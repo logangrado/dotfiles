@@ -4,7 +4,7 @@ DOT_DIR=$PWD
 DATE_TIME=$(date '+%Y-%m-%d_%H:%M:%S')
 BACKUP_DIR="$DOT_DIR/backups/$DATE_TIME"
 
-FILES="zshrc tmux.conf"
+FILES="zshrc tmux.conf emacs.d"
 
 # create dotfiles.bak
 echo "Making backup directory: $BACKUP_DIR"
