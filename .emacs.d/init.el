@@ -39,7 +39,12 @@
 ;;line numbers
 (global-linum-mode t)
 (setq linum-format "%4d\u2502 ")
+;;(set-face-foreground 'linum "#303030")
 
+;;theme
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
+(load-theme 'solarized t)
+(set-terminal-parameter nil 'background-mode 'dark)
 
 ;; Keyboard Shortcuts
 ;;==============================================================================
@@ -84,15 +89,22 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("8db4b03b9ae654d4a57804286eb3e332725c84d7cdab38463cb6b97d5762ad26" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(package-selected-packages
    (quote
-    (neotree markdown-mode flymd web-mode multi-web-mode pbcopy simpleclip scala-mode))))
+    (use-package neotree flymd web-mode pbcopy simpleclip scala-mode))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
 
 ;;Load use-package.el
 (load "~/.emacs.d/use-package")
