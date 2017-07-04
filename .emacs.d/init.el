@@ -39,9 +39,7 @@
 ;;line numbers
 (global-linum-mode t)
 (setq linum-format "%4d\u2502")
-;;(set-face-background 'linum "#262626")
-
-
+(set-face-background 'linum nil)
 
 ;;theme
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
@@ -100,7 +98,7 @@
     ("8db4b03b9ae654d4a57804286eb3e332725c84d7cdab38463cb6b97d5762ad26" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(package-selected-packages
    (quote
-    (0blayout nlinum use-package neotree flymd web-mode pbcopy simpleclip scala-mode))))
+    (auctex use-package neotree flymd web-mode pbcopy simpleclip scala-mode))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
