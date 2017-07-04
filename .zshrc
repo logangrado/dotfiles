@@ -35,7 +35,10 @@ bindkey "\eOB" down-line-or-history
 
 
 # BLACKYNN ONLY
-source ~/.blackfynnrc
+BLACKFYNNRC="$HOME/.blackfynnrc"
+if [ -e $BLACKFYNNRC ]; then
+    source $BLACKFYNNRC
+fi
 
 # Misc Options...
 
