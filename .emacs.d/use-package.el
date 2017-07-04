@@ -70,7 +70,18 @@
   
 ;;adaptive wrap
 ;;========================================================================
-;;(define-globalized-minor-mode global-visual-line-mode visual-line-mode
-;;  (lambda () (visual-line-mode 1)))
-;;(global-visual-line-mode t)
-;;(add-hook 'visual-line-mode-hook 'adaptive-wrap-prefix-mode)
+(use-package adaptive-wrap
+  :ensure t
+  :config
+  (define-globalized-minor-mode global-visual-line-mode visual-line-mode
+    (lambda () (visual-line-mode 1)))
+  (global-visual-line-mode t)
+  (add-hook 'visual-line-mode-hook 'adaptive-wrap-prefix-mode)
+)
+
+;;nlinum
+;;(use-package nlinum
+;;  :ensure t
+;;  :init
+;;  (global-nlinum-mode t)
+;;  )
