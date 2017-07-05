@@ -39,6 +39,10 @@
   (add-to-list 'flymd-markdown-file-type '"\\.mdown\\'")
   )
 
+(use-package markdown-mode
+  :ensure t
+  )
+
 ;;neotree
 ;;==========================================================================
 (use-package neotree
