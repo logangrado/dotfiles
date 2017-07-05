@@ -45,6 +45,8 @@
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
 (load-theme 'solarized t)
 (set-terminal-parameter nil 'background-mode 'dark)
+(set-face-attribute 'font-lock-comment-face nil           :foreground "#bd3612") ;;Comment color
+(set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "#bd3612") ;;Comment delim color
 
 ;;colors
 (set-face-attribute 'markdown-code-face nil)
