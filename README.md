@@ -28,7 +28,8 @@ Download emacs theme [here](https://github.com/sellout/emacs-color-theme-solariz
 - [ ] Add oh-my-zsh theme
 - [ ] Figure out how to do better line numbers (fringe mode?!)
 - [ ] figure out how to prevent emacs selection from highlighting line numbers
-- [ ] Put terminal thheme in here too
+- [ ] Put terminal theme in here too
+- [x] figure out why README files dont have syntax highlighting at work
 
 ## MaybeDo
 - Ony have init.el and use-package.el? 
