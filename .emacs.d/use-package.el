@@ -1,3 +1,7 @@
+(use-package matlab-mode
+  :ensure t
+  )
+
 ;;pbcopy
 ;;========================================================================
 (use-package pbcopy
