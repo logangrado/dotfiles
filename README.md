@@ -28,6 +28,7 @@ Download emacs theme [here](https://github.com/sellout/emacs-color-theme-solariz
 - [ ] Add oh-my-zsh theme
 - [ ] Figure out how to do better line numbers (fringe mode?!)
 - [ ] figure out how to prevent emacs selection from highlighting line numbers
+- [ ] Put terminal thheme in here too
 
 ## MaybeDo
 - Ony have init.el and use-package.el? 
