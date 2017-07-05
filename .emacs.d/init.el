@@ -19,6 +19,7 @@
 ;;==============================================================================
 ;;paren mode
 (show-paren-mode 1)
+(set-face-attribute 'show-paren-match-face nil :background "#839496");;"#EEE8D5")
 
 ;;hide/show
 (defvar code-editing-mode-hooks '(c-mode-common-hook
