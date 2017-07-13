@@ -1,14 +1,13 @@
 ;; Backup and autosave lications
 ;;==============================================================================
 ;;backup
-(setq
- backup-by-copying t                ; don't clobber symlinks
- backup-directory-alist
- '(("." . "~/.emacs.d/backups"))    ; don't litter my fs tree
- delete-old-versions t
- kept-new-versions 6
- kept-old-versions 2
- version-control t)                 ; use versioned backups
+(setq backup-by-copying t                ; don't clobber symlinks
+      backup-directory-alist
+      '(("." . "~/.emacs.d/backups/"))    ; don't litter my fs tree
+      delete-old-versions t
+      kept-new-versions 6
+      kept-old-versions 2
+      version-control t)                 ; use versioned backups
 
 ;;autosave
 (setq auto-save-file-name-transforms
@@ -102,7 +101,7 @@
     ("8db4b03b9ae654d4a57804286eb3e332725c84d7cdab38463cb6b97d5762ad26" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(package-selected-packages
    (quote
-    (matlab-mode markdown-mode auctex use-package neotree flymd web-mode pbcopy simpleclip scala-mode))))
+    (tex matlab-mode markdown-mode auctex use-package neotree flymd web-mode pbcopy simpleclip scala-mode))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

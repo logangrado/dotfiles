@@ -1,3 +1,9 @@
+;;(use-package tex (or tex-site)?
+;;  :ensure auctex
+;;  :ensure t
+;;  )
+
+
 (use-package matlab-mode
   :ensure t
   )
