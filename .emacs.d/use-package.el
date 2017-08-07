@@ -80,6 +80,10 @@
    'neotree-mode-hook
    (lambda ()
      (define-key neotree-mode-map (kbd "RET") 'neotree-enter-hide)))
+
+  ;; Hides certain file types/extensions. Can be customized in list neo-hidden-regexp-list
+  (setq neo-show-hidden-files nil)
+  ;;(add-to-list 'neo-hidden-regexp-list)
   )
   
 ;;adaptive wrap

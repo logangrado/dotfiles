@@ -99,6 +99,9 @@
  '(custom-safe-themes
    (quote
     ("8db4b03b9ae654d4a57804286eb3e332725c84d7cdab38463cb6b97d5762ad26" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
+ '(neo-hidden-regexp-list
+   (quote
+    ("\\.pyc\\'" ".*.pyc" "^\\." "\\.pyc$" "~$" "^#.*#$" "\\.elc$")))
  '(package-selected-packages
    (quote
     (tex matlab-mode markdown-mode auctex use-package neotree flymd web-mode pbcopy simpleclip scala-mode))))
