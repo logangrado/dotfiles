@@ -1,3 +1,33 @@
+;;auctex
+(use-package auctex
+  :ensure t
+  :mode ("\\.tex\\'" . latex-mode)
+  :commands (latex-mode LaTeX-mode plain-tex-mode)
+  :init
+  (add-hook 'LaTeX-mode-hook #'LaTeX-preview-setup)
+  (add-hook 'LaTeX-mode-hook #'flyspell-mode)
+  (add-hook 'LaTeX-mode-hook #'turn-on-reftex)
+  (setq TeX-auto-save t
+	TeX-parse-self t
+	TeX-save-query nil
+	TeX-PDF-mode t)
+  (setq-default TeX-master nil)
+  )
+
+
+;;flyspell
+(use-package flyspell
+  :ensure t
+  :init
+  (flyspell-mode 1)
+  :config
+  (setq ispell-program-name "ispell")
+  (setq ispell-dictionary "english")
+  (add-hook 'LaTeX-mode-hook 'flyspell-mode)
+  (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
+  )
+
+
 ;;pbcopy
 ;;========================================================================
 (use-package pbcopy
