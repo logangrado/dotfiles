@@ -33,6 +33,11 @@ alias del='rmtrash'
 alias g++='g++ -std=c++11'
 #alias emacs='emacs -nw'
 
+alias python='python3'
+alias pip='pip3'
+alias ipython='ipython3'
+alias pylab='ipython3 --pylab'
+
 setopt nosharehistory
 bindkey "\eOA" up-line-or-history
 bindkey "\eOB" down-line-or-history

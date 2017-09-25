@@ -7,11 +7,19 @@
   (add-hook 'LaTeX-mode-hook #'LaTeX-preview-setup)
   (add-hook 'LaTeX-mode-hook #'flyspell-mode)
   (add-hook 'LaTeX-mode-hook #'turn-on-reftex)
+
+  (add-hook 'LaTeX-mode-hook (lambda ()
+                             (TeX-fold-mode 1)))
+  ;;(add-hook 'find-file-hook 'TeX-fold-buffer t) ;;automatically hide all foldable items
+  
   (setq TeX-auto-save t
 	TeX-parse-self t
 	TeX-save-query nil
 	TeX-PDF-mode t)
   (setq-default TeX-master nil)
+
+  :config
+  
   )
 
 
@@ -27,6 +35,9 @@
   (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
   )
 
+(use-package matlab-mode
+  :ensure t
+  )
 
 ;;pbcopy
 ;;========================================================================
@@ -100,6 +111,10 @@
    'neotree-mode-hook
    (lambda ()
      (define-key neotree-mode-map (kbd "RET") 'neotree-enter-hide)))
+
+  ;; Hides certain file types/extensions. Can be customized in list neo-hidden-regexp-list
+  (setq neo-show-hidden-files nil)
+  ;;(add-to-list 'neo-hidden-regexp-list)
   )
   
 ;;adaptive wrap
