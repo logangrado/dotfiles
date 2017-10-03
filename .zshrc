@@ -31,8 +31,8 @@ alias ls='ls -CFG'
 alias lsa='ls -CFGa'
 alias del='rmtrash'
 alias g++='g++ -std=c++11'
-#alias emacs='emacs -nw'
 
+#python aliases
 alias python='python3'
 alias pip='pip3'
 alias ipython='ipython3'
@@ -48,9 +48,3 @@ bindkey "\eOB" down-line-or-history
 for f in $HOME/.dotfiles/scripts/*.sh; do
     source $f
 done
-
-# BLACKYNN ONLY
-BLACKFYNNRC="$HOME/.blackfynnrc"
-if [ -e $BLACKFYNNRC ]; then
-    source $BLACKFYNNRC
-fi
