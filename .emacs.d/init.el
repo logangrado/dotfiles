@@ -39,7 +39,7 @@
 
 (add-to-list 'load-path "~/.emacs.d/hideshow-orgmode")
 (require 'hideshow-orgmode)
-(add-hook 'hs-minor-mode-hook 'hs-fold-all)=
+(add-hook 'hs-minor-mode-hook 'hs-fold-all)
 
 ;;line numbers
 (global-linum-mode t)
