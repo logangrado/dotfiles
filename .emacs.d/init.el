@@ -13,14 +13,14 @@
 (setq auto-save-file-name-transforms
  `((".*" ,temporary-file-directory t)))
 
-
 ;; Interface options
 ;;==============================================================================
 ;;paren mode
 (show-paren-mode 1)
 (set-face-attribute 'show-paren-match-face nil :background "#839496");;"#EEE8D5")
 
-;;hide/show
+;; Hideshow
+;;=======================================================
 (defvar code-editing-mode-hooks '(c-mode-common-hook
 				  clojure-mode-hook
 				  emacs-lisp-mode-hook
@@ -33,13 +33,20 @@
 				  python-mode-hook
 				  sh-mode-hook))
 ;; add a hs-minor-mode hook to code editing major modes
+(load-library "hideshow")
 (dolist (mode code-editing-mode-hooks)
   (add-hook mode 'hs-minor-mode))
+
+(add-to-list 'load-path "~/.emacs.d/hideshow-orgmode")
+(require 'hideshow-orgmode)
+(add-hook 'hs-minor-mode-hook 'hs-fold-all)=
 
 ;;line numbers
 (global-linum-mode t)
 (setq linum-format "%4d\u2502")
-(set-face-background 'linum nil)
+(set-face-background 'linum "brightblack")
+(set-face-underline-p 'linum nil) ;;Dont underline linenumbers
+(set-face-attribute 'linum nil :inverse-video nil)
 
 ;;theme
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
@@ -53,14 +60,18 @@
 ;;colors
 (set-face-attribute 'markdown-code-face nil)
 
-
 ;; Keyboard Shortcuts
 ;;==============================================================================
-(global-set-key (kbd "C-h") 'hs-toggle-hiding)
-(global-set-key (kbd "M-h") 'hs-hide-all)
-(global-set-key (kbd "M-s") 'hs-show-all)
+(global-set-key (kbd "C-c c") 'hs-cycle)
+(global-set-key (kbd "C-c C") 'hs-cycle-all)
+(global-set-key (kbd "C-c h") 'hs-fold-block)
+(global-set-key (kbd "C-c H") 'hs-fold-all)
+(global-set-key (kbd "C-c s") 'hs-show-block)
+(global-set-key (kbd "C-c S") 'hs-show-all)
 
-(global-set-key (kbd "C-x a RET") 'align)
+(global-set-key (kbd "C-c a") 'align)
+(global-set-key (kbd "C-c A") 'align-regexp)
+
 
 ;; Styles
 ;;==============================================================================
@@ -105,7 +116,7 @@
     ("\\.pyc\\'" ".*.pyc" "^\\." "\\.pyc$" "~$" "^#.*#$" "\\.elc$")))
  '(package-selected-packages
    (quote
-    (matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout))))
+    (pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

@@ -1,3 +1,39 @@
+;;pretty-mode
+(use-package pretty-mode
+  :ensure t
+  :init
+  (add-hook 'python-mode-hook 'turn-on-pretty-mode)
+  :config
+  (pretty-activate-groups '(:greek :sub-and-superscripts))
+  )
+
+;;which-key
+(use-package which-key
+  :ensure t
+  :init
+  (which-key-mode)
+  )
+
+;;org-mode
+(use-package org
+  :ensure t
+  :init
+  :config
+  (set-face-attribute 'org-todo nil :background "yellow")
+  )
+  
+;;prettify-greek
+(use-package prettify-greek
+  :ensure t
+  :init
+  ;; (add-hook 'python-mode-hook
+  ;; 	    (lambda()
+  ;; 	      (setq prettify-symbols-alist prettify-greek-lower)
+  ;; 	      (append prettify-symbols-alist prettify-greek-upper)
+  ;; 	      ;(setq prettify-symbols-alist (append prettify-greek-lower (append prettify-symbols-alist prettify-greek-upper)))
+  ;; 	      (prettify-symbols-mode t)))
+  )
+
 ;;auctex
 (use-package auctex
   :ensure t
