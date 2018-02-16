@@ -41,6 +41,15 @@
 (require 'hideshow-orgmode)
 (add-hook 'hs-minor-mode-hook 'hs-fold-all)
 
+;; (add-hook 'LaTeX-mode-hook 'hs-minor-mode)
+;; (add-to-list 'hs-special-modes-alist
+;; 	     '(latex-mode
+;; 	       "\\\\begin" ;; regexp for start block
+;; 	       "\\\\end"   ;; regexp for end block
+;; 	       "%"         ;; regexp for comment start
+;; 	       (lambda (arg)(search-forward "\\end"))
+;; 	       nil))
+
 ;;line numbers
 (global-linum-mode t)
 (setq linum-format "%4d\u2502")
@@ -56,6 +65,15 @@
 (set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "#bd3612") ;;Comment delim color
 (set-face-attribute 'font-lock-doc-face nil               :foreground "cyan")
 
+;;set faces for git smerge
+(defun set-smerge-faces ()
+  ;(set-face-attribute 'smerge-mine            nil :background "cyan")
+  ;(set-face-attribute 'smerge-other           nil :background "cyan")
+  (set-face-attribute 'smerge-refined-removed nil :foreground "black" );:background "green");"#335533")
+  (set-face-attribute 'smerge-refined-added   nil :foreground "black" );:background "green");"#553333")
+  ;(set-face-attribute 'smerge-refined-changed nil :background "cyan")
+)
+(add-hook 'smerge-mode-hook 'set-smerge-faces)
 
 ;;colors
 (set-face-attribute 'markdown-code-face nil)
@@ -116,7 +134,7 @@
     ("\\.pyc\\'" ".*.pyc" "^\\." "\\.pyc$" "~$" "^#.*#$" "\\.elc$")))
  '(package-selected-packages
    (quote
-    (pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout))))
+    (outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
