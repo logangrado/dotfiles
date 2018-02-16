@@ -4,7 +4,7 @@
   :init
   (add-hook 'python-mode-hook 'turn-on-pretty-mode)
   :config
-  (pretty-activate-groups '(:greek :sub-and-superscripts))
+  (pretty-activate-groups '(:greek)) ;;:sub-and-superscripts))
   )
 
 ;;which-key
@@ -20,6 +20,9 @@
   :init
   :config
   (set-face-attribute 'org-todo nil :background "yellow")
+  (setq org-startup-indented t)
+  (setq org-hierarchical-todo-statics nil)
+  (setq org-checkbox-hierarchical-statistics nil)
   )
   
 ;;prettify-greek
@@ -34,30 +37,45 @@
   ;; 	      (prettify-symbols-mode t)))
   )
 
+;;outshine
+(use-package outshine
+  :ensure t
+  )
+
 ;;auctex
 (use-package auctex
   :ensure t
   :mode ("\\.tex\\'" . latex-mode)
-  :commands (latex-mode LaTeX-mode plain-tex-mode)
+  :commands
+  (latex-mode LaTeX-mode plain-tex-mode)
   :init
-  (add-hook 'LaTeX-mode-hook #'LaTeX-preview-setup)
-  (add-hook 'LaTeX-mode-hook #'flyspell-mode)
-  (add-hook 'LaTeX-mode-hook #'turn-on-reftex)
-
-  (add-hook 'LaTeX-mode-hook (lambda ()
-                             (TeX-fold-mode 1)))
-  ;;(add-hook 'find-file-hook 'TeX-fold-buffer t) ;;automatically hide all foldable items
+  (add-hook 'LaTeX-mode-hook 'LaTeX-preview-setup)
+  (add-hook 'LaTeX-mode-hook 'flyspell-mode)
+  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
   
   (setq TeX-auto-save t
 	TeX-parse-self t
 	TeX-save-query nil
 	TeX-PDF-mode t)
   (setq-default TeX-master nil)
-
+  (add-hook 'TeX-mode-hook (lambda ()
+			     (TeX-fold-mode t)
+			     (delete '("[l]" ("label")) TeX-fold-macro-spec-list)
+			     (TeX-fold-mode t)
+			     (add-hook 'find-file-hook 'TeX-fold-buffer t t) ;;Autohide all when opening buffer
+			     (add-hook 'after-change-functions               ;;Autohide after typing '}' or '$'
+				       (lambda (start end oldlen) 
+					 (when (= (- end start) 1)
+					   (let ((char-point 
+						  (buffer-substring-no-properties 
+						   start end)))
+					     (when (or (string= char-point "}")
+						       (string= char-point "$"))
+					       (TeX-fold-paragraph)))))
+				       t t)))
+  (add-hook 'TeX-mode-hook 'outline-minor-mode)
   :config
-  
   )
-
 
 ;;flyspell
 (use-package flyspell
@@ -71,9 +89,11 @@
   (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
   )
 
-(use-package matlab-mode
-  :ensure t
-  )
+;;(use-package matlab-mode
+;;  :ensure t
+;;  :init
+;;  (require 'outshine)
+;;  )
 
 ;;pbcopy
 ;;========================================================================
@@ -114,6 +134,14 @@
   :ensure t
   :config
   (add-to-list 'flymd-markdown-file-type '"\\.mdown\\'")
+  (defun my-flymd-browser-function (url)
+    (let ((process-environment (browse-url-process-environment)))
+    (apply 'start-process
+           (concat "firefox " url)
+           nil
+           "/usr/bin/open"
+           (list "-a" "firefox" url))))
+  (setq flymd-browser-open-function 'my-flymd-browser-function)
   )
 
 ;;(use-package markdown-mode
