@@ -1,3 +1,25 @@
+(use-package magit
+  ; Dont really know how to use this yet...
+  )
+
+(use-package auto-complete
+  :ensure t
+  :init
+  (ac-config-default)
+  )
+
+(use-package outline-magic
+  :ensure t
+  :init
+  :config
+  )
+
+(use-package scad-mode
+  :ensure t
+  :init
+  :config
+  )
+
 ;;pretty-mode
 (use-package pretty-mode
   :ensure t
@@ -5,6 +27,7 @@
   (add-hook 'python-mode-hook 'turn-on-pretty-mode)
   :config
   (pretty-activate-groups '(:greek)) ;;:sub-and-superscripts))
+  (pretty-deactivate-patterns '(:==)) ;;disable eqauls
   )
 
 ;;which-key
@@ -17,25 +40,54 @@
 ;;org-mode
 (use-package org
   :ensure t
+
   :init
+  (setq org-agenda-files (list "~/org/todo.org"
+                               "~/org/notes.org"
+                               "~/org/refile.org"))
+  (setq org-default-notes-file "~/org/refile.org")
+
+  (setq org-agenda-ndays 7)
+  (setq org-deadline-warning-days 14)
+  (setq org-agenda-show-all-dates t)
+  (setq org-agenda-skip-deadline-if-done t)
+  (setq org-agenda-skip-scheduled-if-done t)
+  (setq org-agenda-start-on-weekday nil)
+  (setq org-reverse-note-order t)
+
+  
+  (setq org-capture-templates
+        '(("t" "Todo" entry (file+headline "~/org/refile.org" "Tasks")
+           "* TODO %?\n  %u\n  %a")))
+
+  (setq org-todo-keywords
+        '((sequence "TODO" "IN PROG" "|" "DONE")))
+  
+  (global-set-key (kbd "C-c a") 'org-agenda)
+  (global-set-key (kbd "C-c r") 'org-capture)
+  
   :config
-  (set-face-attribute 'org-todo nil :background "yellow")
+  (add-hook 'org-mode-hook 'flyspell-mode)
+  (set-face-attribute 'org-todo nil :background "Bright Cyan") ;:background "yellow")
   (setq org-startup-indented t)
   (setq org-hierarchical-todo-statics nil)
+  ;;(setq org-fontify-done-headline t)
   (setq org-checkbox-hierarchical-statistics nil)
-  )
+
   
-;;prettify-greek
-(use-package prettify-greek
-  :ensure t
-  :init
-  ;; (add-hook 'python-mode-hook
-  ;; 	    (lambda()
-  ;; 	      (setq prettify-symbols-alist prettify-greek-lower)
-  ;; 	      (append prettify-symbols-alist prettify-greek-upper)
-  ;; 	      ;(setq prettify-symbols-alist (append prettify-greek-lower (append prettify-symbols-alist prettify-greek-upper)))
-  ;; 	      (prettify-symbols-mode t)))
+  
   )
+
+;;doom-themes-org
+(use-package doom-themes
+
+  :config
+  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+        doom-themes-enable-italic t)   ; if nil, italics is universally disabled
+  (doom-themes-org-config)
+  (doom-org-custom-fontification)
+  )
+
 
 ;;outshine
 (use-package outshine
@@ -52,7 +104,26 @@
   (add-hook 'LaTeX-mode-hook 'LaTeX-preview-setup)
   (add-hook 'LaTeX-mode-hook 'flyspell-mode)
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-  
+
+  ;; Colorize diff
+  (defface DIFadd
+  '((t :foreground "#268BD2"
+       :weight bold
+       ))
+  "Face for DIFadd"
+  :group 'my-lang-mode )
+  (defface DIFdel
+    '((t :foreground "#DC322F"
+         :weight bold
+         ))
+  "Face for DIFdel"
+  :group 'my-lang-mode )
+  (setq font-latex-user-keyword-classes
+        '(("DIFadd" (("DIFadd" "{")) DIFadd)
+          ("DIFdel" (("DIFdel" "{")) DIFdel)
+          ("DIFaddFL" (("DIFaddFL" "{")) DIFadd)
+          ("DIFdelFL" (("DIFdelFL" "{")) DIFdel)))
+    
   (setq TeX-auto-save t
 	TeX-parse-self t
 	TeX-save-query nil
@@ -74,6 +145,7 @@
 					       (TeX-fold-paragraph)))))
 				       t t)))
   (add-hook 'TeX-mode-hook 'outline-minor-mode)
+  (add-hook 'LaTeX-mode-hook (lambda() (bind-key (kbd "C-c c") 'outline-cycle)))
   :config
   )
 
@@ -86,7 +158,7 @@
   (setq ispell-program-name "ispell")
   (setq ispell-dictionary "english")
   (add-hook 'LaTeX-mode-hook 'flyspell-mode)
-  (add-hook 'LaTeX-mode-hook 'flyspell-buffer)
+  ;;(add-hook 'LaTeX-mode-hook 'flyspell-buffer)
   )
 
 ;;(use-package matlab-mode

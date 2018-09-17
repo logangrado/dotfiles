@@ -14,13 +14,13 @@
  `((".*" ,temporary-file-directory t)))
 
 ;; Interface options
-;;==============================================================================
+;;-------------------------------------------------------------------
 ;;paren mode
 (show-paren-mode 1)
 (set-face-attribute 'show-paren-match-face nil :background "#839496");;"#EEE8D5")
 
 ;; Hideshow
-;;=======================================================
+;;-------------------------------------------------------------------
 (defvar code-editing-mode-hooks '(c-mode-common-hook
 				  clojure-mode-hook
 				  emacs-lisp-mode-hook
@@ -41,23 +41,16 @@
 (require 'hideshow-orgmode)
 (add-hook 'hs-minor-mode-hook 'hs-fold-all)
 
-;; (add-hook 'LaTeX-mode-hook 'hs-minor-mode)
-;; (add-to-list 'hs-special-modes-alist
-;; 	     '(latex-mode
-;; 	       "\\\\begin" ;; regexp for start block
-;; 	       "\\\\end"   ;; regexp for end block
-;; 	       "%"         ;; regexp for comment start
-;; 	       (lambda (arg)(search-forward "\\end"))
-;; 	       nil))
-
-;;line numbers
+;; line numbers
+;;-------------------------------------------------------------------
 (global-linum-mode t)
 (setq linum-format "%4d\u2502")
 (set-face-background 'linum "brightblack")
 (set-face-underline-p 'linum nil) ;;Dont underline linenumbers
 (set-face-attribute 'linum nil :inverse-video nil)
 
-;;theme
+;; theme
+;;-------------------------------------------------------------------
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
 (load-theme 'solarized t)
 (set-terminal-parameter nil 'background-mode 'dark)
@@ -96,6 +89,8 @@
 ;;C++
 (setq c-default-style "linux"
       c-basic-offset 4)
+(setq-default indent-tabs-mode nil)
+;;(add-to-list 'auto-mode-alist '("\\.scad\\'" . c++-mode))
 
 
 ;; Misc
@@ -103,13 +98,12 @@
 ;;iBuffer
 (global-set-key (kbd "C-b") 'ibuffer)
 (autoload 'ibuffer "ibuffer" "List buffers." t)
-
+(delete-selection-mode 1) ;; Delete selected text when you type
 
 ;; Include elpa directory and subdirectories
 ;;==============================================================================
 ;;(let ((default-directory  "~/.emacs.d/elpa/"))
 ;;  (normal-top-level-add-subdirs-to-load-path))
-
 
 ;; MELPA
 ;;==========================================================
@@ -132,9 +126,54 @@
  '(neo-hidden-regexp-list
    (quote
     ("\\.pyc\\'" ".*.pyc" "^\\." "\\.pyc$" "~$" "^#.*#$" "\\.elc$")))
+ '(org-agenda-custom-commands
+   (quote
+    (("d" todo "DELEGATED" nil)
+     ("c" todo "DONE|DEFERRED|CANCELLED" nil)
+     ("w" todo "WAITING" nil)
+     ("W" agenda ""
+      ((org-agenda-ndays 21)))
+     ("A" agenda ""
+      ((org-agenda-skip-function
+        (lambda nil
+          (org-agenda-skip-entry-if
+           (quote notregexp)
+           "\\=.*\\[#A\\]")))
+       (org-agenda-ndays 1)
+       (org-agenda-overriding-header "Today's Priority #A tasks: ")))
+     ("u" alltodo ""
+      ((org-agenda-skip-function
+        (lambda nil
+          (org-agenda-skip-entry-if
+           (quote scheduled)
+           (quote deadline)
+           (quote regexp)
+           "
+]+>")))
+       (org-agenda-overriding-header "Unscheduled TODO entries: "))))))
+ '(org-agenda-files
+   (quote
+    ("~/org/notes.org" "~/org/todo.org ~/org/notes.org")))
+ '(org-agenda-ndays 7 t)
+ '(org-agenda-show-all-dates t t)
+ '(org-agenda-skip-deadline-if-done t t)
+ '(org-agenda-skip-scheduled-if-done t t)
+ '(org-agenda-start-on-weekday nil t)
+ '(org-deadline-warning-days 14)
+ '(org-default-notes-file "~/notes.org")
+ '(org-fast-tag-selection-single-key (quote expert))
+ '(org-remember-store-without-prompt t)
+ '(org-remember-templates
+   (quote
+    ((116 "* TODO %?
+  %u" "~/todo.org" "Tasks")
+     (110 "* %u %?" "~/notes.org" "Notes"))))
+ '(org-reverse-note-order t)
  '(package-selected-packages
    (quote
-    (outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout))))
+    (synonymous magit doom-themes-org doom-themes outline-magic scad-mode auto-complete outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout)))
+ '(remember-annotation-functions (quote (org-remember-annotation)))
+ '(remember-handler-functions (quote (org-remember-handler))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -149,3 +188,11 @@
 
 ;;Load use-package.el
 (load "~/.emacs.d/use-package")
+
+;;(require 'doom-themes-org)
+;;(doom-org-custom-fontification)
+
+;Delete this after done playign wtih org-mode
+;; Load external config files
+;;==============================================================================
+;(load "~/.emacs.d/org-mode-config")

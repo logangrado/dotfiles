@@ -1,9 +1,11 @@
 # Path to your oh-my-zsh configuration.
 ZSH=$HOME/.oh-my-zsh
 
-# Path to personal bin
+# PATH
 #=====================
-export PATH=$PATH:$HOME/.bin
+export PATH=$HOME/.bin:$PATH       # Personal bin
+
+# Yarn (package manaager installed by Brew)
 
 # Set ZSH 
 #=========================================================
@@ -12,7 +14,6 @@ ZSH_THEME="grado"
 
 # zsh themes
 plugins=(git)
-
 
 # source zsh
 source $ZSH/oh-my-zsh.sh
@@ -35,6 +36,8 @@ alias g++='g++ -std=c++11'
 
 alias clear='printf "\n%.0s" {1..50} && clear'
 
+alias latexbuild='latexmk -pdf -pvc --outdir=build'
+
 #MSI
 alias msi='ssh msi'
 alias mesabi='ssh msi -t ssh mesabi'
@@ -48,8 +51,12 @@ alias ipython='ipython3'
 alias pylab='ipython3 --pylab'
 
 #git aliases
-alias gitlog='git log --oneline --graph --color --all --decorate'
 alias gitrm='git ls-files --deleted -z | xargs -0 git rm'
+alias gitlog2='git log --oneline --graph --color --all --decorate | reverse_log.py'
+#alias gitlog='git log --graph --branches --all --color --decorate --date=format:"%Y-%m-%d %H:%M:%S" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(bold yellow)(%cd) %C(bold green)<%an>%Creset"' '| reverse_log.py'
+alias gitlog='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#323232)(%cd, %an)%Creset" | reverse_log.py'
+
+alias openscad='/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD'
 
 setopt nosharehistory
 bindkey "\eOA" up-line-or-history
