@@ -42,6 +42,8 @@
   :ensure t
 
   :init
+  (setq org-latex-create-formula-image-program 'dvisvgm)
+  
   (setq org-agenda-files (list "~/org/todo.org"
                                "~/org/notes.org"
                                "~/org/refile.org"))
