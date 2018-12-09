@@ -1,0 +1,3 @@
+[submodule ".emacs.d/hideshow-orgmode"]
+	path = .emacs.d/hideshow-orgmode
+	url = https://github.com/logangrado/hideshow-orgmode.git
