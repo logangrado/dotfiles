@@ -12,6 +12,10 @@ brew install tmux
 brew install python
 brew install python2
 
+# Install and update submodules (to get hidehsow-orgmode)
+git submodule init
+git submodule update
+
 #ZSH
 brew install zsh
 sudo -s 'echo /usr/local/bin/zsh >> /etc/shells'

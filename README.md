@@ -2,10 +2,10 @@
 
 ## Install and link
 
-The script `install.sh` installs things like homebrew, various utilities (git, emacs, etc), zsh, and tmux. `link.sh` links dotfiles, themes, etc into the appropriate locations.
+The script `install_osx.sh` installs things like homebrew, various utilities (git, emacs, etc), zsh, and tmux. `link.sh` links dotfiles, themes, etc into the appropriate locations.
 
 ```shell
-$ ./osx_install.sh
+$ ./install_osx.sh
 $ ./link.sh
 ```
 
@@ -14,12 +14,16 @@ $ ./link.sh
 #### TMUX
 Download TMUX [here](https://github.com/tmux/tmux/wiki)
 
+> `install_osx.sh` should already have installed tmux.
+
 #### Solarized Theme
 Download OSX Terminal Theme [here](https://github.com/tomislav/osx-terminal.app-colors-solarized)  
 
+> The solarized theme for iTerm2 is already included
+
 Download emacs theme [here](https://github.com/sellout/emacs-color-theme-solarized)  
 
-**Note**: The solarized theme for emacs should be included in .emacs
+> The solarized theme for emacs is already included
 
 ## TODO
 - [ ] Add git commit message
