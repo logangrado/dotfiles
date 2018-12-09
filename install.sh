@@ -2,11 +2,15 @@
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 #Install brew things
+brew install git
 brew install wget
 brew install curl
 brew install reattach-to-user-namespace
 brew install emacs
 brew install libevent
+brew install tmux
+brew install python
+brew install python2
 
 #ZSH
 brew install zsh

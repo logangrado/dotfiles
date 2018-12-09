@@ -1,13 +1,15 @@
 # Grado's Dotfiles
 
-## Installation
-This script contains one-time commands to be executed when getting started on a new compute
+## Install and link
 
-## Linking
-This script creates symlinks for relevant dot files in the home directory
+The script `install.sh` installs things like homebrew, various utilities (git, emacs, etc), zsh, and tmux. `link.sh` links dotfiles, themes, etc into the appropriate locations.
 
-## Other
-This section pertains to things that cannot be installed using scripts
+```shell
+$ ./osx_install.sh
+$ ./link.sh
+```
+
+## Extras
 
 #### TMUX
 Download TMUX [here](https://github.com/tmux/tmux/wiki)
@@ -20,7 +22,7 @@ Download emacs theme [here](https://github.com/sellout/emacs-color-theme-solariz
 **Note**: The solarized theme for emacs should be included in .emacs
 
 ## TODO
-- [ ] Put terminal theme in here too
+- [ ] Add git commit message
 - [ ] Add .gitignore_global
     - [ ] Add .gitignore_global to linking script
 - [ ] Put linked files/directories in their own folder
