@@ -1,4 +1,5 @@
 (use-package magit
+  :ensure t
   ; Dont really know how to use this yet...
   )
 
@@ -82,7 +83,7 @@
 
 ;;doom-themes-org
 (use-package doom-themes
-
+  :ensure t
   :config
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t)   ; if nil, italics is universally disabled
