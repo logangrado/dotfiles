@@ -17,7 +17,8 @@
 ;;-------------------------------------------------------------------
 ;;paren mode
 (show-paren-mode 1)
-(set-face-attribute 'show-paren-match-face nil :background "#839496");;"#EEE8D5")
+(require 'paren)
+(set-face-background 'show-paren-match "#839496")
 
 ;; Hideshow
 ;;-------------------------------------------------------------------
