@@ -25,7 +25,9 @@ Select under `Profiles > Colors > Color Presets...`
   * C-M-arrow
   
     `\033[1;7<A,B,C,D> (Up, Down, Right, Left)`
-    
+
+  > For iTerm, select `Send escape sequence` (not `send text`) and omit `\033`
+
 ## Extras
 
 #### TMUX
