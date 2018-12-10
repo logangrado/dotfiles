@@ -9,6 +9,23 @@ $ ./install_osx.sh
 $ ./link.sh
 ```
 
+## iTerm2 Setup
+
+#### Theme
+
+Select under `Profiles > Colors > Color Presets...`
+
+#### Escape codes/key bindings
+
+* Enable `Meta` key
+  
+  Under `Profile > Keys` select `Esc+` for Left and Right option keys
+
+* Set escape sequences (as necessary)
+  * C-M-arrow
+  
+    `\033[1;7<A,B,C,D> (Up, Down, Right, Left)`
+    
 ## Extras
 
 #### TMUX
