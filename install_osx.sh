@@ -1,3 +1,7 @@
+# Install cron jobs
+(crontab -l ; echo "0 4 * * * $HOME/.dotfiles/cronjobs/daily_cleanup.sh") | crontab -
+exit
+
 #Install brew
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
