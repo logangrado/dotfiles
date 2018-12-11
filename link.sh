@@ -11,23 +11,31 @@ declare -a ARR=(".zshrc $HOME/.zshrc"
                )
 
 DOT_DIR=$PWD
-DATE_TIME=$(date '+%Y-%m-%d_%H:%M:%S')
+DATE_TIME=$(date '+%Y-%m-%d')
 BACKUP_DIR="$DOT_DIR/backups/$DATE_TIME"
 
 # create dotfiles.bak
-echo "Making backup directory: $BACKUP_DIR"
+echo -e "Making backup directory...\n  $BACKUP_DIR"
 mkdir -p $BACKUP_DIR
+
+echo "Linking..."
 
 for PAIR in "${ARR[@]}"; do
     IFS=' ' read -a FROMTO <<< "$PAIR"
     FROM=$DOT_DIR/${FROMTO[0]}
     TO=${FROMTO[1]}
-    
-    if [ -e $TO ] || [ -L $TO ]; then
+
+    echo $TO
+    if [ -L $TO ]; then
+        rm $TO
+        echo "  old symlink removed"
+    elif [ -f $TO ]; then
         mv $TO $BACKUP_DIR
-    fi        
-    
-    echo "  backed up and symlinked: $FROM"
+        echo "  old file copied to backup directory"
+    fi
+
     ln -s $FROM $TO
+    echo "  symlinked from $FROM"
+    echo
 done
 exit
