@@ -85,14 +85,14 @@
 (global-set-key (kbd "C-c A") 'align-regexp)
 
 
-;; Styles
+;; Styles and Syntax Highlighting
 ;;==============================================================================
 ;;C++
 (setq c-default-style "linux"
       c-basic-offset 4)
 (setq-default indent-tabs-mode nil)
 ;;(add-to-list 'auto-mode-alist '("\\.scad\\'" . c++-mode))
-
+(add-to-list 'auto-mode-alist '("\\.*rc$" . conf-unix-mode))
 
 ;; Misc
 ;;==============================================================================
