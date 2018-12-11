@@ -5,6 +5,9 @@ declare -a ARR=(".zshrc $HOME/.zshrc"
                 ".tmux-darwin.conf $HOME/.tmux-darwin.conf"
                 ".emacs.d $HOME/.emacs.d"
                 "grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
+                ".gitconfig $HOME/.gitconfig"
+                ".gitignore_global $HOME/.gitignore_global"
+                ".gitmessage $HOME/.gitmessage"
                )
 
 DOT_DIR=$PWD

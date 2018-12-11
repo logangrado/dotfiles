@@ -1,0 +1,13 @@
+[core]
+	excludesfile = /Users/grado/.gitignore_global	
+	
+[user]
+	name = Logan Grado
+	email = grado@umn.edu
+
+[commit]
+	template = ~/.gitmessage
+        
+[pager]
+	branch = false
+        log = less -iXFR                # Leave on screen after exit
