@@ -1,6 +1,5 @@
 # Install cron jobs
 (crontab -l ; echo "0 4 * * * $HOME/.dotfiles/cronjobs/daily_cleanup.sh") | crontab -
-exit
 
 #Install brew
 /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -28,3 +27,4 @@ sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/to
 
 #Install TPM (tmux plugin manager)
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+echo "Don't forget to install TMUX plugins by running `prefix+I`"
