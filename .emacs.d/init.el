@@ -192,8 +192,3 @@
 
 ;;(require 'doom-themes-org)
 ;;(doom-org-custom-fontification)
-
-;Delete this after done playign wtih org-mode
-;; Load external config files
-;;==============================================================================
-;(load "~/.emacs.d/org-mode-config")
