@@ -1,14 +1,26 @@
 #!/bin/bash
 
-declare -a ARR=(".zshrc $HOME/.zshrc"
-                ".tmux.conf $HOME/.tmux.conf"
-                ".tmux-darwin.conf $HOME/.tmux-darwin.conf"
-                ".emacs.d $HOME/.emacs.d"
-                "grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
-                ".gitconfig $HOME/.gitconfig"
-                ".gitignore_global $HOME/.gitignore_global"
-                ".gitmessage $HOME/.gitmessage"
-               )
+ALL=(".zshrc $HOME/.zshrc"
+     ".tmux.conf $HOME/.tmux.conf"                
+     ".emacs.d $HOME/.emacs.d"
+     "grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
+     ".gitconfig $HOME/.gitconfig"
+     ".gitignore_global $HOME/.gitignore_global"
+     ".gitmessage $HOME/.gitmessage"
+    )
+
+OSX=(".tmux-darwin.conf $HOME/.tmux-darwin.conf"
+     "com.googlecode.iterm2.plist $HOME/Library/Preferences/com.googlecode.iterm2.plist"
+    )
+
+# Determine OS
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)  ;;
+    Darwin*) ALL=("${ALL[@]}" "${OSX[@]}");;
+    CYGWIN*) ;;
+    MINGW*)  ;;
+esac
 
 DOT_DIR=$PWD
 DATE_TIME=$(date '+%Y-%m-%d')
@@ -20,7 +32,7 @@ mkdir -p $BACKUP_DIR
 
 echo "Linking..."
 
-for PAIR in "${ARR[@]}"; do
+for PAIR in "${ALL[@]}"; do
     IFS=' ' read -a FROMTO <<< "$PAIR"
     FROM=$DOT_DIR/${FROMTO[0]}
     TO=${FROMTO[1]}
@@ -35,7 +47,7 @@ for PAIR in "${ARR[@]}"; do
     fi
 
     ln -s $FROM $TO
-    echo "  symlinked from $FROM"
+    echo "  symlinke created"
     echo
 done
 exit
