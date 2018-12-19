@@ -54,10 +54,16 @@ done
 
 # OS-Specific Config
 #======================================================
-case $OSTYPE in
-    *"linux"*)
+unameOut="$(uname -s)"
+case "${unameOut}" in
+    Linux*)
         alias ls='ls -CFG --color'
         ;;
+    Darwin*) ;;
+    CYGWIN*)
+        alias ls='ls -CFG --color'
+        ;;
+    MINGW*)  ;;
 esac
     
 # Computer specific config
