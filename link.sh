@@ -41,13 +41,15 @@ for PAIR in "${ALL[@]}"; do
     if [ -L $TO ]; then
         rm $TO
         echo "  old symlink removed"
-    elif [ -f $TO ]; then
+    elif [[ -f $TO || -d $TO ]]; then
         mv $TO $BACKUP_DIR
         echo "  old file copied to backup directory"
     fi
 
     ln -s $FROM $TO
-    echo "  symlinke created"
+    if [ $? -eq 0 ]; then
+	echo "  symlinke created"
+    fi
     echo
 done
 exit
