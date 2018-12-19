@@ -39,7 +39,7 @@ alias pylab='ipython3 --pylab'
 #git aliases
 alias gitrm='git ls-files --deleted -z | xargs -0 git rm'
 alias gitlog2='git log --oneline --graph --color --all --decorate | reverse_log.py'
-alias gitlog='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#323232)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+alias gitlog='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
 
 setopt nosharehistory
 bindkey "\eOA" up-line-or-history
