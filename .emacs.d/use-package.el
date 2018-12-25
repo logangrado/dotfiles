@@ -21,7 +21,7 @@
   :config
   )
 
-;;pretty-mode
+;;pretty-modex
 (use-package pretty-mode
   :ensure t
   :init

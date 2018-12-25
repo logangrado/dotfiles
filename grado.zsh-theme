@@ -6,7 +6,6 @@ $(git_prompt_info)\
 PROMPT2='%{$fg[red]%}\ %{$reset_color%}'
 RPS1='%{$fg[blue]%}%~%{$reset_color%} : %n@%m : %*' # ${return_code}'
 
-
 ZSH_THEME_GIT_PROMPT_PREFIX="%{$reset_color%}:: %{$fg[yellow]%}("
 ZSH_THEME_GIT_PROMPT_SUFFIX=")%{$reset_color%} "
 ZSH_THEME_GIT_PROMPT_CLEAN=""

@@ -1,6 +1,13 @@
 ;; Backup and autosave lications
 ;;==============================================================================
 ;;backup
+
+;; Added by Package.el.  This must come before configurations of
+;; installed packages.  Don't delete this line.  If you don't want it,
+;; just comment it out by adding a semicolon to the start of the line.
+;; You may delete these explanatory comments.
+(package-initialize)
+
 (setq backup-by-copying t                ; don't clobber symlinks
       backup-directory-alist
       '(("." . "~/.emacs.d/backups/"))    ; don't litter my fs tree
@@ -13,12 +20,11 @@
 (setq auto-save-file-name-transforms
  `((".*" ,temporary-file-directory t)))
 
+
 ;; Interface options
 ;;-------------------------------------------------------------------
 ;;paren mode
 (show-paren-mode 1)
-(require 'paren)
-(set-face-background 'show-paren-match "#839496")
 
 ;; Hideshow
 ;;-------------------------------------------------------------------
@@ -55,22 +61,10 @@
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
 (load-theme 'solarized t)
 (set-terminal-parameter nil 'background-mode 'dark)
-(set-face-attribute 'font-lock-comment-face nil           :foreground "brightred");;"#d75f00") ;;orange-256
-(set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "#bd3612") ;;Comment delim color
+
+(set-face-attribute 'font-lock-comment-face nil :foreground "brightred")
+(set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "brightred")
 (set-face-attribute 'font-lock-doc-face nil               :foreground "cyan")
-
-;;set faces for git smerge
-(defun set-smerge-faces ()
-  ;(set-face-attribute 'smerge-mine            nil :background "cyan")
-  ;(set-face-attribute 'smerge-other           nil :background "cyan")
-  (set-face-attribute 'smerge-refined-removed nil :foreground "black" );:background "green");"#335533")
-  (set-face-attribute 'smerge-refined-added   nil :foreground "black" );:background "green");"#553333")
-  ;(set-face-attribute 'smerge-refined-changed nil :background "cyan")
-)
-(add-hook 'smerge-mode-hook 'set-smerge-faces)
-
-;;colors
-(set-face-attribute 'markdown-code-face nil)
 
 ;; Keyboard Shortcuts
 ;;==============================================================================
@@ -83,7 +77,6 @@
 
 (global-set-key (kbd "C-c a") 'align)
 (global-set-key (kbd "C-c A") 'align-regexp)
-
 
 ;; Styles and Syntax Highlighting
 ;;==============================================================================
