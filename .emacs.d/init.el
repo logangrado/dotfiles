@@ -94,6 +94,13 @@
 ;;(add-to-list 'auto-mode-alist '("\\.scad\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.*rc$" . conf-unix-mode))
 
+;; Define json minor mode
+(defun json-indent-level ()
+  (when (and (stringp buffer-file-name)
+             (string-match "\\.json\\'" buffer-file-name))
+    (setq js-indent-level 2)))
+(add-hook 'find-file-hook 'json-indent-level)
+
 ;; Misc
 ;;==============================================================================
 ;;iBuffer
