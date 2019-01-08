@@ -70,7 +70,7 @@
   (set-face-attribute 'smerge-refined-removed nil :foreground "black" );:background "green");"#335533")
   (set-face-attribute 'smerge-refined-added   nil :foreground "black" );:background "green");"#553333")
   ;(set-face-attribute 'smerge-refined-changed nil :background "cyan")
-  za)
+  )
 (add-hook 'smerge-mode-hook 'set-smerge-faces)
 
 (set-face-attribute 'font-lock-comment-face nil           :foreground "brightred")
@@ -200,6 +200,3 @@
 
 ;;Load use-package.el
 (load "~/.emacs.d/use-package")
-
-;;(require 'doom-themes-org)
-;;(doom-org-custom-fontification)
