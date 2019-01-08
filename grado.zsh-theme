@@ -46,6 +46,14 @@ function ssh_connection() {
   fi
 }
 
+function virtualenv() {
+  if [ ! -z "${VIRTUAL_ENV-}" ]; then
+    ENV=$(basename $VIRTUAL_ENV)
+    echo "($ENV) "
+  fi
+}
+export VIRTUAL_ENV_DISABLE_PROMPT=true
+
 
 local return_code="%(?..%{$fg[red]%}%? ↵%{$reset_color%})"
 
@@ -55,12 +63,15 @@ PS1='┌ %{$fg[green]%}%n\
 %{$reset_color%}@\
 %{$fg[green]%}%m
 %{$reset_color%}└ \
+$(virtualenv)\
 %{$fg[red]%}%c\
 $(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} '
 
 PROMPT2='%{$fg[red]%}\ %{$reset_color%}'
 
 RPS1='%{$fg[blue]%}%~%{$reset_color%} [%*]' # ${return_code}'
+
+
 
 # Git prompt variables
 #==============================================================
