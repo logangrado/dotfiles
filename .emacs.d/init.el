@@ -25,6 +25,7 @@
 ;;-------------------------------------------------------------------
 ;;paren mode
 (show-paren-mode 1)
+(set-face-background 'show-paren-match "brightcyan")
 
 ;; Hideshow
 ;;-------------------------------------------------------------------
@@ -62,7 +63,17 @@
 (load-theme 'solarized t)
 (set-terminal-parameter nil 'background-mode 'dark)
 
-(set-face-attribute 'font-lock-comment-face nil :foreground "brightred")
+;;set faces for git smerge
+(defun set-smerge-faces ()
+  ;(set-face-attribute 'smerge-mine            nil :background "cyan")
+  ;(set-face-attribute 'smerge-other           nil :background "cyan")
+  (set-face-attribute 'smerge-refined-removed nil :foreground "black" );:background "green");"#335533")
+  (set-face-attribute 'smerge-refined-added   nil :foreground "black" );:background "green");"#553333")
+  ;(set-face-attribute 'smerge-refined-changed nil :background "cyan")
+  za)
+(add-hook 'smerge-mode-hook 'set-smerge-faces)
+
+(set-face-attribute 'font-lock-comment-face nil           :foreground "brightred")
 (set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "brightred")
 (set-face-attribute 'font-lock-doc-face nil               :foreground "cyan")
 

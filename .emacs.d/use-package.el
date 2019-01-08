@@ -21,7 +21,7 @@
   :config
   )
 
-;;pretty-modex
+;;pretty-mode
 (use-package pretty-mode
   :ensure t
   :init
@@ -41,7 +41,6 @@
 ;;org-mode
 (use-package org
   :ensure t
-
   :init
   (setq org-latex-create-formula-image-program 'dvisvgm)
   
