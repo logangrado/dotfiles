@@ -75,9 +75,6 @@
   (setq org-hierarchical-todo-statics nil)
   ;;(setq org-fontify-done-headline t)
   (setq org-checkbox-hierarchical-statistics nil)
-
-  
-  
   )
 
 ;;doom-themes-org
@@ -162,12 +159,6 @@
   (add-hook 'LaTeX-mode-hook 'flyspell-mode)
   ;;(add-hook 'LaTeX-mode-hook 'flyspell-buffer)
   )
-
-;;(use-package matlab-mode
-;;  :ensure t
-;;  :init
-;;  (require 'outshine)
-;;  )
 
 ;;pbcopy
 ;;========================================================================
@@ -265,10 +256,3 @@
   (global-visual-line-mode t)
   (add-hook 'visual-line-mode-hook 'adaptive-wrap-prefix-mode)
 )
-
-;;nlinum
-;;(use-package nlinum
-;;  :ensure t
-;;  :init
-;;  (global-nlinum-mode t)
-;;  )
