@@ -43,26 +43,43 @@ function install_cygwin {
     sed -i "s&$HOME:/bin/bash&$HOME:/bin/zsh&g" /etc/passwd  # Change default shell for user
 }
 
+function install_arch {
+    
+    sudo pacman -Syyu --noconfirm
+
+    sudo pacman -S --noconfirm --needed emacs git tmux python2 python3 wget zsh
+
+    USER=$(whoami)
+    sudo chsh -s /usr/bin/zsh $USER
+
+    #locale-gen stuff
+    #This is important but I don't remember what I did. You'll have to figure it out
+    #and update it here next time you install on Arch
+}
+
 # Determine OS
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    Linux*)  ;;
+    Linux*)  install_arch;;
     Darwin*) install_osx;;
     CYGWIN*) install_cygwin;;
     MINGW*)  ;;
 esac
 
 # Install and update submodules (to get hidehsow-orgmode)
+echo "Updating submodules..."
 git submodule init
 git submodule update
 
 # oh-my-zsh
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
+    echo "Installing oh-my-zshell..."
     sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
 fi
     
 # Install TPM (tmux plugin manager)
 if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+    echo "Installing tmux plugin manager..."
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 fi
 echo "Don't forget to install TMUX plugins by running \`prefix+I\`"
