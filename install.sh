@@ -53,8 +53,14 @@ function install_arch {
     sudo chsh -s /usr/bin/zsh $USER
 
     #locale-gen stuff
-    #This is important but I don't remember what I did. You'll have to figure it out
-    #and update it here next time you install on Arch
+    sudo echo "en_US.UTF-8" >> /etc/locale.gen
+    sudo locale-gen
+    sudo localectl set-locale LANG=en_US.UTF-8  
+    sudo timedatectl set-timezone America/Chicago
+    
+    # The locale won't take effect until logging back in, or the following:
+    unset LANG
+    source /etc/profile.d/locale.sh
 }
 
 # Determine OS
