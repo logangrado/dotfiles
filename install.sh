@@ -53,7 +53,7 @@ function install_arch {
     sudo chsh -s /usr/bin/zsh $USER
 
     #locale-gen stuff
-    sudo echo "en_US.UTF-8" >> /etc/locale.gen
+    echo "en_US.UTF-8 UTF-8" | sudo tee --append /etc/locale.gen
     sudo locale-gen
     sudo localectl set-locale LANG=en_US.UTF-8  
     sudo timedatectl set-timezone America/Chicago
