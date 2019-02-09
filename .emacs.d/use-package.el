@@ -1,29 +1,27 @@
 (use-package magit
-  :ensure t
+  :defer t
   ; Dont really know how to use this yet...
   )
 
 (use-package auto-complete
-  :ensure t
-  :init
+  :defer t
+  :config
   (ac-config-default)
   )
 
 (use-package outline-magic
-  :ensure t
-  :init
-  :config
+  :defer t
   )
 
 (use-package scad-mode
-  :ensure t
+  :defer t
   :init
   :config
   )
 
 ;;pretty-mode
 (use-package pretty-mode
-  :ensure t
+  :defer t
   :init
   (add-hook 'python-mode-hook 'turn-on-pretty-mode)
   :config
@@ -33,8 +31,8 @@
 
 ;;which-key
 (use-package which-key
-  :ensure t
-  :init
+  :defer t
+  :config
   (which-key-mode)
   )
 
@@ -79,7 +77,7 @@
 
 ;;doom-themes-org
 (use-package doom-themes
-  :ensure t
+  :defer t
   :config
   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
         doom-themes-enable-italic t)   ; if nil, italics is universally disabled
@@ -90,12 +88,12 @@
 
 ;;outshine
 (use-package outshine
-  :ensure t
+  :defer t
   )
 
 ;;auctex
 (use-package auctex
-  :ensure t
+  :defer t
   :mode ("\\.tex\\'" . latex-mode)
   :commands
   (latex-mode LaTeX-mode plain-tex-mode)
@@ -150,7 +148,7 @@
 
 ;;flyspell
 (use-package flyspell
-  :ensure t
+  :defer t
   :init
   (flyspell-mode 1)
   :config
@@ -163,7 +161,7 @@
 ;;pbcopy
 ;;========================================================================
 (use-package pbcopy
-  :ensure t
+  :defer t
   :init
   :config
   (turn-on-pbcopy)
@@ -172,7 +170,7 @@
 ;;web-mode
 ;;========================================================================
 (use-package web-mode
-  :ensure t
+  :defer t
   :init
   :config
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
@@ -196,7 +194,7 @@
 ;;flymd
 ;;==========================================================================
 (use-package flymd
-  :ensure t
+  :defer t
   :config
   (add-to-list 'flymd-markdown-file-type '"\\.mdown\\'")
   (defun my-flymd-browser-function (url)

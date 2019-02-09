@@ -198,5 +198,8 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
+(eval-when-compile
+  (require 'use-package))           
+
 ;;Load use-package.el
 (load "~/.emacs.d/use-package")
