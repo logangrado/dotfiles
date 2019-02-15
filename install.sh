@@ -63,10 +63,30 @@ function install_arch {
     source /etc/profile.d/locale.sh
 }
 
+function install_debian {
+    # Install debian...
+
+    sudo apt update
+
+    sudo apt install emacs git tmux python3 wget zsh
+
+    sudo chsh -s /usr/bin/zsh $USER
+}
+
+function install_linux {
+    # Determine which linux version, and re-direct accordingly
+    DIST=$(cat /etc/*-release)
+    if echo $DIST | grep -q debian; then
+	install_debian
+    elif echo $DIST | grep -q arch; then
+	install_arch
+    fi
+}
+
 # Determine OS
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    Linux*)  install_arch;;
+    Linux*)  install_linux;; #install_arch;;
     Darwin*) install_osx;;
     CYGWIN*) install_cygwin;;
     MINGW*)  ;;
