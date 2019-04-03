@@ -199,4 +199,4 @@
   (package-install 'use-package))
 
 ;;Load use-package.el
-(load "~/.emacs.d/use-package")
+;;(load "~/.emacs.d/use-package")

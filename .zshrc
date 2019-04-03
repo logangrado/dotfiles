@@ -22,6 +22,7 @@ unset LSCOLORS
 # Set environment variables
 #======================================================
 export EDITOR='emacs'
+alias emacs='emacs -nw'
 
 # ALIASES
 #======================================================
