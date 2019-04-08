@@ -93,10 +93,15 @@
 (global-set-key (kbd "C-c a") 'align)
 (global-set-key (kbd "C-c A") 'align-regexp)
 
-(defun reload-init-file ()
-  (interactive)
-  (load-file user-init-file))
-(global-set-key (kbd "C-r") 'reload-init-file)
+(global-set-key (kbd "C-c b") 'ibuffer)
+
+;; Navigation
+(global-set-key (kbd "M-k") 'next-line)
+(global-set-key (kbd "M-i") 'previous-line)
+(global-set-key (kbd "M-j") 'backward-char)
+(global-set-key (kbd "M-l") 'forward-char)
+(global-set-key (kbd "M-u") 'beginning-of-line)
+(global-set-key (kbd "M-o") 'end-of-line)
 
 ;; Styles and Syntax Highlighting
 ;;==============================================================================
@@ -117,7 +122,6 @@
 ;; Misc
 ;;==============================================================================
 ;;iBuffer
-(global-set-key (kbd "C-b") 'ibuffer)
 (autoload 'ibuffer "ibuffer" "List buffers." t)
 (delete-selection-mode 1) ;; Delete selected text when you type
 
