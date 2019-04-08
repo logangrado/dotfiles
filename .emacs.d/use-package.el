@@ -1,3 +1,10 @@
+(use-package exec-path-from-shell   ;; For GUI emacs
+   :ensure t
+   :config
+   (setq exec-path-from-shell-check-startup-files nil)  ; suppress warning message
+   (exec-path-from-shell-initialize)                    ; use shell path
+   )
+
 (use-package magit
   :ensure t
   ; Dont really know how to use this yet...
@@ -75,6 +82,8 @@
   (setq org-hierarchical-todo-statics nil)
   ;;(setq org-fontify-done-headline t)
   (setq org-checkbox-hierarchical-statistics nil)
+  ;;(set-face-attribute 'org-hide nil :background "#002B36" :foreground "#002B36")
+  ;;(set-face-attribute 'org-hide nil :background "brightblack" :foreground "brightblack")
   )
 
 ;;doom-themes-org
