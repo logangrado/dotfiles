@@ -64,24 +64,34 @@
   (setq org-agenda-start-on-weekday nil)
   (setq org-reverse-note-order t)
 
-  
   (setq org-capture-templates
         '(("t" "Todo" entry (file+headline "~/org/refile.org" "Tasks")
            "* TODO %?\n  %u\n  %a")))
 
   (setq org-todo-keywords
-        '((sequence "TODO" "IN PROG" "|" "DONE")))
+        '((sequence "TODO" "PROG" "|" "DONE")))
   
   (global-set-key (kbd "C-c a") 'org-agenda)
   (global-set-key (kbd "C-c r") 'org-capture)
+
+  ;; Org Archive
+  ;;=============
+  ;; Org archive location
+  (setq org-archive-location ".%s_archive::")
   
+  ;; Function to archive all DONE items in file
+  (defun org-archive-done-tasks ()
+    (interactive)
+    (org-map-entries 'org-archive-subtree "/DONE" 'file))
+  (global-set-key (kbd "C-c C-x A") 'org-archive-done-tasks)
+    
   :config
   (add-hook 'org-mode-hook 'flyspell-mode)
   (set-face-attribute 'org-todo nil :background "Bright Cyan") ;:background "yellow")
   (setq org-startup-indented t)
-  (setq org-hierarchical-todo-statics nil)
-  ;;(setq org-fontify-done-headline t)
-  (setq org-checkbox-hierarchical-statistics nil)
+  (setq org-hierarchical-todo-statics t)
+  ;;(setq org-fontify-done-headline t)  ;; Don't know what this does anymore
+  (setq org-checkbox-hierarchical-statistics t)
   ;;(set-face-attribute 'org-hide nil :background "#002B36" :foreground "#002B36")
   ;;(set-face-attribute 'org-hide nil :background "brightblack" :foreground "brightblack")
   )
