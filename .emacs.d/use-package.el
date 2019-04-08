@@ -83,9 +83,10 @@
   (defun org-archive-done-tasks ()
     (interactive)
     (org-map-entries 'org-archive-subtree "/DONE" 'file))
-  (global-set-key (kbd "C-c C-x A") 'org-archive-done-tasks)
-    
+  (global-set-key (kbd "C-c C-x C-A") 'org-archive-done-tasks)
+  
   :config
+  
   (add-hook 'org-mode-hook 'flyspell-mode)
   (set-face-attribute 'org-todo nil :background "Bright Cyan") ;:background "yellow")
   (setq org-startup-indented t)
