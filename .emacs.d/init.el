@@ -93,6 +93,11 @@
 (global-set-key (kbd "C-c a") 'align)
 (global-set-key (kbd "C-c A") 'align-regexp)
 
+(defun reload-init-file ()
+  (interactive)
+  (load-file user-init-file))
+(global-set-key (kbd "C-r") 'reload-init-file)
+
 ;; Styles and Syntax Highlighting
 ;;==============================================================================
 ;;C++
