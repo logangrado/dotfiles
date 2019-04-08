@@ -93,7 +93,7 @@
 (global-set-key (kbd "C-c a") 'align)
 (global-set-key (kbd "C-c A") 'align-regexp)
 
-(global-set-key (kbd "C-c b") 'ibuffer)
+(global-set-key (kbd "C-b") 'ibuffer)
 
 ;; Navigation
 (global-set-key (kbd "M-k") 'next-line)
@@ -102,6 +102,11 @@
 (global-set-key (kbd "M-l") 'forward-char)
 (global-set-key (kbd "M-u") 'beginning-of-line)
 (global-set-key (kbd "M-o") 'end-of-line)
+
+(global-set-key (kbd "C-M-i") 'backward-sexp)
+(global-set-key (kbd "C-M-k") 'forward-sexp)
+(global-set-key (kbd "C-M-j") 'backward-sexp)
+(global-set-key (kbd "C-M-l") 'forward-sexp)
 
 ;; Styles and Syntax Highlighting
 ;;==============================================================================
