@@ -45,16 +45,22 @@
   (which-key-mode)
   )
 
+;;real-auto-save
+(use-package real-auto-save
+  :ensure t
+  :init
+  (setq real-auto-save-interval 10) ;; in seconds
+  :config
+  )
+
 ;;org-mode
 (use-package org
   :ensure t
   :init
   (setq org-latex-create-formula-image-program 'dvisvgm)
-  
-  (setq org-agenda-files (list "~/org/todo.org"
-                               "~/org/notes.org"
-                               "~/org/refile.org"))
-  (setq org-default-notes-file "~/org/refile.org")
+
+  (setq org-agenda-files (list "~/org/todo"))
+  (setq org-default-notes-file "~/org/todo/inbox.org")
 
   (setq org-agenda-ndays 7)
   (setq org-deadline-warning-days 14)
@@ -65,34 +71,40 @@
   (setq org-reverse-note-order t)
 
   (setq org-capture-templates
-        '(("t" "Todo" entry (file+headline "~/org/refile.org" "Tasks")
+        '(("t" "Todo" entry (file+headline "~/org/todo/inbox.org")
            "* TODO %?\n  %u\n  %a")))
 
   (setq org-todo-keywords
-        '((sequence "TODO" "PROG" "|" "DONE")))
+        '((sequence "TODO" "IN PROG" "WAITING" "|" "DONE")
+          (sequence "DELEGATED" "|" "DONE")))
   
   (global-set-key (kbd "C-c a") 'org-agenda)
   (global-set-key (kbd "C-c r") 'org-capture)
 
   ;; Org Archive
-  ;;=============
-  ;; Org archive location
-  (setq org-archive-location ".%s_archive::")
+  (setq org-archive-location ".%s_archive::") ;; Hide org archive files
   
   ;; Function to archive all DONE items in file
   (defun org-archive-done-tasks ()
     (interactive)
     (org-map-entries 'org-archive-subtree "/DONE" 'file))
   (global-set-key (kbd "C-c C-x C-A") 'org-archive-done-tasks)
+
+  ;; Org-mode-hooks
+  ;; auto-save and auto-revert
+  (add-hook 'org-mode-hook 'real-auto-save-mode)
+  (add-hook 'org-mode-hook 'auto-revert-mode)  
   
   :config
-  
+  ;;=============================================================
   (add-hook 'org-mode-hook 'flyspell-mode)
-  (set-face-attribute 'org-todo nil :background "Bright Cyan") ;:background "yellow")
+  (set-face-attribute 'org-todo nil :background "Bright Cyan")
   (setq org-startup-indented t)
-  (setq org-hierarchical-todo-statics t)
+  (setq org-hierarchical-todo-statics nil)         ;; Nil means children count, not just top leve
+  (setq org-checkbox-hierarchical-statistics nil)
+
+  
   ;;(setq org-fontify-done-headline t)  ;; Don't know what this does anymore
-  (setq org-checkbox-hierarchical-statistics t)
   ;;(set-face-attribute 'org-hide nil :background "#002B36" :foreground "#002B36")
   ;;(set-face-attribute 'org-hide nil :background "brightblack" :foreground "brightblack")
   )
