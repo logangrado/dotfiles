@@ -21,10 +21,12 @@ unset LSCOLORS
 
 # Set environment variables
 #======================================================
-export EDITOR='emacs'
+export EDITOR='emacs -nw'
 
 # ALIASES
 #======================================================
+alias emacs='emacs -nw'
+
 alias ls='ls -CFG'
 alias lsa='ls -CFGa'
 alias del='rmtrash'
@@ -61,6 +63,7 @@ case "${unameOut}" in
         DIST=$(cat /etc/*-release)
         if echo $DIST | grep -q debian; then
             export LS_COLORS="$LS_COLORS:ow=1;34:tw=1;34:"
+            export DISPLAY=localhost:0.0
         fi
         ;;
     Darwin*) ;;
