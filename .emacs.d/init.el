@@ -1,13 +1,6 @@
 ;; Backup and autosave lications
 ;;==============================================================================
 ;;backup
-
-;; Added by Package.el.  This must come before configurations of
-;; installed packages.  Don't delete this line.  If you don't want it,
-;; just comment it out by adding a semicolon to the start of the line.
-;; You may delete these explanatory comments.
-(package-initialize)
-
 (setq backup-by-copying t                ; don't clobber symlinks
       backup-directory-alist
       '(("." . "~/.emacs.d/backups/"))    ; don't litter my fs tree
@@ -61,12 +54,7 @@
 (set-face-underline-p 'linum nil) ;;Dont underline linenumbers
 (set-face-attribute 'linum nil :inverse-video nil)
 
-;; Colors and Themes
-;;-------------------------------------------------------------------
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
-(load-theme 'solarized t)
-;;(set-frame-parameter nil 'background-mode 'light)    ;;GUI
-(set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+
 ;;set faces for git smerge
 (defun set-smerge-faces ()
   ;(set-face-attribute 'smerge-mine            nil :background "cyan")
@@ -145,6 +133,24 @@
   ;; For important compatibility libraries like cl-lib
   (add-to-list 'package-archives '("gnu" . "http://elpa.gnu.org/packages/")))
 (package-initialize)
+
+;; OS SPECIFIC CONFIG
+;;===============================================================================
+(when (string-equal system-type "darwin")
+  ;; Colors and Themes
+  ;;------------------------------------------------------------------
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
+  (load-theme 'solarized t)
+  (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+  (set-frame-parameter nil 'background-mode 'light)    ;;GUI
+  )
+
+(when (string-equal system-type "windows-nt")
+  )
+
+(when (string-equal system-type "gnu/linux")
+  (set-face-background 'linum 'unspecified)  ;; Unset linenum face background
+  )
 
 ;; Custom
 ;;==============================================================================

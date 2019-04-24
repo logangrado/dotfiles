@@ -110,15 +110,14 @@
   )
 
 ;;doom-themes-org
-(use-package doom-themes
-  :ensure t
-  :config
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t)   ; if nil, italics is universally disabled
-  (doom-themes-org-config)
-  (doom-org-custom-fontification)
-  )
-
+;; (use-package doom-themes
+;;   :ensure t
+;;   :config
+;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+;;         doom-themes-enable-italic t)   ; if nil, italics is universally disabled
+;;   (doom-themes-org-config)
+;;   (doom-org-custom-fontification)
+;;   )
 
 ;;outshine
 (use-package outshine
