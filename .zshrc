@@ -4,6 +4,7 @@ ZSH=$HOME/.oh-my-zsh
 # PATH
 #=========================================================
 export PATH=$HOME/.bin:$PATH       # Personal bin
+export PATH=/usr/local/sbin:$PATH  # Homebrew sbin
 
 # Set ZSH 
 #=========================================================
@@ -33,10 +34,16 @@ alias del='rmtrash'
 alias g++='g++ -std=c++11'
 
 #python aliases
-alias python='python3'
-alias pip='pip3'
-alias ipython='ipython3'
-alias pylab='ipython3 --pylab'
+#alias python='python3'
+#alias pip='pip3'
+#alias ipython='ipython3'
+#alias pylab='ipython3 --pylab'
+
+alias pyenv='pipenv run python'
+alias ipyenv='pipenv run ipython'
+
+alias activate="pipenv shell"
+export PIPENV_VENV_IN_PROJECT=1   # Place pipenv virtualenv's in current directory
 
 #git aliases
 alias gitrm='git ls-files --deleted -z | xargs -0 git rm'
