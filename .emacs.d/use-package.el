@@ -1,3 +1,13 @@
+(use-package undo-tree
+  :ensure t
+  :init
+  (global-undo-tree-mode)
+  ;; Keybindings:
+  ;;   C-_   : Undo,
+  ;;   M-_   : Redo,
+  ;;   C-x u : Show tree
+  )
+
 (use-package exec-path-from-shell   ;; For GUI emacs
    :ensure t
    :config
@@ -75,7 +85,7 @@
            "* TODO %?\n  %u\n  %a")))
 
   (setq org-todo-keywords
-        '((sequence "TODO" "IN PROG" "WAITING" "|" "DONE")
+        '((sequence "TODO" "IN PROG" "|" "DONE")
           (sequence "DELEGATED" "|" "DONE")))
   
   (global-set-key (kbd "C-c a") 'org-agenda)
