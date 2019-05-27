@@ -46,12 +46,21 @@ function ssh_connection() {
   fi
 }
 
+# This function returns the venv's actual name
 function get_virtualenv_name() {
   if [ ! -z "${VIRTUAL_ENV-}" ]; then
     ENV=$(basename $VIRTUAL_ENV)
     echo "($ENV) "
   fi
 }
+
+# This function just returns "(pyenv) " if there is an active pyenv
+function get_virtualenv_indicator() {
+  if [ ! -z "${VIRTUAL_ENV-}" ]; then
+     echo "(pyenv) "
+  fi
+}
+
 export VIRTUAL_ENV_DISABLE_PROMPT=true
 
 
@@ -63,7 +72,7 @@ PS1='┌ %{$fg[green]%}%n\
 %{$reset_color%}@\
 %{$fg[green]%}%m
 %{$reset_color%}└ \
-$(get_virtualenv_name)\
+$(get_virtualenv_indicator)\
 %{$fg[red]%}%c\
 $(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} '
 
