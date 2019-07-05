@@ -1,3 +1,11 @@
+(use-package iedit
+  :ensure t
+  :init
+  (global-set-key (kbd "C-c i") 'iedit-mode)
+  (custom-set-faces
+   '(iedit-occurrence ((t (:background "yellow" :foreground "black")))))
+  )
+
 (use-package undo-tree
   :ensure t
   :init
@@ -86,6 +94,7 @@
 
   (setq org-todo-keywords
         '((sequence "TODO" "IN PROG" "|" "DONE")
+          (sequence "CONTACT" "CONTACTED" "|" "DONE")
           (sequence "DELEGATED" "|" "DONE")))
   
   (global-set-key (kbd "C-c a") 'org-agenda)
@@ -108,7 +117,7 @@
   :config
   ;;=============================================================
   (add-hook 'org-mode-hook 'flyspell-mode)
-  (set-face-attribute 'org-todo nil :background "Bright Cyan")
+  (set-face-attribute 'org-todo nil :background "Red")
   (setq org-startup-indented t)
   (setq org-hierarchical-todo-statics nil)         ;; Nil means children count, not just top leve
   (setq org-checkbox-hierarchical-statistics nil)
@@ -217,16 +226,19 @@
   :init
   :config
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+  (add-to-list 'auto-mode-alist '("\\.js[x]?\\'" . web-mode)) ;; Use web-mode for .js(x) files
+
+  (setq web-mode-content-types-alist                        
+        '(("jsx" . "\\.js[x]?\\'")))                          ;; Tell web-mode that .js(x) files are jsx
+
+  ;; Set indent level to 2
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-code-indent-offset 2)
+  
   ;;(set-face-attribute 'web-mode-html-tag-face nil :foreground "#990000") ;;set tags to dark red
   (set-face-attribute 'web-mode-html-tag-face nil :foreground "#0000B2") ;;set tags to dark blue
   (set-face-background 'web-mode-current-element-highlight-face "#999999") ;;set highlight color to white
 
-  ;;set indent to 2
-  (defun my-web-mode-hook ()
-    "Hooks for Web mode."
-    (setq web-mode-markup-indent-offset 2)
-    )
-  (add-hook 'web-mode-hook  'my-web-mode-hook)
   
   (setq web-mode-enable-current-element-highlight t) ;;highlight current element
   ;;(setq web-mode-enable-current-column-highlight t)  ;;highlight current column

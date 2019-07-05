@@ -55,7 +55,7 @@
  '(org-reverse-note-order t)
  '(package-selected-packages
    (quote
-    (undo-tree real-auto-save exec-path-from-shell latex-preview-pane list-packages-ext org-bullets synonymous magit doom-themes-org doom-themes outline-magic scad-mode auto-complete outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout)))
+    (js2-mode iedit i-edit undo-tree real-auto-save exec-path-from-shell latex-preview-pane list-packages-ext org-bullets synonymous magit doom-themes-org doom-themes outline-magic scad-mode auto-complete outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode flymd auctex adaptive-wrap 0blayout)))
  '(remember-annotation-functions (quote (org-remember-annotation)))
  '(remember-handler-functions (quote (org-remember-handler))))
 (custom-set-faces
@@ -64,4 +64,5 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(font-lock-keyword-face ((t (:foreground "green"))))
+ '(iedit-occurrence ((t (:background "yellow" :foreground "black"))))
  '(markdown-code-face ((t (:inherit fixed-pitch)))))
