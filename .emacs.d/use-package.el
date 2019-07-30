@@ -1,3 +1,31 @@
+(use-package tabbar
+  :ensure t
+  :init
+  (tabbar-mode)
+  :config
+  (global-set-key (kbd "ESC <left>") 'tabbar-backward-tab)
+  (global-set-key (kbd "ESC <right>") 'tabbar-forward-tab)
+  (global-set-key (kbd "M-<up>") 'tabbar-backward-group)
+  (global-set-key (kbd "M-<down>") 'tabbar-forward-group)
+
+  (set-face-attribute 'tabbar-default nil :background "brightcyan" :foreground "brightcyan")
+  (set-face-attribute 'tabbar-unselected nil
+                      :background "brightblack"
+                      :foreground "brightcyan")
+
+  (set-face-attribute 'tabbar-selected nil
+                      :background "brightcyan"
+                      :foreground "brightblack")
+
+  ;; Add space to make less crowded
+  (defadvice tabbar-buffer-tab-label (after fixup_tab_label_space_and_flag activate)
+    (setq ad-return-value
+          (if (and (buffer-modified-p (tabbar-tab-value tab))
+                   (buffer-file-name (tabbar-tab-value tab)))
+              (concat " + " (concat ad-return-value " "))
+            (concat " " (concat ad-return-value " ")))))
+  )
+
 (use-package iedit
   :ensure t
   :init
