@@ -252,10 +252,15 @@
 (use-package web-mode
   :ensure t
   :init
+  (global-set-key (kbd "C-c s") 'hs-show-block)
+  (global-set-key (kbd "C-c S") 'hs-show-all)
+  (global-set-key (kbd "C-c h") 'hs-hide-block)
+  (global-set-key (kbd "C-c H") 'hs-hide-all)
+  
   :config
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
   (add-to-list 'auto-mode-alist '("\\.js[x]?\\'" . web-mode)) ;; Use web-mode for .js(x) files
-
+  
   (setq web-mode-content-types-alist                        
         '(("jsx" . "\\.js[x]?\\'")))                          ;; Tell web-mode that .js(x) files are jsx
 
@@ -288,6 +293,7 @@
            "/usr/bin/open"
            (list "-a" "firefox" url))))
   (setq flymd-browser-open-function 'my-flymd-browser-function)
+  (setq flymd-close-buffer-delete-temp-files t)
   )
 
 ;;(use-package markdown-mode
