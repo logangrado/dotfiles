@@ -124,6 +124,14 @@
 (autoload 'ibuffer "ibuffer" "List buffers." t)
 (delete-selection-mode 1) ;; Delete selected text when you type
 
+;; Turn off god forsaken change-log-mode
+(setq auto-mode-alist
+      (append '(("[cC]hange\\.?[lL]og?\\'" . markdown-mode)
+                ("[cC]hange[lL]og[-.][0-9]+\\'" . markdown-mode)
+                ("\\$CHANGE_LOG\\$\\.TXT" . markdown-mode)
+                ("[cC]hange[lL]og[-.][-0-9a-z]+\\'" . markdown-mode))
+              auto-mode-alist))
+
 ;; Include elpa directory and subdirectories
 ;;==============================================================================
 ;;(let ((default-directory  "~/.emacs.d/elpa/"))
