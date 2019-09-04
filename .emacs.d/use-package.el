@@ -155,11 +155,14 @@
   (set-face-attribute 'org-column nil :inverse-video nil)
   (setq org-agenda-view-columns-initially t)
 
+  ;; org-mode only keybindings
+  (global-set-key (kbd "M-t") 'org-todo)
+  
   ;; Org colors
   (setq org-todo-keyword-faces
-      '(("TODO" . (:foreground "red"       :weight bold :inverse-video t))
-        ("IN PROG" . (:foreground "yellow" :weight bold :inverse-video t))
-        ("DONE" . (:foreground "green"     :weight bold :inverse-video t))))
+      '(("TODO" .    (:foreground "red" :weight bold :inverse-video t))
+        ("IN PROG" . (:foreground "green" :weight bold :inverse-video t))
+        ("DONE" .    (:foreground "cyan" :weight bold :inverse-video t))))
   )
 
 ;;doom-themes-org
