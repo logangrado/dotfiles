@@ -1,6 +1,7 @@
 backups
 .emacs.d/auto-save-list/
 .emacs.d/backups/
+.emacs.d/bookmarks
 .emacs.d/elpa/
 .emacs.d/ac-comphist.dat
 .emacs.d/srecode-map.el
