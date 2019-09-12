@@ -121,8 +121,7 @@
            "* TODO %?\n  %u\n  %a")))
 
   (setq org-todo-keywords
-        '((sequence "TODO" "IN PROG" "|" "DONE")
-          (sequence "CONTACT" "CONTACTED" "|" "DONE")
+        '((sequence "TODO(t)" "IN PROG(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)")
           (sequence "DELEGATED" "|" "DONE")))
   
   (global-set-key (kbd "C-c a") 'org-agenda)
@@ -162,7 +161,9 @@
   (setq org-todo-keyword-faces
       '(("TODO" .    (:foreground "red" :weight bold :inverse-video t))
         ("IN PROG" . (:foreground "green" :weight bold :inverse-video t))
-        ("DONE" .    (:foreground "cyan" :weight bold :inverse-video t))))
+        ("WAITING" . (:foreground "green" :weight bold :inverse-video t))
+        ("DONE" .    (:foreground "green" :weight bold))
+        ("CANCELED" .    (:foreground "red" :weight bold))))
   )
 
 ;;doom-themes-org
