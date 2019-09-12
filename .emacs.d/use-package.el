@@ -121,8 +121,7 @@
            "* TODO %?\n  %u\n  %a")))
 
   (setq org-todo-keywords
-        '((sequence "TODO" "IN PROG" "|" "DONE")
-          (sequence "CONTACT" "CONTACTED" "|" "DONE")
+        '((sequence "TODO(t)" "IN PROG(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)")
           (sequence "DELEGATED" "|" "DONE")))
   
   (global-set-key (kbd "C-c a") 'org-agenda)
@@ -150,10 +149,21 @@
   (setq org-hierarchical-todo-statics nil)         ;; Nil means children count, not just top leve
   (setq org-checkbox-hierarchical-statistics nil)
 
+  ;; Org-column settings
+  (setq org-agenda-overriding-columns-format "%TODO %ALLTAGS %ITEM")
+  (set-face-attribute 'org-column nil :inverse-video nil)
+  (setq org-agenda-view-columns-initially t)
+
+  ;; org-mode only keybindings
+  (global-set-key (kbd "M-t") 'org-todo)
   
-  ;;(setq org-fontify-done-headline t)  ;; Don't know what this does anymore
-  ;;(set-face-attribute 'org-hide nil :background "#002B36" :foreground "#002B36")
-  ;;(set-face-attribute 'org-hide nil :background "brightblack" :foreground "brightblack")
+  ;; Org colors
+  (setq org-todo-keyword-faces
+      '(("TODO" .    (:foreground "red" :weight bold :inverse-video t))
+        ("IN PROG" . (:foreground "green" :weight bold :inverse-video t))
+        ("WAITING" . (:foreground "green" :weight bold :inverse-video t))
+        ("DONE" .    (:foreground "green" :weight bold))
+        ("CANCELED" .    (:foreground "red" :weight bold))))
   )
 
 ;;doom-themes-org

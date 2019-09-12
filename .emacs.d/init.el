@@ -56,10 +56,10 @@
 
 ;; Colors and Themes
 ;;-------------------------------------------------------------------
-(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
-(load-theme 'solarized t)
-(set-frame-parameter nil 'background-mode 'light)    ;;GUI
-(set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+;;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
+;;(load-theme 'solarized t)
+;;(set-frame-parameter nil 'background-mode 'light)    ;;GUI
+;;(set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
 
 ;;set faces for git smerge
 (defun set-smerge-faces ()
