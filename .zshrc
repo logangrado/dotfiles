@@ -3,8 +3,8 @@ ZSH=$HOME/.oh-my-zsh
 
 # PATH
 #=========================================================
-export PATH=$HOME/.bin:$PATH       # Personal bin
-export PATH=/usr/local/sbin:$PATH  # Homebrew sbin
+export PATH=$HOME/.dotfiles/bin:$PATH     # Personal bin
+export PATH=/usr/local/sbin:$PATH          # Homebrew sbin
 
 # Set ZSH 
 #=========================================================
@@ -44,11 +44,16 @@ alias ipyenv='pipenv run ipython'
 
 alias activate="pipenv shell"
 export PIPENV_VENV_IN_PROJECT=1   # Place pipenv virtualenv's in current directory
+export PIPENV_SKIP_LOCK=1
 
 #git aliases
-alias gitrm='git ls-files --deleted -z | xargs -0 git rm'
+alias grm='git ls-files --deleted -z | xargs -0 git rm'
+alias gf='git fetch --all --prune'
 alias gitlog2='git log --oneline --graph --color --all --decorate | reverse_log.py'
 alias gitlog='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+
+#google cloud
+alias gci="gcloud compute instances"
 
 setopt nosharehistory
 bindkey "\eOA" up-line-or-history
@@ -94,3 +99,8 @@ case $HOST in
         alias itasca='ssh msi -t ssh itasca'
         alias msilab='ssh msi -t ssh lab'
 esac
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/grado/Applications/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/grado/Applications/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f '/Users/grado/Applications/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/grado/Applications/google-cloud-sdk/completion.zsh.inc'; fi
