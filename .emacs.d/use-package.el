@@ -1,3 +1,9 @@
+(use-package csv-mode
+  :ensure t
+  :config
+  (csv-align-fields-mode)
+  )
+
 (use-package tabbar
   :ensure t
   :init
@@ -122,6 +128,7 @@
 
   (setq org-todo-keywords
         '((sequence "TODO(t)" "IN PROG(p)" "WAITING(w)" "|" "DONE(d)" "CANCELED(c)")
+          (sequence "TODO(t)" "IN PROG(p)" "IN REVIEW(r)" "|" "DONE(d)" "CANCELED(c)")
           (sequence "DELEGATED" "|" "DONE")))
   
   (global-set-key (kbd "C-c a") 'org-agenda)
@@ -160,8 +167,9 @@
   ;; Org colors
   (setq org-todo-keyword-faces
       '(("TODO" .    (:foreground "red" :weight bold :inverse-video t))
-        ("IN PROG" . (:foreground "green" :weight bold :inverse-video t))
+        ("IN PROG" . (:foreground "yellow" :weight bold :inverse-video t))
         ("WAITING" . (:foreground "green" :weight bold :inverse-video t))
+        ("IN REVIEW" . (:foreground "cyan" :weight bold :inverse-video t))
         ("DONE" .    (:foreground "green" :weight bold))
         ("CANCELED" .    (:foreground "red" :weight bold))))
   )
