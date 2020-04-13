@@ -1,3 +1,6 @@
+# This is noecessary to avoid soem new error on the new work mac
+ZSH_DISABLE_COMPFIX=true
+
 # Path to your oh-my-zsh configuration.
 ZSH=$HOME/.oh-my-zsh
 
