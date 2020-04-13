@@ -39,10 +39,10 @@
    (quote
     ("~/org/notes.org" "~/org/todo.org ~/org/notes.org")))
  '(org-agenda-ndays 7 t)
- '(org-agenda-show-all-dates t)
- '(org-agenda-skip-deadline-if-done t)
- '(org-agenda-skip-scheduled-if-done t)
- '(org-agenda-start-on-weekday nil)
+ '(org-agenda-show-all-dates t t)
+ '(org-agenda-skip-deadline-if-done t t)
+ '(org-agenda-skip-scheduled-if-done t t)
+ '(org-agenda-start-on-weekday nil t)
  '(org-deadline-warning-days 14)
  '(org-default-notes-file "~/notes.org")
  '(org-fast-tag-selection-single-key (quote expert))
@@ -55,7 +55,7 @@
  '(org-reverse-note-order t)
  '(package-selected-packages
    (quote
-    (tabbar js2-mode iedit i-edit undo-tree real-auto-save exec-path-from-shell latex-preview-pane list-packages-ext org-bullets synonymous magit doom-themes-org doom-themes outline-magic scad-mode auto-complete outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode auctex adaptive-wrap 0blayout)))
+    (yaml-mode csv-mode flymd tabbar js2-mode iedit i-edit undo-tree real-auto-save exec-path-from-shell latex-preview-pane list-packages-ext org-bullets synonymous magit doom-themes-org doom-themes outline-magic scad-mode auto-complete outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode auctex adaptive-wrap 0blayout)))
  '(remember-annotation-functions (quote (org-remember-annotation)))
  '(remember-handler-functions (quote (org-remember-handler))))
 (custom-set-faces

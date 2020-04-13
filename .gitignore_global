@@ -4,3 +4,4 @@ pyenv*
 *.egg-info
 .venv
 Pipfile.lock
+*.org_archive

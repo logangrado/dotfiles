@@ -1,3 +1,7 @@
+(use-package yaml-mode
+  :ensure t
+  )
+  
 (use-package csv-mode
   :ensure t
   :config
@@ -41,6 +45,9 @@
      (cond
       ((string-equal "*" (substring (buffer-name) 0 1))
        "Emacs Buffer"
+       )
+      ((eq major-mode 'org-mode)
+       "Org"
        )
       ((eq major-mode 'dired-mode)
        "Dired"
@@ -309,7 +316,7 @@
   (setq web-mode-code-indent-offset 2)
   
   ;;(set-face-attribute 'web-mode-html-tag-face nil :foreground "#990000") ;;set tags to dark red
-  (set-face-attribute 'web-mode-html-tag-face nil :foreground "#0000B2") ;;set tags to dark blue
+  (set-face-attribute 'web-mode-html-tag-face nil :foreground "cyan") ;;set tags to dark blue
   (set-face-background 'web-mode-current-element-highlight-face "#999999") ;;set highlight color to white
 
   
