@@ -5,7 +5,7 @@
 (use-package csv-mode
   :ensure t
   :config
-  (csv-align-fields-mode)
+  ;;(csv-align-fields-mode)
   )
 
 (use-package tabbar
