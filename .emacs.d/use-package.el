@@ -116,7 +116,7 @@
   (add-hook 'python-mode-hook 'turn-on-pretty-mode)
   :config
   (pretty-activate-groups '(:greek)) ;;:sub-and-superscripts))
-  (pretty-deactivate-patterns '(:==)) ;;disable eqauls
+  (pretty-deactivate-patterns '(:== :return :def)) ;;disable eqauls
   )
 
 ;;which-key
