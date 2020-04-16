@@ -182,7 +182,7 @@
   (add-hook 'org-mode-hook 'flyspell-mode)
   (set-face-attribute 'org-todo nil :background "Red")
   (setq org-startup-indented t)
-  (setq org-hierarchical-todo-statics nil)         ;; Nil means children count, not just top leve
+  (setq org-hierarchical-todo-statistics nil)         ;; Nil means children count, not just top leve
   (setq org-checkbox-hierarchical-statistics nil)
 
   ;; Org-column settings
