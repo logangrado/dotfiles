@@ -1,3 +1,4 @@
+#!/bin/bash
 function my_git_prompt() {
   tester=$(git rev-parse --git-dir 2> /dev/null) || return
   
@@ -32,7 +33,7 @@ function my_git_prompt() {
   if [[ -n $STATUS ]]; then
     STATUS=" $STATUS"
   fi
-
+  
   echo "$ZSH_THEME_GIT_PROMPT_PREFIX$(my_current_branch)$STATUS$ZSH_THEME_GIT_PROMPT_SUFFIX"
 }
 
@@ -49,8 +50,9 @@ function ssh_connection() {
 # This function returns the venv's actual name
 function get_virtualenv_name() {
   if [ ! -z "${VIRTUAL_ENV-}" ]; then
-    ENV=$(basename $VIRTUAL_ENV)
-    echo "($ENV) "
+      ENV=$(basename $VIRTUAL_ENV)
+      ENV=$(basename $(dirname $VIRTUAL_ENV))
+      echo "($ENV) "
   fi
 }
 
@@ -72,13 +74,13 @@ PS1='┌ %{$fg[green]%}%n\
 %{$reset_color%}@\
 %{$fg[green]%}%m
 %{$reset_color%}└ \
-$(get_virtualenv_indicator)\
+$(get_virtualenv_name)\
 %{$fg[red]%}%c\
 $(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} '
 
 PROMPT2='%{$fg[red]%}\ %{$reset_color%}'
 
-RPS1='%{$fg[blue]%}%~%{$reset_color%} [%*]' # ${return_code}'
+RPS1='%{$fg[blue]%}%~%{$reset_color%} [%*] ${return_code}'
 
 
 
