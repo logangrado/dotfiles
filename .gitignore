@@ -5,3 +5,4 @@ backups
 .emacs.d/elpa/
 .emacs.d/ac-comphist.dat
 .emacs.d/srecode-map.el
+*.log
