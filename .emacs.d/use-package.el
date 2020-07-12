@@ -201,6 +201,38 @@
         ("IN REVIEW" . (:foreground "cyan" :weight bold :inverse-video t))
         ("DONE" .    (:foreground "green" :weight bold))
         ("CANCELED" .    (:foreground "red" :weight bold))))
+
+  
+  ;; Checkbox colors
+  ;; Changes the color of the text behind a checkbox
+  ;;==================================================
+  ;; Define the checkbox todo text
+  (defface org-checkbox-todo-text
+    ;;'((t (:inherit org-todo)))
+    '((t (
+          :inherit default
+          :foreground "red"
+          :weight normal)))
+    "Face for the text part of an unchecked org-mode checkbox.")
+  ;; Add keyword for it
+  (font-lock-add-keywords
+   'org-mode
+   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?: \\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)" 1 'org-checkbox-todo-text prepend))
+   'append)
+
+  ;; Define done
+  (defface org-checkbox-done-text
+    '((t (
+          :foreground "bright green"
+          )))
+    ;;'((t (:inherit org-done)))
+    "Face for the text part of a checked org-mode checkbox.")
+
+  ;; Add keyworkd for it
+  (font-lock-add-keywords
+   'org-mode
+   `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)" 1 'org-checkbox-done-text prepend))
+   'append)  
   )
 
 ;;doom-themes-org
