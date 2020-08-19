@@ -36,15 +36,8 @@
 				  lisp-mode-hook
 				  perl-mode-hook
 				  python-mode-hook
-				  sh-mode-hook))
-;; add a hs-minor-mode hook to code editing major modes
-(load-library "hideshow")
-(dolist (mode code-editing-mode-hooks)
-  (add-hook mode 'hs-minor-mode))
-
-(add-to-list 'load-path "~/.emacs.d/hideshow-orgmode")
-(require 'hideshow-orgmode)
-(add-hook 'hs-minor-mode-hook 'hs-fold-all)
+				  sh-mode-hook
+                                  yaml-mode-hook))
 
 ;; Line Numbers
 ;;-------------------------------------------------------------------
@@ -77,13 +70,6 @@
 
 ;; Keyboard Shortcuts
 ;;==============================================================================
-(global-set-key (kbd "C-c c") 'hs-cycle)
-(global-set-key (kbd "C-c C") 'hs-cycle-all)
-(global-set-key (kbd "C-c h") 'hs-fold-block)
-(global-set-key (kbd "C-c H") 'hs-fold-all)
-(global-set-key (kbd "C-c s") 'hs-show-block)
-(global-set-key (kbd "C-c S") 'hs-show-all)
-
 (global-set-key (kbd "C-c a") 'align)
 (global-set-key (kbd "C-c A") 'align-regexp)
 
