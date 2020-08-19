@@ -16,6 +16,7 @@ ZSH_THEME="grado"
 
 # zsh themes
 plugins=(git)
+unsetopt AUTO_CD  # Don't cd w/o `cd`
 
 # source zsh
 source $ZSH/oh-my-zsh.sh
@@ -54,6 +55,9 @@ alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
 alias gitlog2='git log --oneline --graph --color --all --decorate | reverse_log.py'
 alias gitlog='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+alias gcm='git commit -m'
+alias gca='git commit --amend'
+alias gcan='git commit --amend --no-edit'
 
 #google cloud
 alias gci="gcloud compute instances"
