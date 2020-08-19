@@ -1,3 +1,9 @@
+(use-package dockerfile-mode
+  :ensure t
+  :init
+  (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
+  )
+  
 (use-package yaml-mode
   :ensure t
   )
@@ -13,11 +19,7 @@
   :init
   (tabbar-mode)
   :config
-  (global-set-key (kbd "ESC <left>") 'tabbar-backward-tab)
-  (global-set-key (kbd "ESC <right>") 'tabbar-forward-tab)
-  (global-set-key (kbd "M-<up>") 'tabbar-backward-group)
-  (global-set-key (kbd "M-<down>") 'tabbar-forward-group)
-
+ 
   (set-face-attribute 'tabbar-default nil :background "brightcyan" :foreground "brightcyan")
   (set-face-attribute 'tabbar-unselected nil
                       :background "brightblack"
@@ -57,8 +59,70 @@
        )
       ))) 
   
+  (defun tabbar-move-current-tab-one-place-left ()
+    "Move current tab one place left, unless it's already the leftmost."
+    (interactive)
+    (let* ((bufset (tabbar-current-tabset t))
+           (old-bufs (tabbar-tabs bufset))
+           (first-buf (car old-bufs))
+           (new-bufs (list)))
+      (if (string= (buffer-name) (format "%s" (car first-buf)))
+          old-bufs ; the current tab is the leftmost
+        (setq not-yet-this-buf first-buf)
+        (setq old-bufs (cdr old-bufs))
+        (while (and
+                old-bufs
+                (not (string= (buffer-name) (format "%s" (car (car old-bufs))))))
+          (push not-yet-this-buf new-bufs)
+          (setq not-yet-this-buf (car old-bufs))
+          (setq old-bufs (cdr old-bufs)))
+        (if old-bufs ; if this is false, then the current tab's buffer name is mysteriously missing
+            (progn
+              (push (car old-bufs) new-bufs) ; this is the tab that was to be moved
+              (push not-yet-this-buf new-bufs)
+              (setq new-bufs (reverse new-bufs))
+              (setq new-bufs (append new-bufs (cdr old-bufs))))
+          (error "Error: current buffer's name was not found in Tabbar's buffer list."))
+        (set bufset new-bufs)
+        (tabbar-set-template bufset nil)
+        (tabbar-display-update))))
+  
+  (defun tabbar-move-current-tab-one-place-right ()
+    "Move current tab one place right, unless it's already the rightmost."
+    (interactive)
+    (let* ((bufset (tabbar-current-tabset t))
+           (old-bufs (tabbar-tabs bufset))
+           (first-buf (car old-bufs))
+           (new-bufs (list)))
+      (while (and
+              old-bufs
+              (not (string= (buffer-name) (format "%s" (car (car old-bufs))))))
+        (push (car old-bufs) new-bufs)
+        (setq old-bufs (cdr old-bufs)))
+      (if old-bufs ; if this is false, then the current tab's buffer name is mysteriously missing
+          (progn
+            (setq the-buffer (car old-bufs))
+            (setq old-bufs (cdr old-bufs))
+            (if old-bufs ; if this is false, then the current tab is the rightmost
+                (push (car old-bufs) new-bufs))
+            (push the-buffer new-bufs)) ; this is the tab that was to be moved
+        (error "Error: current buffer's name was not found in Tabbar's buffer list."))
+      (setq new-bufs (reverse new-bufs))
+      (setq new-bufs (append new-bufs (cdr old-bufs)))
+      (set bufset new-bufs)
+      (tabbar-set-template bufset nil)
+      (tabbar-display-update)))
+  
   (setq tabbar-buffer-groups-function 'tabbar-buffer-groups)
 
+  (global-set-key (kbd "ESC <left>") 'tabbar-backward-tab)
+  (global-set-key (kbd "ESC <right>") 'tabbar-forward-tab)
+  (global-set-key (kbd "M-<up>") 'tabbar-backward-group)
+  (global-set-key (kbd "M-<down>") 'tabbar-forward-group)
+
+  (global-set-key (kbd "C-c t <left>") 'tabbar-move-current-tab-one-place-left)
+  (global-set-key (kbd "C-c t <right>") 'tabbar-move-current-tab-one-place-right)
+  
   )
 
 (use-package iedit
@@ -391,7 +455,8 @@
   (setq-default neo-window-width 50) ;;set width (default 25)
   (setq-default neo-window-position 'right) ;;put window on right
   (setq-default neo-autorefresh t) ;;automatically refresh tree2
-
+  (setq neo-smart-open t)  ;; Always open at the current file
+  
   ;; hide neotree on file select
   (defun neo-open-file-hide (full-path &optional arg) 
     "Open a file node and hides tree."
