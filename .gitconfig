@@ -1,9 +1,9 @@
 [core]
-	excludesfile = /Users/grado/.gitignore_global	
+	excludesfile = ~/.gitignore_global	
 	
 [user]
 	name = Logan Grado
-	email = grado@umn.edu
+	email = lgrado@apple.com
 
 [commit]
 	template = ~/.gitmessage
