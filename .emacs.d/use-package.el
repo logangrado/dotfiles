@@ -1,3 +1,22 @@
+(use-package origami
+  :ensure t
+  :init
+  (dolist (mode code-editing-mode-hooks)
+    (add-hook mode 'origami-mode))
+  :config  
+  ;; (add-hook 'origami-mode-hook
+  ;;           (lambda ()
+  ;;             (origami-close-all-nodes (current-buffer))))
+  :bind
+  ("M-c" . origami-recursively-toggle-node)
+  ("C-c c" . origami-recursively-toggle-node)
+  ("C-c C" . origami-toggle-all-nodes)
+  ("C-c h" . origami-close-node)
+  ("C-c H" . origami-close-all-nodes)
+  ("C-c s" . origami-show-node)
+  ("C-c S" . origami-show-all-nodes)
+  )
+
 (use-package dockerfile-mode
   :ensure t
   :init
