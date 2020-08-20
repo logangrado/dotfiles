@@ -1,6 +1,7 @@
 #!/bin/bash
 
 ALL=("zsh/zshrc $HOME/.zshrc"
+     "zsh/zshrc-work $HOME/.zshrc-work"
      "zsh/grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
      "tmux/tmux.conf $HOME/.tmux.conf"                
      "emacs.d $HOME/.emacs.d"
