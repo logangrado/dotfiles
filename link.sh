@@ -1,17 +1,17 @@
 #!/bin/bash
 
-ALL=(".zshrc $HOME/.zshrc"
-     ".tmux.conf $HOME/.tmux.conf"                
-     ".emacs.d $HOME/.emacs.d"
-     "grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
-     ".gitconfig $HOME/.gitconfig"
-     ".gitignore_global $HOME/.gitignore_global"
-     ".gitmessage $HOME/.gitmessage"
-     "matplotlibrc $HOME/.matplotlib/matplotlibrc"
+ALL=("zsh/zshrc $HOME/.zshrc"
+     "zsh/grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
+     "tmux/tmux.conf $HOME/.tmux.conf"                
+     "emacs.d $HOME/.emacs.d"
+     "git/gitconfig $HOME/.gitconfig"
+     "git/gitignore_global $HOME/.gitignore_global"
+     "git/gitmessage $HOME/.gitmessage"
+     "matplotlib/matplotlibrc $HOME/.matplotlib/matplotlibrc"
     )
 
-OSX=(".tmux-darwin.conf $HOME/.tmux-darwin.conf"
-     "com.googlecode.iterm2.plist $HOME/Library/Preferences/com.googlecode.iterm2.plist"
+OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
+     "iterm2/com.googlecode.iterm2.plist $HOME/Library/Preferences/com.googlecode.iterm2.plist"
     )
 
 # Determine OS
