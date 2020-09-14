@@ -8,14 +8,16 @@
   ;; (add-hook 'origami-mode-hook
   ;;           (lambda ()
   ;;             (origami-close-all-nodes (current-buffer))))
-  :bind
-  ("M-c"   . origami-recursively-toggle-node)
-  ("C-c c" . origami-recursively-toggle-node)
-  ("C-c C" . origami-toggle-all-nodes)
-  ("C-c h" . origami-close-node)
-  ("C-c H" . origami-close-all-nodes)
-  ("C-c s" . origami-open-node)
-  ("C-c S" . origami-open-all-nodes)
+  (setq origami-mode-map (make-sparse-keymap))
+  (use-local-map origami-mode-map)
+  :bind (:map origami-mode-map
+              ("M-c"   . origami-recursively-toggle-node)
+              ("C-c c" . origami-recursively-toggle-node)
+              ("C-c C" . origami-toggle-all-nodes)
+              ("C-c h" . origami-close-node)
+              ("C-c H" . origami-close-all-nodes)
+              ("C-c s" . origami-open-node)
+              ("C-c S" . origami-open-all-nodes))
   )
 
 (use-package dockerfile-mode
