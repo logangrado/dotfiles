@@ -1,14 +1,15 @@
 (use-package origami
   :ensure t
   :init
-  (dolist (mode code-editing-mode-hooks)
-    (add-hook mode 'origami-mode))
-  :config  
+  (add-hook 'yaml-mode-hook 'origami-mode)
+  ;(dolist (mode code-editing-mode-hooks)
+  ;  (add-hook mode 'origami-mode))
+  :config
   ;; (add-hook 'origami-mode-hook
   ;;           (lambda ()
   ;;             (origami-close-all-nodes (current-buffer))))
   :bind
-  ("M-c" . origami-recursively-toggle-node)
+  ("M-c"   . origami-recursively-toggle-node)
   ("C-c c" . origami-recursively-toggle-node)
   ("C-c C" . origami-toggle-all-nodes)
   ("C-c h" . origami-close-node)
