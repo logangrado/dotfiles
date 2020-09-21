@@ -1,0 +1,18 @@
+[core]
+	excludesfile = ~/.gitignore_global	
+	
+[user]
+	name = Logan Grado
+	email = lgrado@apple.com
+
+[commit]
+	template = ~/.gitmessage
+        
+[pager]
+	branch = false
+        log = less -iXFR                # Leave on screen after exit
+[filter "lfs"]
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process

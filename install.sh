@@ -15,7 +15,6 @@ function install_osx {
     brew install libevent
     brew install tmux
     brew install python
-    brew install python2
     brew install zsh
 
     # Set zsh as default
@@ -34,7 +33,6 @@ function install_cygwin {
     apt-cyg install emacs
     apt-cyg install git
     apt-cyg install tmux
-    apt-cyg install python
     apt-cyg install python3
     apt-cyg install zsh
 
@@ -50,7 +48,6 @@ function install_arch {
     sudo pacman -S --noconfirm --needed emacs git tmux python2 python3 wget zsh
 
     USER=$(whoami)
-    sudo chsh -s /usr/bin/zsh $USER
 
     #locale-gen stuff
     echo "en_US.UTF-8 UTF-8" | sudo tee --append /etc/locale.gen
@@ -69,8 +66,6 @@ function install_debian {
     sudo apt update
 
     sudo apt install emacs git tmux python3 wget zsh
-
-    sudo chsh -s /usr/bin/zsh $USER
 }
 
 function install_linux {
@@ -81,6 +76,8 @@ function install_linux {
     elif echo $DIST | grep -q arch; then
 	install_arch
     fi
+
+    sudo chsh -s /usr/bin/zsh $USER
 }
 
 # Determine OS
@@ -100,7 +97,7 @@ git submodule update
 # oh-my-zsh
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
     echo "Installing oh-my-zshell..."
-    sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)"
+    sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)" --unattended
 fi
     
 # Install TPM (tmux plugin manager)
