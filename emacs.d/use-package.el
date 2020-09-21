@@ -1,20 +1,23 @@
 (use-package origami
   :ensure t
   :init
-  (dolist (mode code-editing-mode-hooks)
-    (add-hook mode 'origami-mode))
-  :config  
+  (add-hook 'yaml-mode-hook 'origami-mode)
+  ;(dolist (mode code-editing-mode-hooks)
+  ;  (add-hook mode 'origami-mode))
+  :config
   ;; (add-hook 'origami-mode-hook
   ;;           (lambda ()
   ;;             (origami-close-all-nodes (current-buffer))))
-  :bind
-  ("M-c" . origami-recursively-toggle-node)
-  ("C-c c" . origami-recursively-toggle-node)
-  ("C-c C" . origami-toggle-all-nodes)
-  ("C-c h" . origami-close-node)
-  ("C-c H" . origami-close-all-nodes)
-  ("C-c s" . origami-show-node)
-  ("C-c S" . origami-show-all-nodes)
+  (setq origami-mode-map (make-sparse-keymap))
+  (use-local-map origami-mode-map)
+  :bind (:map origami-mode-map
+              ("M-c"   . origami-recursively-toggle-node)
+              ("C-c c" . origami-recursively-toggle-node)
+              ("C-c C" . origami-toggle-all-nodes)
+              ("C-c h" . origami-close-node)
+              ("C-c H" . origami-close-all-nodes)
+              ("C-c s" . origami-open-node)
+              ("C-c S" . origami-open-all-nodes))
   )
 
 (use-package dockerfile-mode
@@ -413,11 +416,11 @@
 ;;========================================================================
 (use-package web-mode
   :ensure t
-  :init
-  (global-set-key (kbd "C-c s") 'hs-show-block)
-  (global-set-key (kbd "C-c S") 'hs-show-all)
-  (global-set-key (kbd "C-c h") 'hs-hide-block)
-  (global-set-key (kbd "C-c H") 'hs-hide-all)
+  :bind
+  ("C-c s" . hs-show-block)
+  ("C-c S" . hs-show-all)
+  ("C-c h" . hs-hide-block)
+  ("C-c H" . hs-hide-all)
   
   :config
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))

@@ -38,6 +38,23 @@
 				  python-mode-hook
 				  sh-mode-hook
                                   yaml-mode-hook))
+;; add a hs-minor-mode hook to code editing major modes
+(load-library "hideshow")
+(dolist (mode code-editing-mode-hooks)
+  (add-hook mode 'hs-minor-mode))
+
+(add-to-list 'load-path "~/.emacs.d/hideshow-orgmode")
+(require 'hideshow-orgmode)
+(add-hook 'hs-minor-mode-hook 'hs-fold-all)
+
+(global-set-key (kbd "C-c c") 'hs-cycle)
+(global-set-key (kbd "M-c") 'hs-cycle)
+(global-set-key (kbd "C-c C") 'hs-cycle-all)
+(global-set-key (kbd "C-c h") 'hs-fold-block)
+(global-set-key (kbd "C-c H") 'hs-fold-all)
+(global-set-key (kbd "C-c s") 'hs-show-block)
+(global-set-key (kbd "C-c S") 'hs-show-all)
+
 
 ;; Line Numbers
 ;;-------------------------------------------------------------------
@@ -49,10 +66,10 @@
 
 ;; Colors and Themes
 ;;-------------------------------------------------------------------
-;;(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
-;;(load-theme 'solarized t)
-;;(set-frame-parameter nil 'background-mode 'light)    ;;GUI
-;;(set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+(add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
+(load-theme 'solarized t)
+(set-frame-parameter nil 'background-mode 'light)    ;;GUI
+(set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
 
 ;;set faces for git smerge
 (defun set-smerge-faces ()
