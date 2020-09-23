@@ -1,6 +1,7 @@
 #!/bin/bash
 
 function gfm () {
+    set -e
     if [ ! -n "$1" ]; then
         echo "Please specify a branch to merge into"
         return
@@ -17,5 +18,13 @@ function gfm () {
     
     git checkout $1
     git merge --no-ff --no-edit $branch
-    git branch -d $branch
+    git branch -f $branch HEAD
+    
+    if [[ "-d" == "$2" ]]; then
+        git branch -d $branch
+    fi
+    if [[ "-D" == "$2" ]]; then
+        git branch -D $branch
+    fi
+    set +e
 }
