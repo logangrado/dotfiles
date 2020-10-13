@@ -63,9 +63,15 @@ alias gcan='git commit --amend --no-edit'
 #google cloud
 alias gci="gcloud compute instances"
 
-setopt nosharehistory
-bindkey "\eOA" up-line-or-history
-bindkey "\eOB" down-line-or-history
+setopt nosharehistory                 # Prevent command history from being shared within windows
+# These lines prevent command-matching when moving through command history
+#bindkey "\eOA" up-line-or-history    
+#bindkey "\eOB" down-line-or-history
+
+# This fixes the issue where the return key doesn't work on some OS's
+# Somehow return stops sending the ^M code, and sends this instead
+# So we just set zsh to accept that as return
+bindkey '^[OM' accept-line
 
 # SOURCING
 #======================================================
