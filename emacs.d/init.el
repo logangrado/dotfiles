@@ -113,6 +113,7 @@
 (setq-default indent-tabs-mode nil)
 ;;(add-to-list 'auto-mode-alist '("\\.scad\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.*rc$" . conf-unix-mode))
+(add-to-list 'auto-mode-alist '("\\.jsonnet$" . js-mode))
 
 ;; Define json minor mode
 (defun json-indent-level ()
