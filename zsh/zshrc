@@ -8,7 +8,8 @@ ZSH=$HOME/.oh-my-zsh
 # PATH
 #=========================================================
 export PATH=$HOME/.dotfiles/bin:$PATH     # Personal bin
-export PATH=/usr/local/sbin:$PATH          # Homebrew sbin
+export PATH=/usr/local/sbin:$PATH         # Homebrew sbin
+export PATH=$HOME/venvs/bin:$PATH         # bins for isolated venv installs of packages
 
 # Set ZSH 
 #=========================================================
@@ -65,8 +66,8 @@ alias gci="gcloud compute instances"
 
 setopt nosharehistory                 # Prevent command history from being shared within windows
 # These lines prevent command-matching when moving through command history
-#bindkey "\eOA" up-line-or-history    
-#bindkey "\eOB" down-line-or-history
+bindkey "\eOA" up-line-or-history    
+bindkey "\eOB" down-line-or-history
 
 # This fixes the issue where the return key doesn't work on some OS's
 # Somehow return stops sending the ^M code, and sends this instead
