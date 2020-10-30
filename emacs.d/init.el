@@ -37,7 +37,8 @@
 				  perl-mode-hook
 				  python-mode-hook
 				  sh-mode-hook
-                                  yaml-mode-hook))
+                                  yaml-mode-hook
+                                  jsonnet-mode-hook))
 ;; add a hs-minor-mode hook to code editing major modes
 (load-library "hideshow")
 (dolist (mode code-editing-mode-hooks)
@@ -113,7 +114,6 @@
 (setq-default indent-tabs-mode nil)
 ;;(add-to-list 'auto-mode-alist '("\\.scad\\'" . c++-mode))
 (add-to-list 'auto-mode-alist '("\\.*rc$" . conf-unix-mode))
-(add-to-list 'auto-mode-alist '("\\.jsonnet$" . js-mode))
 
 ;; Define json minor mode
 (defun json-indent-level ()

@@ -1,3 +1,18 @@
+(use-package jsonnet-mode
+  :ensure t
+  )
+
+(use-package log4j-mode
+  :ensure t
+  )
+
+;; (use-package logview
+;;   :ensure t
+;;   :init
+;;   (setenv "TZ" "US/Pacific")
+;;   ;;(setq datetime-timezone "US/Pacific")
+;;   )
+
 (use-package origami
   :ensure t
   :init

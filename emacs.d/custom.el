@@ -55,7 +55,7 @@
  '(org-reverse-note-order t)
  '(package-selected-packages
    (quote
-    (jsonnet-mode yaml-mode csv-mode flymd tabbar js2-mode iedit i-edit undo-tree real-auto-save exec-path-from-shell latex-preview-pane list-packages-ext org-bullets synonymous magit doom-themes-org doom-themes outline-magic scad-mode auto-complete outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode auctex adaptive-wrap 0blayout)))
+    (log4j-mode Log4j jsonnet-mode yaml-mode csv-mode flymd tabbar js2-mode iedit i-edit undo-tree real-auto-save exec-path-from-shell latex-preview-pane list-packages-ext org-bullets synonymous magit doom-themes-org doom-themes outline-magic scad-mode auto-complete outshine pretty-mode which-key prettify-greek org org-mode matlab-mode web-mode use-package pbcopy nlinum neotree markdown-mode auctex adaptive-wrap 0blayout)))
  '(remember-annotation-functions (quote (org-remember-annotation)))
  '(remember-handler-functions (quote (org-remember-handler))))
 (custom-set-faces
