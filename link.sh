@@ -48,9 +48,12 @@ for PAIR in "${ALL[@]}"; do
         echo "  old file copied to backup directory"
     fi
 
+    if [[ ! -d $(dirname $TO) ]]; then
+        mkdir -p $(dirname $TO)
+    fi
     ln -s $FROM $TO
     if [ $? -eq 0 ]; then
-	echo "  symlinke created"
+	echo "  symlink created"
     fi
     echo
 done
