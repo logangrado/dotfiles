@@ -5,3 +5,4 @@ pyenv*
 .venv
 Pipfile.lock
 *.org_archive
+.#*
