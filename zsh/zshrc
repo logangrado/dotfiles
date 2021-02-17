@@ -55,8 +55,12 @@ export PIPENV_SKIP_LOCK=1
 #git aliases
 alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
-alias gitlog2='git log --oneline --graph --color --all --decorate | reverse_log.py'
-alias gitlog='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+# git log, but just show current branch, master, and dev (if they exist)
+alias gitlog='git log $(git rev-parse --verify --quiet master) $(git rev-parse --verify --quiet dev) $(git rev-parse HEAD) --oneline --graph --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+# git log all
+alias gitlogall='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+alias gl="gitlog"
+alias gla="gitlogall"
 alias gcm='git commit -m'
 alias gca='git commit --amend'
 alias gcan='git commit --amend --no-edit'
