@@ -1,0 +1,33 @@
+#!/bin/bash
+function get_remotes() {
+    # Return a list of branches matching input names if they exist,
+    # as well as their remote counterparts
+    
+    REMOTES=($(git remote))
+    REMOTES=(${REMOTES[@]} "_LOCAL_MARKER_")
+    
+    # Iterate over all input branches
+    for BRANCH in "$@"; do
+        # If HEAD, convert to current branch
+        if [[ $BRANCH == "HEAD" ]]; then
+            BRANCH=$(git branch --show-current)
+        fi
+
+        # Iterate over all remotes
+        for REMOTE in ${REMOTES[@]}; do
+            # Construct branch name
+            if [[ $REMOTE == '_LOCAL_MARKER_' ]]; then
+                FULL_BRANCH=$BRANCH
+            else
+                FULL_BRANCH=$REMOTE/$BRANCH
+            fi
+
+            # Check if teh branch exists, and echo
+            if [[ $(git rev-parse --verify --quiet $FULL_BRANCH) ]]; then
+                echo $FULL_BRANCH
+            fi
+        done
+    done
+}
+
+get_remotes $@
