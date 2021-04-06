@@ -39,7 +39,7 @@ for PAIR in "${ALL[@]}"; do
     FROM=$DOT_DIR/${FROMTO[0]}
     TO=${FROMTO[1]}
 
-    if [[ -f $FROM ]]; then
+    if [[ -f $FROM || -d $FROM ]]; then
         echo $TO
         if [ -L $TO ]; then
             rm $TO

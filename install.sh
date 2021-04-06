@@ -106,3 +106,8 @@ if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
 fi
 echo "Don't forget to install TMUX plugins by running \`prefix+I\`"
+
+# Make an ssh directory if it doesn't exist
+if [ ! -d $HOME/.ssh ]; then
+    mkdir $HOME/.ssh
+fi
