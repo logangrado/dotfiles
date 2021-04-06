@@ -1,6 +1,7 @@
-if [[ -f ~/.zshrc-work ]]; then
-   source ~/.zshrc-work
-fi
+# Source any extra zsh configs
+for CONFIG in $("ls" -a ~/.zshrc-*); do
+    source $CONFIG
+done
 
 # Path to your oh-my-zsh configuration.
 ZSH=$HOME/.oh-my-zsh
