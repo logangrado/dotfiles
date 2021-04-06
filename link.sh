@@ -39,22 +39,24 @@ for PAIR in "${ALL[@]}"; do
     FROM=$DOT_DIR/${FROMTO[0]}
     TO=${FROMTO[1]}
 
-    echo $TO
-    if [ -L $TO ]; then
-        rm $TO
-        echo "  old symlink removed"
-    elif [[ -f $TO || -d $TO ]]; then
-        mv $TO $BACKUP_DIR
-        echo "  old file copied to backup directory"
-    fi
+    if [[ -f $FROM ]]; then
+        echo $TO
+        if [ -L $TO ]; then
+            rm $TO
+            echo "  old symlink removed"
+        elif [[ -f $TO || -d $TO ]]; then
+            mv $TO $BACKUP_DIR
+            echo "  old file copied to backup directory"
+        fi
 
-    if [[ ! -d $(dirname $TO) ]]; then
-        mkdir -p $(dirname $TO)
+        if [[ ! -d $(dirname $TO) ]]; then
+            mkdir -p $(dirname $TO)
+        fi
+        ln -s $FROM $TO
+        if [ $? -eq 0 ]; then
+            echo "  symlink created"
+        fi
+        echo
     fi
-    ln -s $FROM $TO
-    if [ $? -eq 0 ]; then
-	echo "  symlink created"
-    fi
-    echo
 done
 exit
