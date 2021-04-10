@@ -1,0 +1,107 @@
+#!/bin/bash
+
+function relation() {
+    # Determine the relation between two branches, A and B.
+    #
+    # 'ancestor' means B is an ancestor of A
+
+    BRANCH_A=$1
+    BRANCH_B=$2
+    SHA_A=$(git rev-parse $BRANCH_A)
+    SHA_B=$(git rev-parse $BRANCH_B)
+
+    if [[ $BRANCH_A == $BRANCH_B ]]; then
+        echo "same"
+    elif git rev-list $SHA_A | grep -q $SHA_B; then
+        echo "ancestor"
+    elif git rev-list $SHA_B | grep -q $SHA_A; then
+        echo "child"
+    else
+        echo "unrelated"
+    fi
+}
+
+function all_branches() {
+    # Return a list of all branches
+    echo $(git for-each-ref --format='%(refname:short)' refs/heads/)
+}
+
+function all_children() {
+    # Return a list of all children branches of the current branches
+    for BRANCH in $(all_branches); do
+        RELATION=$(relation $1 $BRANCH)
+        if [[ $RELATION = "child" ]]; then
+            echo $BRANCH
+        fi
+    done
+}
+
+function all_direct_children() {
+    PARENT=$1
+    ALL_CHILDREN=$(all_children $PARENT)
+    for CHILD in $ALL_CHILDREN; do
+        DIRECT_CHILD=1  # Assume we are a direct child to start
+        for OTHER_CHILD in $ALL_CHILDREN; do
+            if [[ $CHILD != $OTHER_CHILD ]]; then
+               OTHER_SHA=$(git rev-parse $OTHER_CHILD)
+               if git rev-list $CHILD | grep -q $OTHER_SHA; then
+                   DIRECT_CHILD=0
+               fi
+            fi
+        done
+        if [[ $DIRECT_CHILD = 1 ]]; then
+            echo $CHILD
+        fi
+    done
+}
+
+function recursive_rebase_tree() {
+    echo "Rebasing $1 -> $2"
+    local TO=$1
+    local FROM=$2
+    local CHILDREN=$(all_direct_children $FROM)
+    
+    git rebase $TO $FROM
+    for CHILD in $CHILDREN; do
+        recursive_rebase_tree $FROM $CHILD
+    done
+}
+
+function usage() {
+    cat << EOF
+Usage:  
+  $(basename $0) TO FROM
+
+Rebase FROM onto TO, as well as all children of FROM
+EOF
+}
+
+
+function check_args() {
+    # Check if we have FROM and TO
+    if [[ $# != 2 ]]; then
+       usage
+       exit
+    fi
+
+    # Check that both FROM and TO are branches
+    for BRANCH in "$@"; do
+        if [[ " $(all_branches) " != *" $BRANCH "* ]]; then
+            echo "Branch does not exist: '$BRANCH'"
+            echo
+            usage
+            exit
+        fi
+    done
+}
+
+check_args $@
+
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+git checkout $2
+
+recursive_rebase_tree $1 $2
+
+git checkout $CURRENT_BRANCH
