@@ -21,14 +21,18 @@ function relation() {
     fi
 }
 
-function all_branches() {
-    # Return a list of all branches
+function all_local_branches() {
     echo $(git for-each-ref --format='%(refname:short)' refs/heads/)
+}
+
+function all_branches() {
+    # This allows all local and remotes
+    echo $(git for-each-ref --format='%(refname:short)' refs/)
 }
 
 function all_children() {
     # Return a list of all children branches of the current branches
-    for BRANCH in $(all_branches); do
+    for BRANCH in $(all_local_branches); do
         RELATION=$(relation $1 $BRANCH)
         if [[ $RELATION = "child" ]]; then
             echo $BRANCH
@@ -56,15 +60,22 @@ function all_direct_children() {
 }
 
 function recursive_rebase_tree() {
-    echo "Rebasing $1 -> $2"
     local TO=$1
     local FROM=$2
-    local CHILDREN=$(all_direct_children $FROM)
-    
-    git rebase $TO $FROM
-    for CHILD in $CHILDREN; do
-        recursive_rebase_tree $FROM $CHILD
-    done
+    local INDENT="  $3"
+    echo "${INDENT}$TO <- $FROM"
+    if [[ $(relation $TO $FROM) = "child" ]]; then
+        echo "${INDENT}  '${FROM}' is already a child of '${TO}', nothing to do"
+    else
+        local CHILDREN=$(all_direct_children $FROM)
+
+        if [[ $DRY_RUN = 0 ]]; then
+            git rebase $TO $FROM
+        fi
+        for CHILD in $CHILDREN; do
+            recursive_rebase_tree $FROM $CHILD "$INDENT"
+        done
+    fi
 }
 
 function usage() {
@@ -73,35 +84,84 @@ Usage:
   $(basename $0) TO FROM
 
 Rebase FROM onto TO, as well as all children of FROM
+
+Options:
+  -d, --dry-run     Perform dry run
 EOF
 }
 
+function parse_args() {
+    DRY_RUN=0
+    while (( "$#" )); do
+        case "$1" in
+            -d|--dry-run)
+                DRY_RUN=1
+                shift;;
+            -*|--*=)
+                echo "Error: Unsupported flag $1" >&2
+                exit 2
+                ;;
+            *)
+                break
+                ;;
+        esac        
+    done
 
-function check_args() {
     # Check if we have FROM and TO
     if [[ $# != 2 ]]; then
        usage
        exit
     fi
+    
+    # Check number of positional arguments
+    if [[ $# != 2 ]]; then
+        usage
+        exit 2
+    fi
 
-    # Check that both FROM and TO are branches
-    for BRANCH in "$@"; do
-        if [[ " $(all_branches) " != *" $BRANCH "* ]]; then
-            echo "Branch does not exist: '$BRANCH'"
-            echo
-            usage
-            exit
-        fi
-    done
+    TO=$1
+    FROM=$2
+    
+    if [[ " $(all_branches) " != *" $TO "* ]]; then
+        echo "Branch does not exist: '$TO'"
+        echo
+        usage
+        exit 2
+    fi
+    if [[ " $(all_local_branches) " != *" $FROM "* ]]; then
+        echo "Branch does not exist or is not local: '$FROM'"
+        echo
+        usage
+        exit 2
+    fi
 }
 
-check_args $@
+function check_in_git_repo() {
+    if ! git status > /dev/null 2>&1; then
+        echo "Not in a git repository"
+        exit 2
+    fi
+}
 
+function main() {
 
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    check_in_git_repo
+    parse_args $@
+    
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-git checkout $2
+    if [[ $DRY_RUN != 0 ]]; then
+        echo "DRY RUN"
+    fi
 
-recursive_rebase_tree $1 $2
+    echo "Rebasing tree: $TO <- $FROM"
+    
+    git checkout $FROM > /dev/null 2>&1
+    
+    recursive_rebase_tree $TO $FROM
 
-git checkout $CURRENT_BRANCH
+    git checkout $CURRENT_BRANCH > /dev/null 2>&1
+
+}
+
+main $@
