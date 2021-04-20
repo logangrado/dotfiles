@@ -1,3 +1,11 @@
+(use-package python-black
+  :ensure t
+  :after python
+  :hook (python-mode . python-black-on-save-mode)
+  :config
+  (setq python-black-extra-args (list "-l 120"))
+  )
+
 (use-package protobuf-mode
   :ensure t
   :init
