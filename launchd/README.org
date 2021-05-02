@@ -1,0 +1,4 @@
+* Launchd: Automated tasks
+All automated tasks are stored here, as defined in launchd format
+
+All services can be installed and enabled via the install script
