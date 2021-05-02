@@ -1,0 +1,201 @@
+#!/bin/bash
+
+# Author: Logan Grado <https://github.com/logangrado>
+# License: GNU GLP-3.0
+
+VERSION="0.3.0"
+
+setup() {
+    # Set up temporary files
+    TMPDIR=$TMPDIR/gld
+    if [ ! -d $TMPDIR ]; then mkdir $TMPDIR; fi
+    OLD=$TMPDIR/old.tex
+    NEW=$TMPDIR/new.tex
+
+    # Ensure we are in the root directory
+    git_dir="$(git rev-parse --git-dir)"   # Determine git directory
+    cd "$(git rev-parse --show-cdup)"      # cd to root
+
+    if [ ! -d $OUTDIR ]; then mkdir $OUTDIR; fi
+    # if $no_overwrite; then
+    #     if [ -d $DIFFDIR ]; then
+    #         echo -n "Output dir \""$DIFFDIR"\" already exists. "
+    #         if ! $force; then
+    #             echo "Exiting."
+    #             exit
+    #         else
+    #             echo "Overwriting."
+    #             rm -r $DIFFDIR
+    #         fi
+    #     fi
+    #     mkdir $DIFFDIR
+    # fi
+}
+
+teardown() {
+    dirs=($TMPDIR)
+    for d in ${dirs[@]}; do
+        if [ -d $d ]; then
+            rm -r $d
+        fi
+    done
+}
+
+usage() {
+    cat << EOF    
+gld: git latexdiff
+
+Calls latexdiff on all .tex files in the current directory, recrusively, between 
+the current versions and the specified git commit. If no commit is provided, uses
+HEAD~1.
+
+Usage
+  $(basename "$0") [options] [OLD]
+
+Options
+  -d --dry         Dry run - show what would be done.
+  -f               Force
+  -h --help        Show help
+  --outdir <DIR>   Output directory. [Defaults to ./]
+  -v --verbose     Verbose
+  --version        Print version and exit
+EOF
+}
+
+process_args() {
+    # Default args
+    no_overwrite=false
+    VERBOSE=false
+    FORCE=false
+    OUTDIR=./
+    DRY=false
+    
+    POSITIONAL=()
+    while [[ $# -gt 0 ]]
+    do
+    key="$1"
+    
+    # process key/value args
+    case $1 in
+        -d|--dry)
+            DRY=true
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -f)
+            FORCE=true
+            shift
+            ;;
+        -v|--verbose)
+            VERBOSE=true
+            shift
+            ;;
+        --version)
+            echo "$(basename "$0") version $VERSION"
+            exit 0
+            ;;
+        --outdir)
+            OUTDIR=$2
+            shift
+            shift
+            ;;
+        *)    # unknown option
+            if [ ${1:0:1} == - ]; then
+                echo "Unrecognized option \""$1"\""
+                exit
+            fi
+            POSITIONAL+=("$1") # save it in an array for later
+            shift # past argument
+            ;;
+    esac
+    done
+
+    # process positional args
+    if [ ${#POSITIONAL[@]} -gt 0 ]; then
+        commit=${POSITIONAL[0]}
+        git cat-file -e $commit > /dev/null 2>&1
+        if [ ! $? -eq 0 ]; then
+           echo "Invalid commit \""$commit"\""
+           exit
+        fi
+    else
+        commit="HEAD~1"
+    fi
+}
+
+fatal() {
+    echo "fatal: $*"
+    exit 1
+}
+
+warn() {
+    echo "warning: $*"
+}
+
+run_diff() {
+    if $DRY; then echo "Dry run:"; fi
+    
+    FILES=$(find . -type f -name '*.tex')
+    
+    for f in $FILES; do
+        DEST=$OUTDIR/$f
+        DEST=$(realpath -q $DEST --relative-to=./)
+        
+        OLD_CONTENTS=$(git show $commit:$f 2> /dev/null)
+        if [ $? != 0 ]; then
+            warn "File '"$f"' does not exist on '"$commit"'. Skipping."
+            continue
+        fi
+        
+        echo "$f > $DEST"
+
+        if ! $DRY; then
+            echo "$OLD_CONTENTS" > $OLD
+            latexdiff $OLD $f > $NEW
+
+            if [ ! -d $(dirname $DEST) ]; then
+                mkdir -p $(dirname $DEST)
+            fi
+            
+            mv $NEW $DEST
+        fi
+    done
+}
+
+check_git_status() {
+    INDEX=$(git status --untracked-files=no --porcelain 2> /dev/null)
+    STATUS=""
+
+    if [ -z "$INDEX" ]; then
+        STATUS=clean
+    else
+        STATUS=unclean
+    fi
+
+    if [ $STATUS = unclean ] && [ $FORCE = false ]; then
+        echo "Error: Untracked changes present."
+        echo "If you are sure you want to continue, use '-f|--force'"
+        exit
+    fi
+}
+
+main() {
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        fatal "Not a git repostiroy"
+    fi
+        
+    process_args $@
+    
+    check_git_status
+    
+    setup
+    
+    run_diff
+
+    teardown
+}
+
+main $@
