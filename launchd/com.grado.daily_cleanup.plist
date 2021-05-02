@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.grado.daily_cleanup</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/grado/.dotfiles/launchd/daily_cleanup.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>
+    <integer>4</integer>
+  </dict>
+  
+  <key>StandardErrorPath</key>
+  <string>/Users/grado/dotfiles/launchd/daily_cleanup.err</string>
+
+  <key>StandardOutPath</key>
+  <string>/Users/grado/dotfiles/launchd/daily_cleanup.out</string>
+</dict>
+</plist>
