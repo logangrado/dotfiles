@@ -46,13 +46,6 @@ alias g++='g++ -std=c++11'
 #alias ipython='ipython3'
 #alias pylab='ipython3 --pylab'
 
-alias pyenv='pipenv run python'
-alias ipyenv='pipenv run ipython'
-
-alias activate="pipenv shell"
-export PIPENV_VENV_IN_PROJECT=1   # Place pipenv virtualenv's in current directory
-export PIPENV_SKIP_LOCK=1
-
 #git aliases
 alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
