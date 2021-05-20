@@ -51,7 +51,7 @@ function ssh_connection() {
 function get_virtualenv_name() {
   if [ ! -z "${VIRTUAL_ENV-}" ]; then
       ENV=$(basename $VIRTUAL_ENV)
-      ENV=$(basename $(dirname $VIRTUAL_ENV))
+      #ENV=$(basename $(dirname $VIRTUAL_ENV))
       echo "($ENV) "
   fi
 }
@@ -72,9 +72,9 @@ local return_code="%(?..%{$fg[red]%}%? ↵%{$reset_color%})"
 #==============================================================
 PS1='┌ %{$fg[green]%}%n\
 %{$reset_color%}@\
-%{$fg[green]%}%m
-%{$reset_color%}└ \
-$(get_virtualenv_name)\
+%{$fg[green]%}%m \
+%{$reset_color%}$(get_virtualenv_name)
+└ \
 %{$fg[red]%}%c\
 $(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} '
 
