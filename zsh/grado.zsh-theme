@@ -52,7 +52,7 @@ function get_virtualenv_name() {
   if [ ! -z "${VIRTUAL_ENV-}" ]; then
       ENV=$(basename $VIRTUAL_ENV)
       #ENV=$(basename $(dirname $VIRTUAL_ENV))
-      echo "($ENV) "
+      echo "[$ENV]"
   fi
 }
 
@@ -72,31 +72,32 @@ local return_code="%(?..%{$fg[red]%}%? ↵%{$reset_color%})"
 #==============================================================
 PS1='┌ %{$fg[green]%}%n\
 %{$reset_color%}@\
-%{$fg[green]%}%m \
-%{$reset_color%}$(get_virtualenv_name)
-└ \
+%{$fg[green]%}%m\
+%{$fg[cyan]%} $(get_virtualenv_name)
+%{$reset_color%}└ \
 %{$fg[red]%}%c\
 $(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} '
 
-PROMPT2='%{$fg[red]%}\ %{$reset_color%}'
+#PROMPT2='%{$fg[red]%}\ %{$reset_color%}'
 
 RPS1='${return_code} %{$fg[blue]%}%~%{$reset_color%} [%*]'
 
-
-
 # Git prompt variables
 #==============================================================
-ZSH_THEME_GIT_PROMPT_PREFIX="%{$reset_color%}%{$fg[yellow]%}("
+ZSH_THEME_GIT_PROMPT_PREFIX=" %{$reset_color%}%{$fg[yellow]%}("
 ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%}%{$fg[yellow]%})"
 
 ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg[red]%} ✔%{$fg[yellow]%}"
 ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg[red]%} ✗%{$fg[yellow]%}"
 
 ZSH_THEME_GIT_PROMPT_UNTRACKED="%{$reset_color%}●"
-ZSH_THEME_GIT_PROMPT_UNSTAGED="%{$fg[red]%}●"     #✘
-ZSH_THEME_GIT_PROMPT_STAGED="%{$fg[cyan]%}●"      #✚✔● 
+ZSH_THEME_GIT_PROMPT_UNSTAGED="%{$fg[red]%}●"     
+ZSH_THEME_GIT_PROMPT_STAGED="%{$fg[cyan]%}●"      
 ZSH_THEME_GIT_PROMPT_AHEAD="%{$fg[magenta]%}↑"
-ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[red]%}✕"
+ZSH_THEME_GIT_PROMPT_BEHIND="%{$fg[magenta]%}x"
+ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[red]%}§"
+
+# Unused symbols ◒ ✚ ✔ ● ✘
 
 TMOUT=1
 TRAPALRM() {
