@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Logging. Sets max size, and keeps a single backup
-LOG_DIR=~/.dotfiles/cronjobs
+LOG_DIR=~/.dotfiles/launchd
 LOG_FILE=$LOG_DIR/daily_cleanup.log
 LOG_SIZE=0
 if [ -f $LOG_FILE ]; then
     LOG_SIZE=$(wc -c $LOG_FILE)
 fi
 MAX_SIZE=$((8*1024*1024)) # Max size 1MB
-if [ $LOG_SIZE -ge $MAX_SIZE ]; then
+if [[ $LOG_SIZE -ge $MAX_SIZE ]]; then
     mv $LOG_FILE $LOG_FILE.1
     rm $LOG_FILE
 fi
