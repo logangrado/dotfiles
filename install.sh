@@ -7,15 +7,18 @@ function install_osx {
     fi
     
     #Install brew things
-    brew install git
-    brew install wget
-    brew install curl
-    brew install reattach-to-user-namespace
-    brew install emacs
-    brew install libevent
-    brew install tmux
-    brew install python
-    brew install zsh
+    brew install git \
+    wget \
+    curl \
+    reattach-to-user-namespace \
+    emacs \
+    libevent \
+    tmux \
+    python \
+    zsh \
+    pyenv \
+    pipx \
+    coreutils \
 
     # Set zsh as default
     sudo -s 'echo /usr/local/bin/zsh >> /etc/shells'
