@@ -51,12 +51,19 @@ alias g++='g++ -std=c++11'
 #git aliases
 alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
+
 # git log, but just show current branch, master, and dev (if they exist, and their remotes)
-alias gitlog='git log $($HOME/.dotfiles/scripts/get_remotes master dev HEAD) --oneline --graph --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+alias gitlog='git log $($HOME/.dotfiles/scripts/get_remotes master dev HEAD) --graph --color --decorate --first-parent -m | $HOME/.dotfiles/scripts/reverse_log.py'
+# git log, but just show current branch, master, and dev (if they exist, and their remotes)
+alias gitlog-full='git log $($HOME/.dotfiles/scripts/get_remotes master dev HEAD)  --graph --color --decorate | $HOME/.dotfiles/scripts/reverse_log.py'
 # git log all
-alias gitlogall='git log --oneline --graph --branches --all --color --decorate --date=format:"%y-%m-%d %H:%M" --pretty=format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset" | $HOME/.dotfiles/scripts/reverse_log.py'
+alias gitlogall='git log  --graph --branches --all --color --decorate --first-parent -m | $HOME/.dotfiles/scripts/reverse_log.py'
+# git log all
+alias gitlogall-full='git log  --graph --branches --all --color --decorate | $HOME/.dotfiles/scripts/reverse_log.py'
 alias gl="gitlog"
+alias glf="gitlog-full"
 alias gla="gitlogall"
+alias glaf="gitlogall-full"
 alias gcm='git commit -m'
 alias gca='git commit --amend'
 alias gcan='git commit --amend --no-edit'
