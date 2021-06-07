@@ -16,3 +16,9 @@
 	clean = git-lfs clean -- %f
 	smudge = git-lfs smudge -- %f
 	process = git-lfs filter-process
+
+[log]
+        date = format:"%y-%m-%d %H:%M"
+
+[format]
+        pretty = format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset"
