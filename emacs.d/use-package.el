@@ -1,3 +1,36 @@
+;; (use-package bufler
+;;   :quelpa (bufler :fetcher github :repo "alphapapa/bufler.el"
+;;                   :files (:defaults (:exclude "helm-bufler.el")))
+;;   )
+
+(use-package ivy
+  :ensure t
+  :init
+  (ivy-mode)
+  )
+
+(use-package projectile
+  :ensure t
+  ;;:pin melpa-stable
+  :init
+  (projectile-mode +1)
+  :bind (:map projectile-mode-map
+              ("s-p" . projectile-command-map)
+              ("C-c p" . projectile-command-map)))
+
+(use-package ibuffer-vc
+  ;; Group ibuffers by VC project
+  :ensure t
+  :init
+  :config
+   (add-hook 'ibuffer-hook
+             (lambda ()
+               (ibuffer-vc-set-filter-groups-by-vc-root)
+               (unless (eq ibuffer-sorting-mode 'alphabetic)
+                 (ibuffer-do-sort-by-alphabetic))))
+   (setq vc-status ibuffer-formats)
+   )
+
 (use-package python-black
   :ensure t
   :after python
@@ -57,7 +90,7 @@
 (use-package dockerfile-mode
   :ensure t
   :init
-  (add-to-list 'auto-mode-alist '("Dockerfile\\'" . dockerfile-mode))
+  (add-to-list 'auto-mode-alist '("Dockerfile.*\\'" . dockerfile-mode))
   )
   
 (use-package yaml-mode
@@ -211,11 +244,11 @@
   ; Dont really know how to use this yet...
   )
 
-(use-package auto-complete
-  :ensure t
-  :init
-  (ac-config-default)
-  )
+;; (use-package auto-complete
+;;   :ensure t
+;;   :init
+;;   (ac-config-default)
+;;   )
 
 (use-package outline-magic
   :ensure t
@@ -296,6 +329,9 @@
   ;; auto-save and auto-revert
   (add-hook 'org-mode-hook 'real-auto-save-mode)
   (add-hook 'org-mode-hook 'auto-revert-mode)  
+
+  :bind
+  ("S-RET" . org-insert-heading-respect-content)
   
   :config
   ;;=============================================================
@@ -305,6 +341,8 @@
   (setq org-hierarchical-todo-statistics nil)         ;; Nil means children count, not just top leve
   (setq org-checkbox-hierarchical-statistics nil)
 
+  (setq org-M-RET-may-split-line nil)                 ;; Don't split lines when using M-RET
+  
   ;; Org-column settings
   (setq org-agenda-overriding-columns-format "%TODO %ALLTAGS %ITEM")
   (set-face-attribute 'org-column nil :inverse-video nil)
