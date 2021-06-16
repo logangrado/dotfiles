@@ -72,8 +72,18 @@
 ;;-------------------------------------------------------------------
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
 (load-theme 'solarized t)
-(set-frame-parameter nil 'background-mode 'light)    ;;GUI
+(set-frame-parameter nil 'background-mode 'dark)    ;;GUI
 (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+
+;; works for colorizing daemon mode and regular mode
+;; Applys dark to terminal, light to GUI (I think)
+;; Doesn't apply to NeoTree for some reason
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (let ((mode (if (display-graphic-p frame) 'light 'dark)))
+              (set-frame-parameter frame 'background-mode mode)
+              (set-terminal-parameter frame 'background-mode mode))
+            (enable-theme 'solarized)))
 
 ;;set faces for git smerge
 (defun set-smerge-faces ()
