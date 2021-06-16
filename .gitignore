@@ -7,4 +7,6 @@ emacs.d/ac-comphist.dat
 emacs.d/srecode-map.el
 emacs.d/transient
 *.log
+*.err
+*.out
 zsh/zshrc-work

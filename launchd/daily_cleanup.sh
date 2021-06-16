@@ -3,34 +3,28 @@
 # Logging. Sets max size, and keeps a single backup
 LOG_DIR=$HOME/.dotfiles/launchd
 LOG_FILE=$LOG_DIR/daily_cleanup.log
-LOG_SIZE=0
-if [ -f $LOG_FILE ]; then
-    LOG_SIZE=$(wc -c $LOG_FILE)
-fi
-MAX_SIZE=$((8*1024*1024)) # Max size 1MB
-if [[ $LOG_SIZE -ge $MAX_SIZE ]]; then
-    mv $LOG_FILE $LOG_FILE.1
-    rm $LOG_FILE
-fi
 
-echo "[$(DATE)] Running daily cleanup" >> $LOG_FILE
+TODAY="${HOME}/Downloads/today"
+YESTERDAY="${HOME}/Downloads/yesterday"
+LAST_WEEK="${HOME}/Downloads/last_week"
+LAST_MONTH="${HOME}/Downloads/last_month"
+TRASH="${HOME}/.Trash"
 
-#Check for folder existence, create if none
-if [ ! -d $HOME/Downloads/Today ]; then
-    mkdir $HOME/Downloads/Today
-fi
-if [ ! -d $HOME/Downloads/Yesterday ]; then
-    mkdir $HOME/Downloads/Yesterday
-fi
-if [ ! -d $HOME/Downloads/Last\ Week ]; then
-    mkdir $HOME/Downloads/Last\ Week
-fi
-if [ ! -d $HOME/Downloads/Last\ Month ]; then
-    mkdir $HOME/Downloads/Last\ Month
-fi
+function cleanup_logs() {
+    LOG_SIZE=0
+    if [ -f $LOG_FILE ]; then
+        LOG_SIZE=$(wc -l < $LOG_FILE)
+    fi
 
-# Empty trash
-rm -rf $HOME/.Trash/*
+    MAX_SIZE=$((8*1024*1024)) # Max size 1MB
+    if [[ $LOG_SIZE -ge $MAX_SIZE ]]; then
+        mv $LOG_FILE $LOG_FILE.1
+    fi
+}
+
+function log() {
+    echo "[$(DATE)] ${1}" >> $LOG_FILE
+}
 
 function cleanup_helper() {
     SOURCE_DIR=$1
@@ -53,11 +47,30 @@ function cleanup_helper() {
     done
 }
 
-# Clean up downloads folder. Move from Today -> Yesterday, Yesterday -> Last Week, and remove old entries in Last Week
-# Meant to be run at 4AM
-cleanup_helper $HOME/Downloads/Last\ Month $HOME/.Trash +30d
-cleanup_helper $HOME/Downloads/Last\ Week $HOME/Downloads/Last\ Month +7d
-cleanup_helper $HOME/Downloads/Yesterday $HOME/Downloads/Last\ Week +1d4h
-cleanup_helper $HOME/Downloads/Today $HOME/Downloads/Yesterday +4h
+function make_dirs() {
+    for DIR in $@; do
+        if [ ! -d $DIR ]; then
+            mkdir $DIR
+        fi
+    done
+}
 
-# NOTE: On catalina, you have to give cron full disk access. Drag /usr/sbin/cron into System Preferences -> Security & Privacy -> Privacy tab
+function main() {
+    log ""
+    log "Running daily cleanup"
+
+    cleanup_logs
+    make_dirs $TODAY $YESTERDAY $LAST_WEEK $LAST_MONTH
+
+    # Clean up downloads folder. Move from Today -> Yesterday, Yesterday -> Last Week, and remove old entries in Last Week
+    # Meant to be run at 4AM
+    cleanup_helper $LAST_MONTH $TRASH +30d
+    cleanup_helper $LAST_WEEK $LAST_MONTH +7d
+    cleanup_helper $YESTERDAY $LAST_WEEK +1d4h
+    cleanup_helper $TODAY $YESTERDAY +4h
+
+    # Empty trash
+    rm -rf $TRASH/*
+}
+
+main

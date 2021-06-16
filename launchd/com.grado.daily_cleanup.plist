@@ -5,6 +5,11 @@
   <key>Label</key>
   <string>com.grado.daily_cleanup</string>
 
+  <!-- <key>RunAtLoad</key> -->
+  <!-- <true/> -->
+  <!-- <key>KeepAlive</key> -->
+  <!-- <true/> -->
+  
   <key>ProgramArguments</key>
   <array>
     <string>/Users/grado/.dotfiles/launchd/daily_cleanup.sh</string>
@@ -17,9 +22,9 @@
   </dict>
   
   <key>StandardErrorPath</key>
-  <string>/Users/grado/dotfiles/launchd/daily_cleanup.err</string>
+  <string>/Users/grado/.dotfiles/launchd/daily_cleanup.err</string>
 
   <key>StandardOutPath</key>
-  <string>/Users/grado/dotfiles/launchd/daily_cleanup.out</string>
+  <string>/Users/grado/.dotfiles/launchd/daily_cleanup.out</string>
 </dict>
 </plist>
