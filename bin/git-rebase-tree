@@ -47,10 +47,11 @@ function all_direct_children() {
         DIRECT_CHILD=1  # Assume we are a direct child to start
         for OTHER_CHILD in $ALL_CHILDREN; do
             if [[ $CHILD != $OTHER_CHILD ]]; then
-               OTHER_SHA=$(git rev-parse $OTHER_CHILD)
-               if git rev-list $CHILD | grep -q $OTHER_SHA; then
-                   DIRECT_CHILD=0
-               fi
+                OTHER_SHA=$(git rev-parse $OTHER_CHILD)
+                # Skip one, so that branches on the same commit as the child don't interfere
+                if git rev-list $CHILD --skip=1 | grep -q $OTHER_SHA; then
+                    DIRECT_CHILD=0
+                fi
             fi
         done
         if [[ $DIRECT_CHILD = 1 ]]; then
@@ -68,9 +69,10 @@ function recursive_rebase_tree() {
         echo "${INDENT}  '${FROM}' is already a child of '${TO}', nothing to do"
     else
         local CHILDREN=$(all_direct_children $FROM)
-
+        
         if [[ $DRY_RUN = 0 ]]; then
-            git rebase $TO $FROM
+            (git rebase $TO $FROM) # Parens puts the rebase in a subshell, so (hopefully) we continue the rebase-tree
+                                   # after resolving conflicts
         fi
         for CHILD in $CHILDREN; do
             recursive_rebase_tree $FROM $CHILD "$INDENT"
@@ -156,11 +158,11 @@ function main() {
 
     echo "Rebasing tree: $TO <- $FROM"
     
-    git checkout $FROM > /dev/null 2>&1
+    #git checkout $FROM > /dev/null 2>&1
     
     recursive_rebase_tree $TO $FROM
 
-    git checkout $CURRENT_BRANCH > /dev/null 2>&1
+    #git checkout $CURRENT_BRANCH > /dev/null 2>&1
 
 }
 
