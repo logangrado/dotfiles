@@ -13,6 +13,9 @@
 (setq auto-save-file-name-transforms
  `((".*" ,temporary-file-directory t)))
 
+;;autorevert - automatically reload files changed on disk
+(global-auto-revert-mode t)
+
 
 ;; Interface options
 ;;-------------------------------------------------------------------
