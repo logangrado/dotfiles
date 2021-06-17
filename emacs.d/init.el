@@ -15,7 +15,7 @@
 
 ;;autorevert - automatically reload files changed on disk
 (global-auto-revert-mode t)
-
+(setq vc-follow-symlinks nil) ;; Automatically open link (set to t for target)
 
 ;; Interface options
 ;;-------------------------------------------------------------------
