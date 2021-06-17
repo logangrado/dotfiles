@@ -43,6 +43,7 @@ export EDITOR='emacsclient -t'
 alias emacs=$EDITOR
 alias emacs-stop="emacsclient -e '(kill-emacs)'"
 alias emacs-start="'emacs' --daemon"
+alias emacs-restart="emacs-stop && emacs-start"
 
 # ALIASES
 #======================================================
