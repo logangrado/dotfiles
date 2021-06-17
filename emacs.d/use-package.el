@@ -1,12 +1,51 @@
-;; (use-package bufler
-;;   :quelpa (bufler :fetcher github :repo "alphapapa/bufler.el"
-;;                   :files (:defaults (:exclude "helm-bufler.el")))
-;;   )
+;; Python Related
+;;================================================================
+
+(use-package epc
+  :ensure t
+  )
+
+(use-package poetry
+  ;; Allows automatically finding/using poetry envs
+  :ensure t
+  :hook (python-mode . poetry-tracking-mode)
+  )
+
+(use-package jedi
+  ;; Python auto complete package
+  ;; relies on auto-compoete and epc
+  ;; also uses poetry mode to find/use the correct poetry environment
+  :ensure t
+  :hook (python-mode . jedi:setup)
+  ;;:after (poetry auto-complete epc)
+  :init
+  :config
+  (add-to-list 'ac-sources 'ac-source-jedi-direct)
+  (setq jedi:complete-on-dot t)
+  )
+
+(use-package python-black
+  :ensure t
+  :after python
+  :hook (python-mode . python-black-on-save-mode)
+  :config
+  (setq python-black-extra-args (list "-l 120"))
+  )
+
+;; General
+;;================================================================
 
 (use-package ivy
+  ;; General smart auto-complete, all over emacs
   :ensure t
   :init
   (ivy-mode)
+  )
+
+(use-package auto-complete
+  :ensure t
+  :init
+  (ac-config-default)
   )
 
 (use-package projectile
@@ -31,39 +70,37 @@
    (setq vc-status ibuffer-formats)
    )
 
-(use-package python-black
-  :ensure t
-  :after python
-  :hook (python-mode . python-black-on-save-mode)
-  :config
-  (setq python-black-extra-args (list "-l 120"))
-  )
-
-(use-package protobuf-mode
+(use-package neotree
   :ensure t
   :init
-  (defconst my-protobuf-style
-    '((c-basic-offset . 2)
-      (indent-tabs-mode . nil)))
+  :config
+  (global-set-key (kbd "C-t") 'neotree-toggle)
+  (set-face-attribute 'neo-file-link-face nil :foreground "#999999") ;;change file face color to white
+  (setq-default neo-show-hidden-files t) ;;show hidden files
+  (setq-default neo-window-width 50) ;;set width (default 25)
+  (setq-default neo-window-position 'right) ;;put window on right
+  (setq-default neo-autorefresh t) ;;automatically refresh tree2
+  (setq neo-smart-open t)  ;; Always open at the current file
   
-  (add-hook 'protobuf-mode-hook
-            (lambda () (c-add-style "my-style" my-protobuf-style t)))
-  )
-  
-(use-package jsonnet-mode
-  :ensure t
-  )
+  ;; hide neotree on file select
+  (defun neo-open-file-hide (full-path &optional arg) 
+    "Open a file node and hides tree."
+    (neo-global--select-mru-window arg)
+    (find-file full-path)
+    (neotree-hide))
+  (defun neotree-enter-hide (&optional arg)
+    "Enters file and hides neotree directly"
+    (interactive "P")
+    (neo-buffer--execute arg 'neo-open-file-hide 'neo-open-dir))
+  (add-hook
+   'neotree-mode-hook
+   (lambda ()
+     (define-key neotree-mode-map (kbd "RET") 'neotree-enter-hide)))
 
-(use-package log4j-mode
-  :ensure t
+  ;; Hides certain file types/extensions. Can be customized in list neo-hidden-regexp-list
+  (setq neo-show-hidden-files nil)
+  ;;(add-to-list 'neo-hidden-regexp-list)
   )
-
-;; (use-package logview
-;;   :ensure t
-;;   :init
-;;   (setenv "TZ" "US/Pacific")
-;;   ;;(setq datetime-timezone "US/Pacific")
-;;   )
 
 (use-package origami
   :ensure t
@@ -85,22 +122,6 @@
               ("C-c H" . origami-close-all-nodes)
               ("C-c s" . origami-open-node)
               ("C-c S" . origami-open-all-nodes))
-  )
-
-(use-package dockerfile-mode
-  :ensure t
-  :init
-  (add-to-list 'auto-mode-alist '("Dockerfile.*\\'" . dockerfile-mode))
-  )
-  
-(use-package yaml-mode
-  :ensure t
-  )
-  
-(use-package csv-mode
-  :ensure t
-  :config
-  ;;(csv-align-fields-mode)
   )
 
 (use-package tabbar
@@ -244,25 +265,75 @@
   ; Dont really know how to use this yet...
   )
 
-;; (use-package auto-complete
-;;   :ensure t
-;;   :init
-;;   (ac-config-default)
-;;   )
-
 (use-package outline-magic
   :ensure t
   :init
   :config
   )
-
-(use-package scad-mode
+  
+(use-package adaptive-wrap
   :ensure t
+  :config
+  (define-globalized-minor-mode global-visual-line-mode visual-line-mode
+    (lambda () (visual-line-mode 1)))
+  (global-visual-line-mode t)
+  (add-hook 'visual-line-mode-hook 'adaptive-wrap-prefix-mode)
+)
+
+(use-package auctex
+  :ensure t
+  :mode ("\\.tex\\'" . latex-mode)
+  :commands
+  (latex-mode LaTeX-mode plain-tex-mode)
   :init
+  (add-hook 'LaTeX-mode-hook 'LaTeX-preview-setup)
+  (add-hook 'LaTeX-mode-hook 'flyspell-mode)
+  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+
+  ;; Colorize diff
+  (defface DIFadd
+  '((t :foreground "#268BD2"
+       :weight bold
+       ))
+  "Face for DIFadd"
+  :group 'my-lang-mode )
+  (defface DIFdel
+    '((t :foreground "#DC322F"
+         :weight bold
+         ))
+  "Face for DIFdel"
+  :group 'my-lang-mode )
+  (setq font-latex-user-keyword-classes
+        '(("DIFadd" (("DIFadd" "{")) DIFadd)
+          ("DIFdel" (("DIFdel" "{")) DIFdel)
+          ("DIFaddFL" (("DIFaddFL" "{")) DIFadd)
+          ("DIFdelFL" (("DIFdelFL" "{")) DIFdel)))
+    
+  (setq TeX-auto-save t
+	TeX-parse-self t
+	TeX-save-query nil
+	TeX-PDF-mode t)
+  (setq-default TeX-master nil)
+  (add-hook 'TeX-mode-hook (lambda ()
+			     (TeX-fold-mode t)
+			     (delete '("[l]" ("label")) TeX-fold-macro-spec-list)
+			     (TeX-fold-mode t)
+			     (add-hook 'find-file-hook 'TeX-fold-buffer t t) ;;Autohide all when opening buffer
+			     (add-hook 'after-change-functions               ;;Autohide after typing '}' or '$'
+				       (lambda (start end oldlen) 
+					 (when (= (- end start) 1)
+					   (let ((char-point 
+						  (buffer-substring-no-properties 
+						   start end)))
+					     (when (or (string= char-point "}")
+						       (string= char-point "$"))
+					       (TeX-fold-paragraph)))))
+				       t t)))
+  (add-hook 'TeX-mode-hook 'outline-minor-mode)
+  (add-hook 'LaTeX-mode-hook (lambda() (bind-key (kbd "C-c c") 'outline-cycle)))
   :config
   )
 
-;;pretty-mode
 (use-package pretty-mode
   :ensure t
   :init
@@ -272,14 +343,12 @@
   (pretty-deactivate-patterns '(:== :return :def)) ;;disable eqauls
   )
 
-;;which-key
 (use-package which-key
   :ensure t
   :init
   (which-key-mode)
   )
 
-;;real-auto-save
 (use-package real-auto-save
   :ensure t
   :init
@@ -287,7 +356,46 @@
   :config
   )
 
-;;org-mode
+(use-package outshine
+  :ensure t
+  )
+
+(use-package flyspell
+  :ensure t
+  :init
+  (flyspell-mode 1)
+  :config
+  (setq ispell-program-name "ispell")
+  (setq ispell-dictionary "english")
+  (add-hook 'LaTeX-mode-hook 'flyspell-mode)
+  ;;(add-hook 'LaTeX-mode-hook 'flyspell-buffer)
+  )
+
+(use-package pbcopy
+  :ensure t
+  :init
+  :config
+  (turn-on-pbcopy)
+  )
+  
+(use-package flymd
+  :ensure t
+  :config
+  (add-to-list 'flymd-markdown-file-type '"\\.mdown\\'")
+  (defun my-flymd-browser-function (url)
+    (let ((process-environment (browse-url-process-environment)))
+    (apply 'start-process
+           (concat "firefox " url)
+           nil
+           "/usr/bin/open"
+           (list "-a" "firefox" url))))
+  (setq flymd-browser-open-function 'my-flymd-browser-function)
+  (setq flymd-close-buffer-delete-temp-files t)
+  )
+
+;; Major Modes
+;;================================================================
+
 (use-package org
   :ensure t
   :init
@@ -394,99 +502,6 @@
    'append)  
   )
 
-;;doom-themes-org
-;; (use-package doom-themes
-;;   :ensure t
-;;   :config
-;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-;;         doom-themes-enable-italic t)   ; if nil, italics is universally disabled
-;;   (doom-themes-org-config)
-;;   (doom-org-custom-fontification)
-;;   )
-
-;;outshine
-(use-package outshine
-  :ensure t
-  )
-
-;;auctex
-(use-package auctex
-  :ensure t
-  :mode ("\\.tex\\'" . latex-mode)
-  :commands
-  (latex-mode LaTeX-mode plain-tex-mode)
-  :init
-  (add-hook 'LaTeX-mode-hook 'LaTeX-preview-setup)
-  (add-hook 'LaTeX-mode-hook 'flyspell-mode)
-  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-
-  ;; Colorize diff
-  (defface DIFadd
-  '((t :foreground "#268BD2"
-       :weight bold
-       ))
-  "Face for DIFadd"
-  :group 'my-lang-mode )
-  (defface DIFdel
-    '((t :foreground "#DC322F"
-         :weight bold
-         ))
-  "Face for DIFdel"
-  :group 'my-lang-mode )
-  (setq font-latex-user-keyword-classes
-        '(("DIFadd" (("DIFadd" "{")) DIFadd)
-          ("DIFdel" (("DIFdel" "{")) DIFdel)
-          ("DIFaddFL" (("DIFaddFL" "{")) DIFadd)
-          ("DIFdelFL" (("DIFdelFL" "{")) DIFdel)))
-    
-  (setq TeX-auto-save t
-	TeX-parse-self t
-	TeX-save-query nil
-	TeX-PDF-mode t)
-  (setq-default TeX-master nil)
-  (add-hook 'TeX-mode-hook (lambda ()
-			     (TeX-fold-mode t)
-			     (delete '("[l]" ("label")) TeX-fold-macro-spec-list)
-			     (TeX-fold-mode t)
-			     (add-hook 'find-file-hook 'TeX-fold-buffer t t) ;;Autohide all when opening buffer
-			     (add-hook 'after-change-functions               ;;Autohide after typing '}' or '$'
-				       (lambda (start end oldlen) 
-					 (when (= (- end start) 1)
-					   (let ((char-point 
-						  (buffer-substring-no-properties 
-						   start end)))
-					     (when (or (string= char-point "}")
-						       (string= char-point "$"))
-					       (TeX-fold-paragraph)))))
-				       t t)))
-  (add-hook 'TeX-mode-hook 'outline-minor-mode)
-  (add-hook 'LaTeX-mode-hook (lambda() (bind-key (kbd "C-c c") 'outline-cycle)))
-  :config
-  )
-
-;;flyspell
-(use-package flyspell
-  :ensure t
-  :init
-  (flyspell-mode 1)
-  :config
-  (setq ispell-program-name "ispell")
-  (setq ispell-dictionary "english")
-  (add-hook 'LaTeX-mode-hook 'flyspell-mode)
-  ;;(add-hook 'LaTeX-mode-hook 'flyspell-buffer)
-  )
-
-;;pbcopy
-;;========================================================================
-(use-package pbcopy
-  :ensure t
-  :init
-  :config
-  (turn-on-pbcopy)
-  )
-  
-;;web-mode
-;;========================================================================
 (use-package web-mode
   :ensure t
   :bind
@@ -517,68 +532,50 @@
   (setq web-mode-enable-auto-pairing t)  
   )
 
-;;flymd
-;;==========================================================================
-(use-package flymd
-  :ensure t
-  :config
-  (add-to-list 'flymd-markdown-file-type '"\\.mdown\\'")
-  (defun my-flymd-browser-function (url)
-    (let ((process-environment (browse-url-process-environment)))
-    (apply 'start-process
-           (concat "firefox " url)
-           nil
-           "/usr/bin/open"
-           (list "-a" "firefox" url))))
-  (setq flymd-browser-open-function 'my-flymd-browser-function)
-  (setq flymd-close-buffer-delete-temp-files t)
-  )
-
-;;(use-package markdown-mode
-  ;;:ensure t
-;;)
-
-;;neotree
-;;==========================================================================
-(use-package neotree
+(use-package scad-mode
   :ensure t
   :init
   :config
-  (global-set-key (kbd "C-t") 'neotree-toggle)
-  (set-face-attribute 'neo-file-link-face nil :foreground "#999999") ;;change file face color to white
-  (setq-default neo-show-hidden-files t) ;;show hidden files
-  (setq-default neo-window-width 50) ;;set width (default 25)
-  (setq-default neo-window-position 'right) ;;put window on right
-  (setq-default neo-autorefresh t) ;;automatically refresh tree2
-  (setq neo-smart-open t)  ;; Always open at the current file
-  
-  ;; hide neotree on file select
-  (defun neo-open-file-hide (full-path &optional arg) 
-    "Open a file node and hides tree."
-    (neo-global--select-mru-window arg)
-    (find-file full-path)
-    (neotree-hide))
-  (defun neotree-enter-hide (&optional arg)
-    "Enters file and hides neotree directly"
-    (interactive "P")
-    (neo-buffer--execute arg 'neo-open-file-hide 'neo-open-dir))
-  (add-hook
-   'neotree-mode-hook
-   (lambda ()
-     (define-key neotree-mode-map (kbd "RET") 'neotree-enter-hide)))
+  )
 
-  ;; Hides certain file types/extensions. Can be customized in list neo-hidden-regexp-list
-  (setq neo-show-hidden-files nil)
-  ;;(add-to-list 'neo-hidden-regexp-list)
+(use-package protobuf-mode
+  :ensure t
+  :init
+  (defconst my-protobuf-style
+    '((c-basic-offset . 2)
+      (indent-tabs-mode . nil)))
+  
+  (add-hook 'protobuf-mode-hook
+            (lambda () (c-add-style "my-style" my-protobuf-style t)))
   )
   
-;;adaptive wrap
-;;========================================================================
-(use-package adaptive-wrap
+(use-package jsonnet-mode
+  :ensure t
+  )
+
+(use-package log4j-mode
+  :ensure t
+  )
+
+;; (use-package logview
+;;   :ensure t
+;;   :init
+;;   (setenv "TZ" "US/Pacific")
+;;   ;;(setq datetime-timezone "US/Pacific")
+;;   )
+
+(use-package dockerfile-mode
+  :ensure t
+  :init
+  (add-to-list 'auto-mode-alist '("Dockerfile.*\\'" . dockerfile-mode))
+  )
+  
+(use-package yaml-mode
+  :ensure t
+  )
+  
+(use-package csv-mode
   :ensure t
   :config
-  (define-globalized-minor-mode global-visual-line-mode visual-line-mode
-    (lambda () (visual-line-mode 1)))
-  (global-visual-line-mode t)
-  (add-hook 'visual-line-mode-hook 'adaptive-wrap-prefix-mode)
-)
+  ;;(csv-align-fields-mode)
+  )
