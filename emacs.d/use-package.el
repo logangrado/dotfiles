@@ -6,9 +6,17 @@
   )
 
 (use-package poetry
+  ;; ANOTHER POSSABILITY: with-evenv
+  ;; This looks like it might be able to deted poetry env without haveing to do it for each buffer...
+  ;; However, with the 'projectile mode, it seems to work well
+  
   ;; Allows automatically finding/using poetry envs
   :ensure t
   :hook (python-mode . poetry-tracking-mode)
+  :config
+  (setq poetry-tracking-strategy `projectile)
+  ;;(setq poetry-tracking-strategy `switch-buffer)
+  ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
   )
 
 (use-package jedi
@@ -57,18 +65,48 @@
               ("s-p" . projectile-command-map)
               ("C-c p" . projectile-command-map)))
 
-(use-package ibuffer-vc
-  ;; Group ibuffers by VC project
+;; I THINK I've removed this in favor of ibuffer-prjectile, but who knows. delete later?
+;; (use-package ibuffer-vc
+;;   ;; Group ibuffers by VC project
+;;   :ensure t
+;;   :init
+;;   :config
+;;    ;; (add-hook 'ibuffer-hook
+;;    ;;           (lambda ()
+;;    ;;             (ibuffer-vc-set-filter-groups-by-vc-root)
+;;    ;;             (unless (eq ibuffer-sorting-mode 'alphabetic)
+;;    ;;               (ibuffer-do-sort-by-alphabetic))))
+;;    (setq vc-status ibuffer-formats)
+;;    )
+
+(use-package ibuffer-projectile
   :ensure t
   :init
+  (add-hook 'ibuffer-hook
+            (lambda ()
+      (ibuffer-projectile-set-filter-groups)
+      (unless (eq ibuffer-sorting-mode 'alphabetic)
+        (ibuffer-do-sort-by-alphabetic))))
   :config
-   (add-hook 'ibuffer-hook
-             (lambda ()
-               (ibuffer-vc-set-filter-groups-by-vc-root)
-               (unless (eq ibuffer-sorting-mode 'alphabetic)
-                 (ibuffer-do-sort-by-alphabetic))))
-   (setq vc-status ibuffer-formats)
-   )
+  ;; define size-h column (human readable)
+  (define-ibuffer-column size-h
+    (:name "Size" :inline t)
+    (cond
+     ((> (buffer-size) 1000000) (format "%7.1fM" (/ (buffer-size) 1000000.0)))
+     ((> (buffer-size) 100000) (format "%7.0fk" (/ (buffer-size) 1000.0)))
+     ((> (buffer-size) 1000) (format "%7.1fk" (/ (buffer-size) 1000.0)))
+     (t (format "%8dB" (buffer-size)))))
+  
+  (setq ibuffer-formats
+      '((mark modified read-only " "
+              (name 18 18 :left :elide)
+              " "
+              (size-h 9 -1 :right)       ;; use human readable size
+              " "
+              (mode 16 16 :left :elide)
+              " "
+              project-relative-file)))   ;; Display filenames relative to project root
+  )
 
 (use-package neotree
   :ensure t
@@ -124,115 +162,30 @@
               ("C-c S" . origami-open-all-nodes))
   )
 
-(use-package tabbar
+(use-package centaur-tabs
   :ensure t
   :init
-  (tabbar-mode)
+  (centaur-tabs-mode t)
+  (centaur-tabs-local-mode)
   :config
- 
-  (set-face-attribute 'tabbar-default nil :background "brightcyan" :foreground "brightcyan")
-  (set-face-attribute 'tabbar-unselected nil
-                      :background "brightblack"
-                      :foreground "brightcyan")
-
-  (set-face-attribute 'tabbar-selected nil
-                      :background "brightcyan"
-                      :foreground "brightblack")
-
-  ;; Add space to make less crowded
-  (defadvice tabbar-buffer-tab-label (after fixup_tab_label_space_and_flag activate)
-    (setq ad-return-value
-          (if (and (buffer-modified-p (tabbar-tab-value tab))
-                   (buffer-file-name (tabbar-tab-value tab)))
-              (concat " + " (concat ad-return-value " "))
-            (concat " " (concat ad-return-value " ")))))
-
-  (defun tabbar-buffer-groups ()
-    "Return the list of group names the current buffer belongs to.
-    This function is a custom function for tabbar-mode's tabbar-buffer-groups.
-    This function group all buffers into 3 groups:
-    Those Dired, those user buffer, and those emacs buffer.
-    Emacs buffer are those starting with “*”."
-    (list
-     (cond
-      ((string-equal "*" (substring (buffer-name) 0 1))
-       "Emacs Buffer"
-       )
-      ((eq major-mode 'org-mode)
-       "Org"
-       )
-      ((eq major-mode 'dired-mode)
-       "Dired"
-       )
-      (t
-       "User Buffer"
-       )
-      ))) 
-  
-  (defun tabbar-move-current-tab-one-place-left ()
-    "Move current tab one place left, unless it's already the leftmost."
-    (interactive)
-    (let* ((bufset (tabbar-current-tabset t))
-           (old-bufs (tabbar-tabs bufset))
-           (first-buf (car old-bufs))
-           (new-bufs (list)))
-      (if (string= (buffer-name) (format "%s" (car first-buf)))
-          old-bufs ; the current tab is the leftmost
-        (setq not-yet-this-buf first-buf)
-        (setq old-bufs (cdr old-bufs))
-        (while (and
-                old-bufs
-                (not (string= (buffer-name) (format "%s" (car (car old-bufs))))))
-          (push not-yet-this-buf new-bufs)
-          (setq not-yet-this-buf (car old-bufs))
-          (setq old-bufs (cdr old-bufs)))
-        (if old-bufs ; if this is false, then the current tab's buffer name is mysteriously missing
-            (progn
-              (push (car old-bufs) new-bufs) ; this is the tab that was to be moved
-              (push not-yet-this-buf new-bufs)
-              (setq new-bufs (reverse new-bufs))
-              (setq new-bufs (append new-bufs (cdr old-bufs))))
-          (error "Error: current buffer's name was not found in Tabbar's buffer list."))
-        (set bufset new-bufs)
-        (tabbar-set-template bufset nil)
-        (tabbar-display-update))))
-  
-  (defun tabbar-move-current-tab-one-place-right ()
-    "Move current tab one place right, unless it's already the rightmost."
-    (interactive)
-    (let* ((bufset (tabbar-current-tabset t))
-           (old-bufs (tabbar-tabs bufset))
-           (first-buf (car old-bufs))
-           (new-bufs (list)))
-      (while (and
-              old-bufs
-              (not (string= (buffer-name) (format "%s" (car (car old-bufs))))))
-        (push (car old-bufs) new-bufs)
-        (setq old-bufs (cdr old-bufs)))
-      (if old-bufs ; if this is false, then the current tab's buffer name is mysteriously missing
-          (progn
-            (setq the-buffer (car old-bufs))
-            (setq old-bufs (cdr old-bufs))
-            (if old-bufs ; if this is false, then the current tab is the rightmost
-                (push (car old-bufs) new-bufs))
-            (push the-buffer new-bufs)) ; this is the tab that was to be moved
-        (error "Error: current buffer's name was not found in Tabbar's buffer list."))
-      (setq new-bufs (reverse new-bufs))
-      (setq new-bufs (append new-bufs (cdr old-bufs)))
-      (set bufset new-bufs)
-      (tabbar-set-template bufset nil)
-      (tabbar-display-update)))
-  
-  (setq tabbar-buffer-groups-function 'tabbar-buffer-groups)
-
-  (global-set-key (kbd "ESC <left>") 'tabbar-backward-tab)
-  (global-set-key (kbd "ESC <right>") 'tabbar-forward-tab)
-  (global-set-key (kbd "M-<up>") 'tabbar-backward-group)
-  (global-set-key (kbd "M-<down>") 'tabbar-forward-group)
-
-  (global-set-key (kbd "C-c t <left>") 'tabbar-move-current-tab-one-place-left)
-  (global-set-key (kbd "C-c t <right>") 'tabbar-move-current-tab-one-place-right)
-  
+  (setq centaur-tabs-style "bar"
+        centaur-tabs-height 32
+;;        centaur-tabs-set-icons t
+        centaur-tabs-set-modified-marker t
+        centaur-tabs-show-navigation-buttons nil ; No navigation buttons
+        centaur-tabs-set-close-button nil        ; No close button
+        centaur-tabs-set-bar 'under
+        x-underline-at-descent-line t)
+  (centaur-tabs-headline-match)
+  (centaur-tabs-group-by-projectile-project) ;; Group tabs by projectile
+  (setq centaur-tabs-cycle-scope 'tabs) ;; cycle tabs only through current group
+  ;; :hook
+  ;; (term-mode . centaur-tabs-local-mode)
+  :bind
+  ("C-c C-<left>" . centaur-tabs-backward)
+  ("C-c C-<right>" . centaur-tabs-forward)
+  ("C-c C-<up>" . centaur-tabs-backward-group)
+  ("C-c C-<down>" . centaur-tabs-forward-group)
   )
 
 (use-package iedit
@@ -262,7 +215,41 @@
 
 (use-package magit
   :ensure t
-  ; Dont really know how to use this yet...
+  :config
+  (setq magit-diff-refine-hunk 'all)
+
+  ;; Colors!
+  ;; Branches and tags
+  (set-face-attribute 'magit-branch-local nil :foreground "blue" :bold t)
+  (set-face-attribute 'magit-branch-remote nil :foreground "red" :bold t)
+  (set-face-attribute 'magit-tag nil :foreground "cyan")
+
+  ;; Section headers
+  (set-face-attribute 'magit-section-heading nil :foreground "yellow")
+  (set-face-attribute 'magit-section-highlight nil :background "black")
+
+  ;; Diff-ing
+  (set-face-attribute 'magit-diff-hunk-heading-highlight nil :foreground "grey70" :background "grey35")
+  (set-face-attribute 'magit-diff-hunk-heading nil :foreground "grey70" :background "grey25")
+
+  (set-face-attribute 'magit-diff-context nil :foreground "brightblue" :background "brightblack")
+  (set-face-attribute 'magit-diff-context-highlight nil :foreground "grey70" :background "grey20")
+
+  (set-face-attribute 'magit-diff-removed nil :foreground "brightblue" :background "color-52")
+  (set-face-attribute 'magit-diff-removed-highlight nil :foreground "brightblue" :background "color-52")
+
+  (set-face-attribute 'magit-diff-added nil :foreground "grey70" :background "color-23") ;;""color-22")
+  (set-face-attribute 'magit-diff-added-highlight nil :foreground "grey70" :background "color-23") ;;"color-22")
+
+  (set-face-attribute 'diff-refine-added nil :foreground "grey70" :background "color-29" :inverse-video nil)
+  (set-face-attribute 'diff-refine-removed nil :foreground "grey70" :background "color-88" :inverse-video nil)
+
+  (set-face-attribute 'diff-refine-added nil :foreground "grey10" :background "color-23" :inverse-video nil)
+  (set-face-attribute 'diff-refine-removed nil :foreground "grey5" :background "color-52" :inverse-video nil)
+
+  
+  ;; Display the status buffer in full-frame mode
+  (setq magit-display-buffer-function 'magit-display-buffer-fullframe-status-v1)
   )
 
 (use-package outline-magic
@@ -401,7 +388,7 @@
   :init
   (setq org-latex-create-formula-image-program 'dvisvgm)
 
-  (setq org-agenda-files (list "~/org/todo"))
+  (setq org-agenda-files (list "~/org/todo/"))
   (setq org-default-notes-file "~/org/todo/inbox.org")
 
   (setq org-agenda-ndays 7)
@@ -579,3 +566,173 @@
   :config
   ;;(csv-align-fields-mode)
   )
+
+
+;;==============================
+;; SWTICHED TO Centaur Tabs
+;; Centuar tabs has native support for projectile grouping
+;; Leaving this config here because it was a lot of work
+;;==============================
+;; (use-package tabbar
+;;   :ensure t
+;;   :after projectile
+;;   :init
+;;   (tabbar-mode)
+;;   :config
+ 
+;;   (set-face-attribute 'tabbar-default nil :background "brightcyan" :foreground "brightcyan")
+;;   (set-face-attribute 'tabbar-unselected nil
+;;                       :background "brightblack"
+;;                       :foreground "brightcyan")
+
+;;   (set-face-attribute 'tabbar-selected nil
+;;                       :background "brightcyan"
+;;                       :foreground "brightblack")
+
+;;   ;; Add space to make less crowded
+;;   (defadvice tabbar-buffer-tab-label (after fixup_tab_label_space_and_flag activate)
+;;     (setq ad-return-value
+;;           (if (and (buffer-modified-p (tabbar-tab-value tab))
+;;                    (buffer-file-name (tabbar-tab-value tab)))
+;;               (concat " + " (concat ad-return-value " "))
+;;             (concat " " (concat ad-return-value " ")))))
+
+;; ;;   (defun tabbar-buffer-groups ()
+;; ;;     "Return the list of group names the current buffer belongs to.
+;; ;; Return a list of one element based on major mode."
+;; ;;     (list
+;; ;;      (cond
+;; ;;       ((or (get-buffer-process (current-buffer))
+;; ;;            ;; Check if the major mode derives from `comint-mode' or
+;; ;;            ;; `compilation-mode'.
+;; ;;            (tabbar-buffer-mode-derived-p
+;; ;;             major-mode '(comint-mode compilation-mode)))
+;; ;;        "Process"
+;; ;;        )
+;; ;;       ((member (buffer-name)
+;; ;;                '("*scratch*" "*Messages*" "*dashboard*" "TAGS"))
+;; ;;        "Common"
+;; ;;        )
+;; ;;       ((eq major-mode 'dired-mode)
+;; ;;        "Dired"
+;; ;;        )
+;; ;;       ((memq major-mode
+;; ;;              '(help-mode apropos-mode Info-mode Man-mode))
+;; ;;        "Help"
+;; ;;        )
+;; ;;       ((memq major-mode
+;; ;;              '(rmail-mode
+;; ;;                rmail-edit-mode vm-summary-mode vm-mode mail-mode
+;; ;;                mh-letter-mode mh-show-mode mh-folder-mode
+;; ;;                gnus-summary-mode message-mode gnus-group-mode
+;; ;;                gnus-article-mode score-mode gnus-browse-killed-mode))
+;; ;;        "Mail"
+;; ;;        )
+;; ;;     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; ;;     ;;; Group tabs by projectile projects
+;; ;;       ((memq (current-buffer)
+;; ;;              (condition-case nil
+;; ;;                  (projectile-buffers-with-file-or-process (projectile-project-buffers))
+;; ;;                (error nil)))
+;; ;;        (projectile-project-name)
+;; ;;        )
+;; ;;     ;;; end of hacking
+;; ;;     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      
+;; ;;       (t
+;; ;;        ;; Return `mode-name' if not blank, `major-mode' otherwise.
+;; ;;        (if (and (stringp mode-name)
+;; ;;                 ;; Take care of preserving the match-data because this
+;; ;;                 ;; function is called when updating the header line.
+;; ;;                 (save-match-data (string-match "[^ ]" mode-name)))
+;; ;;            mode-name
+;; ;;          (symbol-name major-mode))
+;; ;;        ))))
+
+;;   ;; (defun tabbar-buffer-groups ()
+;;   ;;   "Return the list of group names the current buffer belongs to.
+;;   ;;   This function is a custom function for tabbar-mode's tabbar-buffer-groups.
+;;   ;;   This function group all buffers into 3 groups:
+;;   ;;   Those Dired, those user buffer, and those emacs buffer.
+;;   ;;   Emacs buffer are those starting with “*”."
+;;   ;;   (list
+;;   ;;    (cond
+;;   ;;     ((string-equal "*" (substring (buffer-name) 0 1))
+;;   ;;      "Emacs Buffer"
+;;   ;;      )
+;;   ;;     ((eq major-mode 'org-mode)
+;;   ;;      "Org"
+;;   ;;      )
+;;   ;;     ((eq major-mode 'dired-mode)
+;;   ;;      "Dired"
+;;   ;;      )
+;;   ;;     (t
+;;   ;;      "User Buffer"
+;;   ;;      )
+;;   ;;     ))) 
+  
+;;   (defun tabbar-move-current-tab-one-place-left ()
+;;     "Move current tab one place left, unless it's already the leftmost."
+;;     (interactive)
+;;     (let* ((bufset (tabbar-current-tabset t))
+;;            (old-bufs (tabbar-tabs bufset))
+;;            (first-buf (car old-bufs))
+;;            (new-bufs (list)))
+;;       (if (string= (buffer-name) (format "%s" (car first-buf)))
+;;           old-bufs ; the current tab is the leftmost
+;;         (setq not-yet-this-buf first-buf)
+;;         (setq old-bufs (cdr old-bufs))
+;;         (while (and
+;;                 old-bufs
+;;                 (not (string= (buffer-name) (format "%s" (car (car old-bufs))))))
+;;           (push not-yet-this-buf new-bufs)
+;;           (setq not-yet-this-buf (car old-bufs))
+;;           (setq old-bufs (cdr old-bufs)))
+;;         (if old-bufs ; if this is false, then the current tab's buffer name is mysteriously missing
+;;             (progn
+;;               (push (car old-bufs) new-bufs) ; this is the tab that was to be moved
+;;               (push not-yet-this-buf new-bufs)
+;;               (setq new-bufs (reverse new-bufs))
+;;               (setq new-bufs (append new-bufs (cdr old-bufs))))
+;;           (error "Error: current buffer's name was not found in Tabbar's buffer list."))
+;;         (set bufset new-bufs)
+;;         (tabbar-set-template bufset nil)
+;;         (tabbar-display-update))))
+  
+;;   (defun tabbar-move-current-tab-one-place-right ()
+;;     "Move current tab one place right, unless it's already the rightmost."
+;;     (interactive)
+;;     (let* ((bufset (tabbar-current-tabset t))
+;;            (old-bufs (tabbar-tabs bufset))
+;;            (first-buf (car old-bufs))
+;;            (new-bufs (list)))
+;;       (while (and
+;;               old-bufs
+;;               (not (string= (buffer-name) (format "%s" (car (car old-bufs))))))
+;;         (push (car old-bufs) new-bufs)
+;;         (setq old-bufs (cdr old-bufs)))
+;;       (if old-bufs ; if this is false, then the current tab's buffer name is mysteriously missing
+;;           (progn
+;;             (setq the-buffer (car old-bufs))
+;;             (setq old-bufs (cdr old-bufs))
+;;             (if old-bufs ; if this is false, then the current tab is the rightmost
+;;                 (push (car old-bufs) new-bufs))
+;;             (push the-buffer new-bufs)) ; this is the tab that was to be moved
+;;         (error "Error: current buffer's name was not found in Tabbar's buffer list."))
+;;       (setq new-bufs (reverse new-bufs))
+;;       (setq new-bufs (append new-bufs (cdr old-bufs)))
+;;       (set bufset new-bufs)
+;;       (tabbar-set-template bufset nil)
+;;       (tabbar-display-update)))
+  
+;;   (setq tabbar-buffer-groups-function 'tabbar-buffer-groups)
+
+;;   (global-set-key (kbd "ESC <left>") 'tabbar-backward-tab)
+;;   (global-set-key (kbd "ESC <right>") 'tabbar-forward-tab)
+;;   (global-set-key (kbd "M-<up>") 'tabbar-backward-group)
+;;   (global-set-key (kbd "M-<down>") 'tabbar-forward-group)
+
+;;   (global-set-key (kbd "C-c t <left>") 'tabbar-move-current-tab-one-place-left)
+;;   (global-set-key (kbd "C-c t <right>") 'tabbar-move-current-tab-one-place-right)
+  
+;;   )

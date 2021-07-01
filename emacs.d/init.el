@@ -129,6 +129,11 @@
 
 ;; Keyboard Shortcuts
 ;;==============================================================================
+(defun reload-config()
+  (interactive)
+  (load-file user-init-file))
+(global-set-key (kbd "C-c R") 'reload-config)
+
 (global-set-key (kbd "C-c a") 'align)
 (global-set-key (kbd "C-c A") 'align-regexp)
 
@@ -198,10 +203,11 @@
 (when (string-equal system-type "darwin")
   ;; Colors and Themes
   ;;------------------------------------------------------------------
-  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
-  (load-theme 'solarized t)
-  (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
-  (set-frame-parameter nil 'background-mode 'light)    ;;GUI
+  ;; I don't think this is necessary any more, but not sure. delete whenever I guess...
+  ;;  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
+  ;;  (load-theme 'solarized t)
+  ;;  (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+  ;;  (set-frame-parameter nil 'background-mode 'light)    ;;GUI
   )
 
 (when (string-equal system-type "windows-nt")
