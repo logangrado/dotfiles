@@ -36,13 +36,17 @@ source $ZSH/oh-my-zsh.sh
 # Make ls colors work properly
 unset LSCOLORS
 
-# Set environment variables
+# Emacs and Editor vars
 #======================================================
-export EDITOR='emacs -nw'
+export EDITOR="emacs -nw"
+alias emacs=$EDITOR
+alias emacsd='emacsclient -t'
+alias emacsd-stop="emacsclient -e '(kill-emacs)'"
+alias emacsd-start="'emacs' --daemon"
+alias emacsd-restart="emacs-stop && emacs-start"
 
 # ALIASES
 #======================================================
-alias emacs='emacs -nw'
 
 alias ls='ls -CFG'
 alias lsa='ls -CFGa'

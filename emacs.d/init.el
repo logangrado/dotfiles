@@ -15,13 +15,12 @@
 
 ;;autorevert - automatically reload files changed on disk
 (global-auto-revert-mode t)
-
+(setq vc-follow-symlinks t) ;; Automatically open link (set to t for target)
 
 ;; Interface options
 ;;-------------------------------------------------------------------
 ;;paren mode
 (show-paren-mode 1)
-(set-face-background 'show-paren-match "brightcyan")
 
 ;; smooth scrolling
 (setq scroll-step            1
@@ -59,21 +58,47 @@
 (global-set-key (kbd "C-c s") 'hs-show-block)
 (global-set-key (kbd "C-c S") 'hs-show-all)
 
-
 ;; Line Numbers
 ;;-------------------------------------------------------------------
 (global-linum-mode t)
 (setq linum-format "%4d\u2502")
-(set-face-background 'linum "brightblack")
-(set-face-underline-p 'linum nil) ;;Dont underline linenumbers
-(set-face-attribute 'linum nil :inverse-video nil)
 
 ;; Colors and Themes
 ;;-------------------------------------------------------------------
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
 (load-theme 'solarized t)
-(set-frame-parameter nil 'background-mode 'light)    ;;GUI
+(set-frame-parameter nil 'background-mode 'dark)    ;;GUI
 (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+
+;; Colorization
+(defun set-custom-faces ()
+  ;; Put all customizations into a func, so we can call for either daemon or normal mode
+  ;; Line Numbers
+  (set-face-background 'linum "brightblack")
+  (set-face-underline-p 'linum nil) ;;Dont underline linenumbers
+  (set-face-attribute 'linum nil :inverse-video nil)
+  ;; Paren matching
+  (set-face-background 'show-paren-match "brightcyan")
+  ;; General syntax highlighting
+  (set-face-attribute 'font-lock-comment-face nil           :foreground "brightred")
+  (set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "brightred")
+  (set-face-attribute 'font-lock-doc-face nil               :foreground "cyan")
+  )
+(set-custom-faces)
+
+
+;; works for colorizing daemon mode and regular mode
+;; Applys dark to terminal, light to GUI (I think)
+;; Doesn't apply to NeoTree for some reason
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (let ((mode (if (display-graphic-p frame) 'light 'dark)))
+              (set-frame-parameter frame 'background-mode mode)
+              (set-terminal-parameter frame 'background-mode mode))
+            (enable-theme 'solarized)
+            (set-custom-faces)
+            )
+          )
 
 ;;set faces for git smerge
 (defun set-smerge-faces ()
@@ -84,10 +109,6 @@
   ;(set-face-attribute 'smerge-refined-changed nil :background "cyan")
   )
 (add-hook 'smerge-mode-hook 'set-smerge-faces)
-
-(set-face-attribute 'font-lock-comment-face nil           :foreground "brightred")
-(set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "brightred")
-(set-face-attribute 'font-lock-doc-face nil               :foreground "cyan")
 
 ;; Syntax Highlighting for f-strings
 (require 'python)
@@ -108,6 +129,11 @@
 
 ;; Keyboard Shortcuts
 ;;==============================================================================
+(defun reload-config()
+  (interactive)
+  (load-file user-init-file))
+(global-set-key (kbd "C-c R") 'reload-config)
+
 (global-set-key (kbd "C-c a") 'align)
 (global-set-key (kbd "C-c A") 'align-regexp)
 
@@ -177,10 +203,11 @@
 (when (string-equal system-type "darwin")
   ;; Colors and Themes
   ;;------------------------------------------------------------------
-  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
-  (load-theme 'solarized t)
-  (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
-  (set-frame-parameter nil 'background-mode 'light)    ;;GUI
+  ;; I don't think this is necessary any more, but not sure. delete whenever I guess...
+  ;;  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
+  ;;  (load-theme 'solarized t)
+  ;;  (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
+  ;;  (set-frame-parameter nil 'background-mode 'light)    ;;GUI
   )
 
 (when (string-equal system-type "windows-nt")

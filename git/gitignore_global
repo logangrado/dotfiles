@@ -6,3 +6,4 @@ pyenv*
 Pipfile.lock
 *.org_archive
 .#*
+tags

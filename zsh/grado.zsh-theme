@@ -16,45 +16,19 @@
 #     echo $n_ahead
 # }
 
-function git_diverged() {
-    regex=".*\ ([0-9]*)\ and\ ([0-9]*)\ different\ commits\ each,\ respectively\."
-    if [[ $(git status) =~ $regex ]]; then
-        AHEAD="${match[1]}"
-        BEHIND="${match[2]}"
-        #echo "${ZSH_THEME_GIT_PROMPT_AHEAD}${AHEAD}${ZSH_THEME_GIT_PROMPT_BEHIND}${BEHIND}"
-        echo $AHEAD $BEHIND
-    fi
-}
-
-function git_ahead() {
-    regex="Your\ branch\ is\ ahead\ of\ .*\ by\ ([0-9]*)\ commit.*"
-    if [[ $(git status) =~ $regex ]]; then
-        AHEAD="${match[1]}"
-        echo $AHEAD
-    fi
-}
-
-function git_behind() {
-    regex="Your\ branch\ is\ behind\ .*\ by\ ([0-9]*)\ commit.*"
-    if [[ $(git status) =~ $regex ]]; then
-        BEHIND="${match[1]}"
-        echo "${ZSH_THEME_GIT_PROMPT_BEHIND}${BEHIND}"
-    fi
-}
-
 function git_ahead_behind_diverged() {
-    if [ -n "$(git_diverged)" ]; then
-        DIVERGED=($(git_diverged))
-        echo "${ZSH_THEME_GIT_PROMPT_DIVERGED_COLOR}${ZSH_THEME_GIT_PROMPT_AHEAD_SYMBOL}${DIVERGED[1]}${ZSH_THEME_GIT_PROMPT_BEHIND_SYMBOL}${DIVERGED[2]}"
-    fi
-        
-    if [ -n "$(git_ahead)" ]; then
-        echo "${ZSH_THEME_GIT_PROMPT_AHEAD_COLOR}${ZSH_THEME_GIT_PROMPT_AHEAD_SYMBOL}$(git_ahead)"
-    fi
-        
-    if [ -n "$(git_behind)" ]; then
-        echo "${ZSH_THEME_GIT_PROMPT_BEHIND_COLOR}${ZSH_THEME_GIT_PROMPT_BEHIND_SYMBOL}$(git_behind)"
-    fi
+    N_AHEAD=$(git rev-list @{u}..HEAD 2> /dev/null | wc -l | xargs)
+    N_BEHIND=$(git rev-list HEAD..@{u} 2> /dev/null | wc -l | xargs)
+
+    if [[ $N_AHEAD != "0" && $N_BEHIND != "0" ]]; then
+        echo "${ZSH_THEME_GIT_PROMPT_DIVERGED_COLOR}${ZSH_THEME_GIT_PROMPT_AHEAD_SYMBOL}${N_AHEAD}${ZSH_THEME_GIT_PROMPT_BEHIND_SYMBOL}${N_BEHIND}"
+    elif [[ $N_AHEAD != "0" ]]; then
+        echo "${ZSH_THEME_GIT_PROMPT_AHEAD_COLOR}${ZSH_THEME_GIT_PROMPT_AHEAD_SYMBOL}${N_AHEAD}"
+    elif [[ $N_BEHIND != "0" ]]; then
+        echo "${ZSH_THEME_GIT_PROMPT_BEHIND_COLOR}${ZSH_THEME_GIT_PROMPT_BEHIND_SYMBOL}${N_BEHIND}"
+    else;
+        echo ""
+    fi    
 }
 
 function my_git_prompt() {
@@ -63,7 +37,7 @@ function my_git_prompt() {
   INDEX=$(git status --porcelain 2> /dev/null)
   STATUS=""
 
-  # Are we ahead/behind/diverged?
+  #Are we ahead/behind/diverged?
   if [ -n "$(git_ahead_behind_diverged)" ]; then
       STATUS="${STATUS}$(git_ahead_behind_diverged)"
   fi
