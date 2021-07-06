@@ -43,7 +43,7 @@ alias emacs=$EDITOR
 alias emacsd='emacsclient -t'
 alias emacsd-stop="emacsclient -e '(kill-emacs)'"
 alias emacsd-start="'emacs' --daemon"
-alias emacsd-restart="emacs-stop && emacs-start"
+alias emacsd-restart="emacsd-stop && emacsd-start"
 
 # ALIASES
 #======================================================
