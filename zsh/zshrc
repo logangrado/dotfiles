@@ -87,6 +87,14 @@ setopt nosharehistory                 # Prevent command history from being share
 bindkey "\eOA" up-line-or-history    
 bindkey "\eOB" down-line-or-history
 
+bindkey "^[i" up-line-or-history
+bindkey "^[k" down-line-or-history
+bindkey "^[l" forward-char
+bindkey "^[j" backward-char
+bindkey "^[o" forward-word
+bindkey "^[u" backward-word
+
+
 # This fixes the issue where the return key doesn't work on some OS's
 # Somehow return stops sending the ^M code, and sends this instead
 # So we just set zsh to accept that as return

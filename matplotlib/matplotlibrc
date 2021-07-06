@@ -1,7 +1,8 @@
 ### CHANGES
 backend            : Qt5Agg
-axes.spines.top    : False
-axes.spines.right  : False
+#axes.spines.top    : False
+#axes.spines.right  : False
+axes.grid          : True
 font.size           : 8.0
 lines.linewidth    : 1.5     # Default line width (points). Default 1.5
 lines.markersize   : 5.0     # Marker size (points). Default 6

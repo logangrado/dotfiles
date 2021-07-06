@@ -235,17 +235,24 @@
   (set-face-attribute 'magit-diff-context nil :foreground "brightblue" :background "brightblack")
   (set-face-attribute 'magit-diff-context-highlight nil :foreground "grey70" :background "grey20")
 
-  (set-face-attribute 'magit-diff-removed nil :foreground "brightblue" :background "color-52")
-  (set-face-attribute 'magit-diff-removed-highlight nil :foreground "brightblue" :background "color-52")
+  ;; (set-face-attribute 'magit-diff-removed nil :foreground "brightblue" :background "color-52")
+  ;; (set-face-attribute 'magit-diff-removed-highlight nil :foreground "brightblue" :background "color-52")
 
-  (set-face-attribute 'magit-diff-added nil :foreground "grey70" :background "color-23") ;;""color-22")
-  (set-face-attribute 'magit-diff-added-highlight nil :foreground "grey70" :background "color-23") ;;"color-22")
+  ;; (set-face-attribute 'magit-diff-added nil :foreground "grey70" :background "color-23") ;;""color-22")
+  ;; (set-face-attribute 'magit-diff-added-highlight nil :foreground "grey70" :background "color-23") ;;"color-22")
 
-  (set-face-attribute 'diff-refine-added nil :foreground "grey70" :background "color-29" :inverse-video nil)
-  (set-face-attribute 'diff-refine-removed nil :foreground "grey70" :background "color-88" :inverse-video nil)
+  (set-face-attribute 'magit-diff-removed nil :foreground "red" :background nil :inherit 'magit-diff-context)
+  (set-face-attribute 'magit-diff-removed-highlight nil :foreground "red" :background nil :inherit 'magit-diff-context-highlight)
 
-  (set-face-attribute 'diff-refine-added nil :foreground "grey10" :background "color-23" :inverse-video nil)
-  (set-face-attribute 'diff-refine-removed nil :foreground "grey5" :background "color-52" :inverse-video nil)
+  (set-face-attribute 'magit-diff-added nil :foreground "green" :background nil :inherit 'magit-diff-context)
+  (set-face-attribute 'magit-diff-added-highlight nil :foreground "green" :background nil :inherit 'magit-diff-context-highlight)
+
+
+  ;; (set-face-attribute 'diff-refine-added nil :foreground "grey70" :background "color-29" :inverse-video nil)
+  ;; (set-face-attribute 'diff-refine-removed nil :foreground "grey70" :background "color-88" :inverse-video nil)
+
+  ;; (set-face-attribute 'diff-refine-added nil :foreground "grey10" :background "color-23" :inverse-video nil)
+  ;; (set-face-attribute 'diff-refine-removed nil :foreground "grey5" :background "color-52" :inverse-video nil)
 
   
   ;; Display the status buffer in full-frame mode
