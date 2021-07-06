@@ -6,6 +6,7 @@ emacs.d/elpa/
 emacs.d/ac-comphist.dat
 emacs.d/srecode-map.el
 emacs.d/transient
+emacs.d/projectile-bookmarks.eld
 *.log
 *.err
 *.out
