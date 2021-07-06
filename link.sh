@@ -8,7 +8,7 @@ ALL=("zsh/zshrc $HOME/.zshrc"
      "git/gitconfig $HOME/.gitconfig"
      "git/gitignore_global $HOME/.gitignore_global"
      "git/gitmessage $HOME/.gitmessage"
-     "matplotlib/matplotlibrc $HOME/.matplotlib/matplotlibrc"
+     "matplotlib/matplotlibrc $HOME/.config/matplotlib/matplotlibrc"
     )
 
 OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"

@@ -172,7 +172,9 @@
 ;;==============================================================================
 ;;iBuffer
 (autoload 'ibuffer "ibuffer" "List buffers." t)
+(setq ibuffer-expert t)
 (delete-selection-mode 1) ;; Delete selected text when you type
+
 
 ;; Turn off god forsaken change-log-mode
 (setq auto-mode-alist

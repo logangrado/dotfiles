@@ -216,7 +216,7 @@
 (use-package magit
   :ensure t
   :config
-  (setq magit-diff-refine-hunk 'all)
+  (setq magit-diff-refine-hunk t)
 
   ;; Colors!
   ;; Branches and tags
@@ -235,17 +235,11 @@
   (set-face-attribute 'magit-diff-context nil :foreground "brightblue" :background "brightblack")
   (set-face-attribute 'magit-diff-context-highlight nil :foreground "grey70" :background "grey20")
 
-  ;; (set-face-attribute 'magit-diff-removed nil :foreground "brightblue" :background "color-52")
-  ;; (set-face-attribute 'magit-diff-removed-highlight nil :foreground "brightblue" :background "color-52")
-
-  ;; (set-face-attribute 'magit-diff-added nil :foreground "grey70" :background "color-23") ;;""color-22")
-  ;; (set-face-attribute 'magit-diff-added-highlight nil :foreground "grey70" :background "color-23") ;;"color-22")
-
-  (set-face-attribute 'magit-diff-removed nil :foreground "red" :background nil :inherit 'magit-diff-context)
-  (set-face-attribute 'magit-diff-removed-highlight nil :foreground "red" :background nil :inherit 'magit-diff-context-highlight)
-
-  (set-face-attribute 'magit-diff-added nil :foreground "green" :background nil :inherit 'magit-diff-context)
-  (set-face-attribute 'magit-diff-added-highlight nil :foreground "green" :background nil :inherit 'magit-diff-context-highlight)
+  (set-face-attribute 'magit-diff-removed t :foreground "red" :background "brightblack" :inherit 'magit-diff-context)
+  (set-face-attribute 'magit-diff-removed-highlight t :foreground "red" :background "grey20" :inherit 'magit-diff-context-highlight)
+  
+  (set-face-attribute 'magit-diff-added nil :foreground "green" :background "brightblack" :inherit 'magit-diff-context)
+  (set-face-attribute 'magit-diff-added-highlight nil :foreground "green" :background "grey20" :inherit 'magit-diff-context-highlight)
 
 
   ;; (set-face-attribute 'diff-refine-added nil :foreground "grey70" :background "color-29" :inverse-video nil)
