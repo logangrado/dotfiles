@@ -207,12 +207,14 @@
   ;;   C-x u : Show tree
   )
 
-(use-package exec-path-from-shell   ;; For GUI emacs
-   :ensure t
-   :config
-   (setq exec-path-from-shell-check-startup-files nil)  ; suppress warning message
-   (exec-path-from-shell-initialize)                    ; use shell path
-   )
+;; This appears to be responsible for confusing poetry.el/jedi. Disabling to see if the warnings
+;; finally go away...
+;; (use-package exec-path-from-shell   ;; For GUI emacs
+;;    :ensure t
+;;    :config
+;;    (setq exec-path-from-shell-check-startup-files nil)  ; suppress warning message
+;;    (exec-path-from-shell-initialize)                    ; use shell path
+;;    )
 
 (use-package magit
   :ensure t
