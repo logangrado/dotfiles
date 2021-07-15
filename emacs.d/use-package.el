@@ -1,6 +1,5 @@
 ;; Python Related
 ;;================================================================
-
 (use-package epc
   :ensure t
   )
@@ -14,8 +13,8 @@
   :ensure t
   :hook (python-mode . poetry-tracking-mode)
   :config
-  (setq poetry-tracking-strategy `projectile)
-  ;;(setq poetry-tracking-strategy `switch-buffer)
+  ;;(setq poetry-tracking-strategy `projectile)
+  (setq poetry-tracking-strategy `switch-buffer)
   ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
   )
 
@@ -30,6 +29,7 @@
   :config
   (add-to-list 'ac-sources 'ac-source-jedi-direct)
   (setq jedi:complete-on-dot t)
+  (setq jedi:get-in-function-call-delay 500)
   )
 
 (use-package python-black
@@ -82,11 +82,12 @@
 (use-package ibuffer-projectile
   :ensure t
   :init
-  (add-hook 'ibuffer-hook
+  (add-hook 'ibuffer-mode-hook
             (lambda ()
-      (ibuffer-projectile-set-filter-groups)
-      (unless (eq ibuffer-sorting-mode 'alphabetic)
-        (ibuffer-do-sort-by-alphabetic))))
+              (ibuffer-projectile-set-filter-groups)
+              (ibuffer-do-sort-by-filename/process)))
+      ;; (unless (eq ibuffer-sorting-mode 'alphabetic)
+      ;;   (ibuffer-do-sort-by-alphabetic))))
   :config
   ;; define size-h column (human readable)
   (define-ibuffer-column size-h
@@ -99,7 +100,7 @@
   
   (setq ibuffer-formats
       '((mark modified read-only " "
-              (name 18 18 :left :elide)
+              (name 25 25 :left :elide)
               " "
               (size-h 9 -1 :right)       ;; use human readable size
               " "
@@ -215,6 +216,8 @@
 
 (use-package magit
   :ensure t
+  :init
+  (bind-key "C-x g" 'magit-status)
   :config
   (setq magit-diff-refine-hunk t)
 
