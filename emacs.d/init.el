@@ -139,6 +139,12 @@
 
 (global-set-key (kbd "C-b") 'ibuffer)
 
+;; Revert buffer without confirmation
+(global-set-key (kbd "C-r")
+                '(lambda ()
+                  (interactive)
+                  (revert-buffer t t)))
+                                
 ;; Navigation
 (global-set-key (kbd "M-k") 'next-line)
 (global-set-key (kbd "M-i") 'previous-line)
