@@ -178,6 +178,9 @@
 ;;==============================================================================
 ;;iBuffer
 (autoload 'ibuffer "ibuffer" "List buffers." t)
+;; Hide all magit buffers
+(require 'ibuf-ext)
+(add-to-list 'ibuffer-never-show-predicates "^\\magit")
 (setq ibuffer-expert t)
 (delete-selection-mode 1) ;; Delete selected text when you type
 
