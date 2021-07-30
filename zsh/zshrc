@@ -40,7 +40,8 @@ unset LSCOLORS
 #======================================================
 export EDITOR="emacs -nw"
 alias emacs=$EDITOR
-alias emacsd='emacsclient -t'
+#alias emacsd='emacsclient -t'
+alias emacsd='emacsclient -c'
 alias emacsd-stop="emacsclient -e '(kill-emacs)'"
 alias emacsd-start="'emacs' --daemon"
 alias emacsd-restart="emacsd-stop && emacsd-start"
