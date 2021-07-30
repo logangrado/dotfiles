@@ -30,6 +30,13 @@
   (add-to-list 'ac-sources 'ac-source-jedi-direct)
   (setq jedi:complete-on-dot t)
   (setq jedi:get-in-function-call-delay 500)
+(use-package ein
+  :ensure t
+  :bind
+  ;; ECS <arrow> is really M-<arrow>
+  ("ESC <up>" . ein:worksheet-goto-prev-input-km)
+  ("ESC <down>" . ein:worksheet-goto-next-input-km)
+
   )
 
 (use-package python-black
