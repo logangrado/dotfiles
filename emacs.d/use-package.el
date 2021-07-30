@@ -18,18 +18,19 @@
   ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
   )
 
-(use-package jedi
-  ;; Python auto complete package
-  ;; relies on auto-compoete and epc
-  ;; also uses poetry mode to find/use the correct poetry environment
+(use-package company
   :ensure t
-  :hook (python-mode . jedi:setup)
-  ;;:after (poetry auto-complete epc)
+  )
+
+(use-package elpy
+  :ensure t
+  :defer t
   :init
-  :config
-  (add-to-list 'ac-sources 'ac-source-jedi-direct)
-  (setq jedi:complete-on-dot t)
-  (setq jedi:get-in-function-call-delay 500)
+  (advice-add 'python-mode :before 'elpy-enable)
+  (setq python-shell-interpreter "ipython"
+      python-shell-interpreter-args "-i --simple-prompt")
+  )
+
 (use-package ein
   :ensure t
   :bind
@@ -38,6 +39,20 @@
   ("ESC <down>" . ein:worksheet-goto-next-input-km)
 
   )
+
+;; (use-package jedi
+;;   ;; Python auto complete package
+;;   ;; relies on auto-compoete and epc
+;;   ;; also uses poetry mode to find/use the correct poetry environment
+;;   :ensure t
+;;   :hook (python-mode . jedi:setup)
+;;   ;;:after (poetry auto-complete epc)
+;;   :init
+;;   :config
+;;   (add-to-list 'ac-sources 'ac-source-jedi-direct)
+;;   (setq jedi:complete-on-dot t)
+;;   (setq jedi:get-in-function-call-delay 500)
+;;   )
 
 (use-package python-black
   :ensure t
@@ -57,11 +72,11 @@
   (ivy-mode)
   )
 
-(use-package auto-complete
-  :ensure t
-  :init
-  (ac-config-default)
-  )
+;; (use-package auto-complete
+;;   :ensure t
+;;   :init
+;;   (ac-config-default)
+;;   )
 
 (use-package projectile
   :ensure t
@@ -178,7 +193,7 @@
   :config
   (setq centaur-tabs-style "bar"
         centaur-tabs-height 32
-;;        centaur-tabs-set-icons t
+        ;; centaur-tabs-set-icons t
         centaur-tabs-set-modified-marker t
         centaur-tabs-show-navigation-buttons nil ; No navigation buttons
         centaur-tabs-set-close-button nil        ; No close button
