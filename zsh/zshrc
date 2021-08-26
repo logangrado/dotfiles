@@ -41,10 +41,16 @@ unset LSCOLORS
 export EDITOR="emacs -nw"
 alias emacs=$EDITOR
 #alias emacsd='emacsclient -t'
-alias emacsd='emacsclient -c'
-alias emacsd-stop="emacsclient -e '(kill-emacs)'"
-alias emacsd-start="'emacs' --daemon"
-alias emacsd-restart="emacsd-stop && emacsd-start"
+#alias emacsd='emacsclient -c'
+#alias emacsd-stop="emacsclient -e '(kill-emacs)'"
+#alias emacsd-start="'emacs' --daemon"
+#alias emacsd-restart="emacsd-stop && emacsd-start"
+
+source $HOME/.dotfiles/zsh/emacsd.sh
+#function emacsd() {emacsclient -c -nw $@}
+#function emacsd-start() {emacs --daemon=$1}
+#function emacsd-stop() {emacsclient -s $1 -e '(kill-emacs)'}
+#function emacsd-restart() {emacsd-stop $1;emacsd-start $1}
 
 # ALIASES
 #======================================================
@@ -65,7 +71,7 @@ alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
 
 # git log, but just show current branch, master, and dev (if they exist, and their remotes)
-alias gitlog='git log $($HOME/.dotfiles/scripts/get_remotes master dev HEAD) --graph --color --decorate --first-parent -m | $HOME/.dotfiles/scripts/reverse_log.py'
+alias gitlog='git log $($HOME/.dotfiles/scripts/get_remotes master dev HEAD) --graph --color --decorate --first-parent -m | $HOME/.dotfiles/scripts/reversqe_log.py'
 # git log, but just show current branch, master, and dev (if they exist, and their remotes)
 alias gitlog-full='git log $($HOME/.dotfiles/scripts/get_remotes master dev HEAD)  --graph --color --decorate | $HOME/.dotfiles/scripts/reverse_log.py'
 # git log all
