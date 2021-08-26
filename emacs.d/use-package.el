@@ -265,6 +265,7 @@
   ;; Branches and tags
   (set-face-attribute 'magit-branch-local nil :foreground "blue" :bold t)
   (set-face-attribute 'magit-branch-remote nil :foreground "red" :bold t)
+  (set-face-attribute 'magit-branch-current nil :underline t)
   (set-face-attribute 'magit-tag nil :foreground "cyan")
 
   ;; Section headers
