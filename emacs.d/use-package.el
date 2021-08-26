@@ -70,6 +70,16 @@
   :ensure t
   :init
   (ivy-mode)
+  ;; this sets the ivy autocomplete to only use two faces for matches
+  ;; face-1 is for space between matching words
+  ;; face-2 is for the actual matches
+  ;; ALSO, it seems that ivy-current-match somehow inherits from face-2 in some weird way...
+  (setq ivy-minibuffer-faces '(ivy-minibuffer-match-face-1
+                               ivy-minibuffer-match-face-2))
+  
+  (set-face-attribute 'ivy-current-match nil :foreground "black" :background "#65a7e2")
+  (set-face-attribute 'ivy-minibuffer-match-face-1 nil :foreground "brightblue" :background "brightblack")
+  (set-face-attribute 'ivy-minibuffer-match-face-2 nil :foreground "#6387ac" :background "brightblack" :inverse-video t :inherit nil)
   )
 
 ;; (use-package auto-complete
