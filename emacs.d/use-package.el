@@ -209,6 +209,10 @@
   ("C-c C-<right>" . centaur-tabs-forward)
   ("C-c C-<up>" . centaur-tabs-backward-group)
   ("C-c C-<down>" . centaur-tabs-forward-group)
+
+  ("C-c ESC <right>" . centaur-tabs-move-current-tab-to-right)
+  ("C-c ESC <left>" . centaur-tabs-move-current-tab-to-left)
+  ("C-c k" . centaur-tabs--kill-this-buffer-dont-ask)
   )
 
 (use-package iedit
