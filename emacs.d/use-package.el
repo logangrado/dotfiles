@@ -4,20 +4,6 @@
   :ensure t
   )
 
-(use-package poetry
-  ;; ANOTHER POSSABILITY: with-evenv
-  ;; This looks like it might be able to deted poetry env without haveing to do it for each buffer...
-  ;; However, with the 'projectile mode, it seems to work well
-  
-  ;; Allows automatically finding/using poetry envs
-  :ensure t
-  :hook (python-mode . poetry-tracking-mode)
-  :config
-  ;;(setq poetry-tracking-strategy `projectile)
-  (setq poetry-tracking-strategy `switch-buffer)
-  ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
-  )
-
 (use-package company
   :ensure t
   )
@@ -39,6 +25,22 @@
   ("ESC <down>" . ein:worksheet-goto-next-input-km)
 
   )
+
+;; Elpy doesn't seem to need this
+;; (use-package poetry
+;;   ;; ANOTHER POSSABILITY: with-evenv
+;;   ;; This looks like it might be able to deted poetry env without haveing to do it for each buffer...
+;;   ;; However, with the 'projectile mode, it seems to work well
+  
+;;   ;; Allows automatically finding/using poetry envs
+;;   :ensure t
+;;   :hook (python-mode . poetry-tracking-mode)
+;;   :config
+;;   ;;(setq poetry-tracking-strategy `projectile)
+;;   (setq poetry-tracking-strategy `switch-buffer)
+;;   ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
+;;   )
+
 
 ;; (use-package jedi
 ;;   ;; Python auto complete package
