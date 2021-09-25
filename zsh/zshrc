@@ -1,5 +1,5 @@
 # Source any extra zsh configs
-for CONFIG in $("ls" -a ~/.zshrc-*); do
+for CONFIG in $(find ~ -maxdepth 1 -name ".zshrc-*"); do
     source $CONFIG
 done
 
