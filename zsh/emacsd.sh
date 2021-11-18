@@ -8,8 +8,35 @@ local function _emacsd-list() {
     echo "${servers[@]}"
 }
 
+local function _launch-emacsd() {
+    emacsclient -c -nw -s $@
+}
+
 function emacsd(){
-    emacsclient -c -nw $@
+    if [[ "$#" -lt 1 ]]; then
+        echo "Missing client name"
+        return
+    fi
+
+    CLIENT_NAME=$1
+    RUNNING_CLIENTS=$(_emacsd-list)
+    
+    if echo $RUNNING_CLIENTS | grep -w $CLIENT_NAME > /dev/null; then
+        _launch-emacsd $@
+    else
+        echo "No client named '${CLIENT_NAME}'"
+        emacsd-list
+        echo ""
+        read "response?Start a new server? [Y/n] "
+        case $response in
+            [Yy][Ee][Ss] | [Yy] | "")
+                emacsd-start $@
+                _launch-emacsd $@
+                ;;
+            *)
+                ;;
+        esac
+    fi
 }
 
 function emacsd-start(){

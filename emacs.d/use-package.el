@@ -1,3 +1,5 @@
+;; Inbox
+
 ;; Python Related
 ;;================================================================
 (use-package epc
@@ -5,8 +7,14 @@
   )
 
 (use-package company
+  ;; Complete Anything (company). Autocomplete popup for code.
+  ;; Distinct from ivy, which auto-completes buffer commands
   :ensure t
+  :bind
+  (:map company-active-map ("RET" . newline))  ;; Make RET enter a newline
+  (:map company-active-map ("TAB" . company-complete-selection)) ;; Use TAB for completion (instead of complete common)  
   )
+
 
 (use-package elpy
   :ensure t
@@ -26,6 +34,7 @@
 
   )
 
+;; DELETE AFTER: 2021-01
 ;; Elpy doesn't seem to need this
 ;; (use-package poetry
 ;;   ;; ANOTHER POSSABILITY: with-evenv
@@ -41,7 +50,7 @@
 ;;   ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
 ;;   )
 
-
+;; DELETE AFTER: 2021-01
 ;; (use-package jedi
 ;;   ;; Python auto complete package
 ;;   ;; relies on auto-compoete and epc
@@ -84,6 +93,8 @@
   (set-face-attribute 'ivy-minibuffer-match-face-2 nil :foreground "#6387ac" :background "brightblack" :inverse-video t :inherit nil)
   )
 
+;; DELETE AFTER: 2021-01
+;; I believe this was completely supplanted in favor of ivy
 ;; (use-package auto-complete
 ;;   :ensure t
 ;;   :init
@@ -99,6 +110,7 @@
               ("s-p" . projectile-command-map)
               ("C-c p" . projectile-command-map)))
 
+;; DELETE AFTER: 2021-01
 ;; I THINK I've removed this in favor of ibuffer-prjectile, but who knows. delete later?
 ;; (use-package ibuffer-vc
 ;;   ;; Group ibuffers by VC project
@@ -173,6 +185,9 @@
   ;; Hides certain file types/extensions. Can be customized in list neo-hidden-regexp-list
   (setq neo-show-hidden-files nil)
   ;;(add-to-list 'neo-hidden-regexp-list)
+
+  (set-face-attribute 'neo-root-dir-face nil :foreground "lightblue" :bold t)
+  (set-face-attribute 'neo-dir-link-face nil :foreground "blue" :bold nil)
   )
 
 (use-package origami
@@ -214,6 +229,8 @@
   (centaur-tabs-headline-match)
   (centaur-tabs-group-by-projectile-project) ;; Group tabs by projectile
   (setq centaur-tabs-cycle-scope 'tabs) ;; cycle tabs only through current group
+  (set-face-attribute 'centaur-tabs-unselected nil :foreground "brightblue")
+  
   ;; :hook
   ;; (term-mode . centaur-tabs-local-mode)
   :bind
@@ -265,7 +282,7 @@
   ;; Branches and tags
   (set-face-attribute 'magit-branch-local nil :foreground "blue" :bold t)
   (set-face-attribute 'magit-branch-remote nil :foreground "red" :bold t)
-  (set-face-attribute 'magit-branch-current nil :underline t)
+  (set-face-attribute 'magit-branch-current nil :foreground "cyan" :bold t)
   (set-face-attribute 'magit-tag nil :foreground "cyan")
 
   ;; Section headers
@@ -580,7 +597,19 @@
   (add-hook 'protobuf-mode-hook
             (lambda () (c-add-style "my-style" my-protobuf-style t)))
   )
-  
+
+(use-package format-all
+  ;; Generalized formatting mode.
+  ;; Attempts to call the correct code formatter for just about any language (language-specific
+  ;; formatter must be installed). Also provides format-all-mode to automatically call
+  :ensure t
+  ;;:hook
+  ;;(jsonnet-mode . format-all-mode)
+  ;;(protobuf-mode . format-all-mode)
+  :bind
+  ("C-c C-f" . format-all-buffer)
+  )
+
 (use-package jsonnet-mode
   :ensure t
   )
