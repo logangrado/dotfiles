@@ -15,14 +15,20 @@
     <string>/Users/grado/.dotfiles/launchd/daily_cleanup.sh</string>
   </array>
 
+  <key>UserName</key>
+  <string>grado</string>
+  
   <key>StartCalendarInterval</key>
   <dict>
     <key>Hour</key>
     <integer>4</integer>
   </dict>
+
+  <!-- <key>StartInterval</key> -->
+  <!-- <integer>30</integer> -->
   
   <key>StandardErrorPath</key>
-  <string>/Users/grado/.dotfiles/launchd/daily_cleanup.err</string>
+  <string>/Users/grado/.dotfiles/launchd/daily_cleanup.out</string>
 
   <key>StandardOutPath</key>
   <string>/Users/grado/.dotfiles/launchd/daily_cleanup.out</string>

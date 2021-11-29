@@ -9,11 +9,11 @@ for SOURCE in $(find . -name "*.plist" -exec realpath {} \;); do
         rm $DEST
     fi
     
-    echo -n "  Linking... "
+    echo "Linking... $SOURCE -> $DEST"
     ln -s $SOURCE $DEST
     echo "done"
 
-    echo -n "  Loading... "
+    echo -n "Loading... "
     launchctl unload -w $DEST
     launchctl load -w $DEST
     echo "done"

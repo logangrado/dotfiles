@@ -23,7 +23,7 @@ function cleanup_logs() {
 }
 
 function log() {
-    echo "[$(DATE)] ${1}" >> $LOG_FILE
+    echo "[$(DATE)] ${1}" # >> $LOG_FILE
 }
 
 function cleanup_helper() {
@@ -47,6 +47,7 @@ function cleanup_helper() {
     done
 }
 
+
 function make_dirs() {
     for DIR in $@; do
         if [ ! -d $DIR ]; then
@@ -56,13 +57,14 @@ function make_dirs() {
 }
 
 function main() {
-    log ""
+    echo ""
     log "Running daily cleanup"
 
     cleanup_logs
     make_dirs $TODAY $YESTERDAY $LAST_WEEK $LAST_MONTH
 
     # Clean up downloads folder. Move from Today -> Yesterday, Yesterday -> Last Week, and remove old entries in Last Week
+    
     # Meant to be run at 4AM
     cleanup_helper $LAST_MONTH $TRASH +30d
     cleanup_helper $LAST_WEEK $LAST_MONTH +7d
@@ -71,6 +73,7 @@ function main() {
 
     # Empty trash
     rm -rf $TRASH/*
+    log "Done"
 }
 
 main
