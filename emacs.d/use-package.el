@@ -22,7 +22,11 @@
   :init
   (advice-add 'python-mode :before 'elpy-enable)
   (setq python-shell-interpreter "ipython"
-      python-shell-interpreter-args "-i --simple-prompt")
+        python-shell-interpreter-args "-i --simple-prompt")
+  ;; Use the currently-active python for elpy. As long as poetry is active when launching emacs, this works perfectly
+  (setq elpy-rpc-virtualenv-path 'current)
+  ;; fix "elpy-rpc--default-error-callback: peculiar error: "exited abnormally with code 1"" issue
+  (add-to-list 'process-coding-system-alist '("python" . (utf-8 . utf-8)))
   )
 
 (use-package ein
