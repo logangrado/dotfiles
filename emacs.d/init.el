@@ -26,6 +26,15 @@
 (setq scroll-step            1
       scroll-conservatively  10000)
 
+;; Turn off audio bell
+(setq ring-bell-function 'ignore)
+
+;; DIRED mode: Automatically close dired buffer upon select
+(eval-after-load "dired"
+  (lambda ()
+    (put 'dired-find-alternate-file 'disabled nil)
+    (define-key dired-mode-map (kbd "RET") #'dired-find-alternate-file)))
+
 ;; Hideshow
 ;;-------------------------------------------------------------------
 (defvar code-editing-mode-hooks '(c-mode-common-hook
