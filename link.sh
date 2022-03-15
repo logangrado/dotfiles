@@ -8,17 +8,19 @@ ALL=("zsh/zshrc $HOME/.zshrc"
      "git/gitconfig $HOME/.gitconfig"
      "git/gitignore_global $HOME/.gitignore_global"
      "git/gitmessage $HOME/.gitmessage"
-     "matplotlib/matplotlibrc $HOME/.config/matplotlib/matplotlibrc"
     )
 
 OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
      "iterm2/com.googlecode.iterm2.plist $HOME/Library/Preferences/com.googlecode.iterm2.plist"
+     "matplotlib $HOME/.matplotlib"
     )
+
+LINUX=("matplotlib $HOME/.config/matplotlib")
 
 # Determine OS
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    Linux*)  ;;
+    Linux*)  ALL=("${ALL[@]}" "${LINUX[@]}");;
     Darwin*) ALL=("${ALL[@]}" "${OSX[@]}");;
     CYGWIN*) ;;
     MINGW*)  ;;
