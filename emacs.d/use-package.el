@@ -437,7 +437,12 @@
   :init
   (setq org-latex-create-formula-image-program 'dvisvgm)
 
-  (setq org-agenda-files (list "~/org/todo/"))
+  (load-library "find-lisp")
+  (setq org-agenda-files
+   (find-lisp-find-files "~/org/" "\.org$"))
+  ;;(setq org-agenda-files 
+  ;;  (org-get-agenda-files-recursively "~/org"))
+  ;;(setq org-agenda-files (list "~/org"))
   (setq org-default-notes-file "~/org/todo/inbox.org")
 
   (setq org-agenda-ndays 7)
@@ -474,6 +479,11 @@
   (add-hook 'org-mode-hook 'real-auto-save-mode)
   (add-hook 'org-mode-hook 'auto-revert-mode)  
 
+  ;; Ensure org-capture pop up in full screen
+  (add-hook 'org-capture-mode-hook 'delete-other-windows)
+
+  (require 'ox-taskjuggler)
+  
   :bind
   ("S-RET" . org-insert-heading-respect-content)
   
@@ -487,11 +497,20 @@
 
   (setq org-M-RET-may-split-line nil)                 ;; Don't split lines when using M-RET
   
-  ;; Org-column settings
-  (setq org-agenda-overriding-columns-format "%TODO %ALLTAGS %ITEM")
+  ;; Org-column settings  
+  (setq org-agenda-overriding-columns-format "%TODO %3PRIORITY %ALLTAGS %ITEM")
   (set-face-attribute 'org-column nil :inverse-video nil)
   (setq org-agenda-view-columns-initially t)
 
+  ;; Org priority values
+  ;(setq org-priority-highest 1)
+  ;(setq org-priority-lowest 5)
+  ;(setq org-priority-default 4)
+  (setq org-highest-priority 1)
+  (setq org-default-priority 5)
+  (setq org-lowest-priority 9)
+  
+  
   ;; org-mode only keybindings
   (global-set-key (kbd "M-t") 'org-todo)
   
