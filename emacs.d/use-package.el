@@ -15,7 +15,6 @@
   (:map company-active-map ("TAB" . company-complete-selection)) ;; Use TAB for completion (instead of complete common)  
   )
 
-
 (use-package elpy
   :ensure t
   :defer t
@@ -37,37 +36,6 @@
   ("ESC <down>" . ein:worksheet-goto-next-input-km)
 
   )
-
-;; DELETE AFTER: 2021-01
-;; Elpy doesn't seem to need this
-;; (use-package poetry
-;;   ;; ANOTHER POSSABILITY: with-evenv
-;;   ;; This looks like it might be able to deted poetry env without haveing to do it for each buffer...
-;;   ;; However, with the 'projectile mode, it seems to work well
-  
-;;   ;; Allows automatically finding/using poetry envs
-;;   :ensure t
-;;   :hook (python-mode . poetry-tracking-mode)
-;;   :config
-;;   ;;(setq poetry-tracking-strategy `projectile)
-;;   (setq poetry-tracking-strategy `switch-buffer)
-;;   ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
-;;   )
-
-;; DELETE AFTER: 2021-01
-;; (use-package jedi
-;;   ;; Python auto complete package
-;;   ;; relies on auto-compoete and epc
-;;   ;; also uses poetry mode to find/use the correct poetry environment
-;;   :ensure t
-;;   :hook (python-mode . jedi:setup)
-;;   ;;:after (poetry auto-complete epc)
-;;   :init
-;;   :config
-;;   (add-to-list 'ac-sources 'ac-source-jedi-direct)
-;;   (setq jedi:complete-on-dot t)
-;;   (setq jedi:get-in-function-call-delay 500)
-;;   )
 
 (use-package python-black
   :ensure t
@@ -97,14 +65,6 @@
   (set-face-attribute 'ivy-minibuffer-match-face-2 nil :foreground "#6387ac" :background "brightblack" :inverse-video t :inherit nil)
   )
 
-;; DELETE AFTER: 2021-01
-;; I believe this was completely supplanted in favor of ivy
-;; (use-package auto-complete
-;;   :ensure t
-;;   :init
-;;   (ac-config-default)
-;;   )
-
 (use-package projectile
   :ensure t
   ;;:pin melpa-stable
@@ -113,21 +73,6 @@
   :bind (:map projectile-mode-map
               ("s-p" . projectile-command-map)
               ("C-c p" . projectile-command-map)))
-
-;; DELETE AFTER: 2021-01
-;; I THINK I've removed this in favor of ibuffer-prjectile, but who knows. delete later?
-;; (use-package ibuffer-vc
-;;   ;; Group ibuffers by VC project
-;;   :ensure t
-;;   :init
-;;   :config
-;;    ;; (add-hook 'ibuffer-hook
-;;    ;;           (lambda ()
-;;    ;;             (ibuffer-vc-set-filter-groups-by-vc-root)
-;;    ;;             (unless (eq ibuffer-sorting-mode 'alphabetic)
-;;    ;;               (ibuffer-do-sort-by-alphabetic))))
-;;    (setq vc-status ibuffer-formats)
-;;    )
 
 (use-package ibuffer-projectile
   :ensure t
@@ -664,6 +609,61 @@
   :config
   ;;(csv-align-fields-mode)
   )
+
+;; DELETE AFTER: 2021-01
+;; I believe this was completely supplanted in favor of ivy
+;; (use-package auto-complete
+;;   :ensure t
+;;   :init
+;;   (ac-config-default)
+;;   )
+
+
+;; DELETE AFTER: 2021-01
+;; I THINK I've removed this in favor of ibuffer-prjectile, but who knows. delete later?
+;; (use-package ibuffer-vc
+;;   ;; Group ibuffers by VC project
+;;   :ensure t
+;;   :init
+;;   :config
+;;    ;; (add-hook 'ibuffer-hook
+;;    ;;           (lambda ()
+;;    ;;             (ibuffer-vc-set-filter-groups-by-vc-root)
+;;    ;;             (unless (eq ibuffer-sorting-mode 'alphabetic)
+;;    ;;               (ibuffer-do-sort-by-alphabetic))))
+;;    (setq vc-status ibuffer-formats)
+;;    )
+
+;; DELETE AFTER: 2021-01
+;; Elpy doesn't seem to need this
+;; (use-package poetry
+;;   ;; ANOTHER POSSABILITY: with-evenv
+;;   ;; This looks like it might be able to deted poetry env without haveing to do it for each buffer...
+;;   ;; However, with the 'projectile mode, it seems to work well
+  
+;;   ;; Allows automatically finding/using poetry envs
+;;   :ensure t
+;;   :hook (python-mode . poetry-tracking-mode)
+;;   :config
+;;   ;;(setq poetry-tracking-strategy `projectile)
+;;   (setq poetry-tracking-strategy `switch-buffer)
+;;   ;; Other options: projectile (but only works if you switch buffers using projectile-switch command
+;;   )
+
+;; DELETE AFTER: 2021-01
+;; (use-package jedi
+;;   ;; Python auto complete package
+;;   ;; relies on auto-compoete and epc
+;;   ;; also uses poetry mode to find/use the correct poetry environment
+;;   :ensure t
+;;   :hook (python-mode . jedi:setup)
+;;   ;;:after (poetry auto-complete epc)
+;;   :init
+;;   :config
+;;   (add-to-list 'ac-sources 'ac-source-jedi-direct)
+;;   (setq jedi:complete-on-dot t)
+;;   (setq jedi:get-in-function-call-delay 500)
+;;   )
 
 
 ;;==============================
