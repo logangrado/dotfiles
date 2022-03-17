@@ -221,6 +221,7 @@
   :init
   (centaur-tabs-mode t)
   (centaur-tabs-local-mode)
+  
   :config
   (setq centaur-tabs-style "bar"
         centaur-tabs-height 32
@@ -234,9 +235,28 @@
   (centaur-tabs-group-by-projectile-project) ;; Group tabs by projectile
   (setq centaur-tabs-cycle-scope 'tabs) ;; cycle tabs only through current group
   (set-face-attribute 'centaur-tabs-unselected nil :foreground "brightblue")
+
+  ;; Fixed tab width
+  ;'(setq centaur-tabs-label-fixed-length 20)
+
+  ;; AUTOMATIC BUFFER REORDERING
+  ;;============================
+  ;; Enable buffer reordering when selecting tabs. Automatically moves the newly selected
+  ;; next to the previous tab. Only work with ivy-switch-buffer (not ibuffer)
+  (centaur-tabs-enable-buffer-reordering)
+  (setq centaur-tabs-adjust-buffer-order t)  ;; After switch, move previous buffer next to current buffer (but on the same side)
+  ;; Custom buffer switchign funtion. Only trigger for ivy/projectile switch
+  ;; Otherwise, if we switch buffers by focusing on a different emacs window in tmux, buffers switch on us
+  ;; NOTE: Note sure how to enable for ibuffer switches too
+  (defun custom-adjust-buffer-function ()
+    (if (or (string-prefix-p "ivy" (format "%s" this-command))
+	    (string-prefix-p "projectile" (format "%s" this-command))
+            (centaur-tabs-adjust-buffer-order)
+            )
+        )
+    )
+  (setq centaur-tabs-adjust-buffer-order-function 'custom-adjust-buffer-function)
   
-  ;; :hook
-  ;; (term-mode . centaur-tabs-local-mode)
   :bind
   ("C-c C-<left>" . centaur-tabs-backward)
   ("C-c C-<right>" . centaur-tabs-forward)
