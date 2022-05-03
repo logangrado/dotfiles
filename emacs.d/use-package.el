@@ -210,20 +210,28 @@
   ;; AUTOMATIC BUFFER REORDERING
   ;;============================
   ;; Enable buffer reordering when selecting tabs. Automatically moves the newly selected
-  ;; next to the previous tab. Only work with ivy-switch-buffer (not ibuffer)
-  (centaur-tabs-enable-buffer-reordering)
-  (setq centaur-tabs-adjust-buffer-order t)  ;; After switch, move previous buffer next to current buffer (but on the same side)
+  ;; (centaur-tabs-enable-buffer-reordering)
+  ;; (setq centaur-tabs-adjust-buffer-order t)  ;; After switch, move previous buffer next to current buffer (but on the same side)
   ;; Custom buffer switchign funtion. Only trigger for ivy/projectile switch
-  ;; Otherwise, if we switch buffers by focusing on a different emacs window in tmux, buffers switch on us
+  ;; ERROR: This still is triggerd when switching between tmux windows!
   ;; NOTE: Note sure how to enable for ibuffer switches too
-  (defun custom-adjust-buffer-function ()
-    (if (or (string-prefix-p "ivy" (format "%s" this-command))
-	    (string-prefix-p "projectile" (format "%s" this-command))
-            (centaur-tabs-adjust-buffer-order)
-            )
-        )
+  ;; (defun custom-adjust-buffer-function ()
+  ;;   (if (or (string-prefix-p "ivy" (format "%s" this-command))
+  ;;           (string-prefix-p "projectile" (format "%s" this-command))
+  ;;           (centaur-tabs-adjust-buffer-order)
+  ;;           )
+  ;;       )
+  ;;   )
+  ;; (setq centaur-tabs-adjust-buffer-order-function 'custom-adjust-buffer-function)
+
+  ;; Define custom function to reorder buffers, only when this function is called.
+  ;; Bind key below
+  (setq centaur-tabs-adjust-buffer-order t)  ;; After switch, move previous buffer next to current buffer (but on the same side)
+  (defun centaur-switch-buffer-and-reorder ()
+    (interactive)
+    (ivy-switch-buffer)
+    (centaur-tabs-adjust-buffer-order)
     )
-  (setq centaur-tabs-adjust-buffer-order-function 'custom-adjust-buffer-function)
   
   :bind
   ("C-c C-<left>" . centaur-tabs-backward)
@@ -234,6 +242,8 @@
   ("C-c ESC <right>" . centaur-tabs-move-current-tab-to-right)
   ("C-c ESC <left>" . centaur-tabs-move-current-tab-to-left)
   ("C-c k" . centaur-tabs--kill-this-buffer-dont-ask)
+
+  ("C-x b" . centaur-switch-buffer-and-reorder)
   )
 
 (use-package iedit
