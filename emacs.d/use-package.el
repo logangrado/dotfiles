@@ -81,6 +81,9 @@
   (set-face-attribute 'ivy-current-match nil :foreground "black" :background "#65a7e2")
   (set-face-attribute 'ivy-minibuffer-match-face-1 nil :foreground "brightblue" :background "brightblack")
   (set-face-attribute 'ivy-minibuffer-match-face-2 nil :foreground "#6387ac" :background "brightblack" :inverse-video t :inherit nil)
+  :bind
+  ;; Accept input as is (don't select an autocomplete)
+  ("C-c C-c" . ivy-immediate-done)
   )
 
 (use-package projectile
