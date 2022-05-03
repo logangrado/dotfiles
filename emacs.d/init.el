@@ -35,6 +35,15 @@
     (put 'dired-find-alternate-file 'disabled nil)
     (define-key dired-mode-map (kbd "RET") #'dired-find-alternate-file)))
 
+(defun reb-query-replace (to-string)
+  "Replace current RE from point with `query-replace-regexp'."
+  (interactive
+   (progn (barf-if-buffer-read-only)
+          (list (query-replace-read-to (reb-target-binding reb-regexp)
+                                       "Query replace"  t))))
+  (with-current-buffer reb-target-buffer
+    (query-replace-regexp (reb-target-binding reb-regexp) to-string)))
+
 ;; Hideshow
 ;;-------------------------------------------------------------------
 (defvar code-editing-mode-hooks '(c-mode-common-hook
