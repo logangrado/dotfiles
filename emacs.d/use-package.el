@@ -98,7 +98,9 @@
   (add-hook 'ibuffer-mode-hook
             (lambda ()
               (ibuffer-projectile-set-filter-groups)
-              (ibuffer-do-sort-by-filename/process)))
+              (ibuffer-do-sort-by-filename/process)
+              (visual-line-mode -1)
+              (setq truncate-lines t)))
       ;; (unless (eq ibuffer-sorting-mode 'alphabetic)
       ;;   (ibuffer-do-sort-by-alphabetic))))
   :config
