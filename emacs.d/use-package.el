@@ -624,9 +624,10 @@
   ;; Attempts to call the correct code formatter for just about any language (language-specific
   ;; formatter must be installed). Also provides format-all-mode to automatically call
   :ensure t
-  ;;:hook
-  ;;(jsonnet-mode . format-all-mode)
+  :hook
+  (jsonnet-mode . format-all-mode)
   ;;(protobuf-mode . format-all-mode)
+  (format-all-mode . format-all-ensure-formatter)
   :bind
   ("C-c C-f" . format-all-buffer)
   )
