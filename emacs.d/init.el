@@ -1,3 +1,9 @@
+;;(setq load-prefer-newer t)
+
+;; Custom/local packages
+(add-to-list 'load-path "~/.emacs.d/lisp")
+(require 'capnp-mode)
+
 ;; Backup and autosave lications
 ;;==============================================================================
 ;;backup
