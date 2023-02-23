@@ -67,5 +67,6 @@
   (+workspace/display))
 
 ;; Auto-dim other buffers
-(after! auto-dim-other-buffers
-  auto-dim-other-buffers-mode)
+(use-package! auto-dim-other-buffers
+  :init
+  (auto-dim-other-buffers-mode))
