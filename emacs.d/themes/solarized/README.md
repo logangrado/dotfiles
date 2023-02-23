@@ -1,4 +1,3 @@
-[![Stories in Ready](https://badge.waffle.io/sellout/emacs-color-theme-solarized.png?label=ready&title=Ready)](https://waffle.io/sellout/emacs-color-theme-solarized)
 Solarized Colorscheme for Emacs
 ===============================
 
@@ -7,8 +6,8 @@ Stolen from Ethan Schoonover <es@ethanschoonover.com> by Greg Pfeil <greg@techno
 Visit the [Solarized homepage]
 ------------------------------
 
-See the [Solarized homepage] for screenshots, 
-details and colorscheme versions for Vim, Mutt, popular terminal emulators and 
+See the [Solarized homepage] for screenshots,
+details and colorscheme versions for Vim, Mutt, popular terminal emulators and
 other applications.
 
 Screenshots
@@ -19,7 +18,7 @@ Screenshots
 Downloads
 ---------
 
-If you have come across this colorscheme via the [Emacs-only repository] on 
+If you have come across this colorscheme via the [Emacs-only repository] on
 github, see the link above to the Solarized homepage or visit the main [Solarized repository].
 
 The [Emacs-only repository] is kept in sync with the main [Solarized repository]. Issues, bug reports, changelogs that are not specific to the Emacs implementation should be submitted to the main [Solarized repository].
@@ -27,7 +26,6 @@ The [Emacs-only repository] is kept in sync with the main [Solarized repository]
 [Solarized homepage]:    http://ethanschoonover.com/solarized
 [Solarized repository]:  https://github.com/altercation/solarized
 [Emacs-only repository]:  https://github.com/sellout/emacs-color-theme-solarized
-[color-theme]: http://www.nongnu.org/color-theme
 
 Installation & Usage
 --------------------
@@ -38,26 +36,25 @@ Installation & Usage
 2. Add `(load-theme 'solarized t)` to your Emacs init file.
 3. Reload the init file, or restart Emacs.
 
-### [color-theme] \(pre-Emacs 24\)
-
-1. Download and install [color-theme].
-2. Add the `emacs-color-theme-solarized` directory to your Emacs `load-path`.
-3. Add `(require 'color-theme-solarized)` and `(color-theme-solarized)` to your Emacs init file (usually `~/.emacs`).
-3. Reload the init file, or restart Emacs.
-
 ### all versions
 
 To switch between the light and dark variations of Solarized, set the frame’s `background-mode`. This can be accomplished globally using `M-x customize-variable frame-background-mode` or on a per-frame basis with `(set-frame-parameter nil 'background-mode 'light)` (or `'dark`).  If you're in a terminal, you must also set the terminal parameter with `(set-terminal-parameter nil 'background-mode 'light)` (or `'dark`). Remember to call `enable-theme` after changing the background mode to update the state of the theme.
 
 This allows you to have a mix of light and dark frames. I tend to use light frames in the GUI and dark frames in my terminal, so I use the following code:
 
-```common-lisp
+```emacs-lisp
 (add-hook 'after-make-frame-functions
           (lambda (frame)
-            (let ((mode (if (display-graphic-p frame) 'light 'dark)))
-              (set-frame-parameter frame 'background-mode mode)
-              (set-terminal-parameter frame 'background-mode mode))
-            (enable-theme 'solarized)))
+            (solarized-update-background-mode
+             (if (display-graphic-p frame) 'light 'dark)
+             (list frame))))
+```
+Similarly, you can switch between background modes with `M-x solarized-toggle-background-mode`.
+
+If you use [Emacs Plus](https://github.com/d12frosted/homebrew-emacs-plus), you can keep the mode in sync with the OS with
+```emacs-lisp
+(add-hook 'ns-system-appearance-change-functions
+          #'solarized-update-background-mode)
 ```
 
 ### IMPORTANT NOTE FOR TERMINAL USERS:
@@ -73,7 +70,7 @@ a set compatible with the terminal's default limited 256 color palette
 (whereas by using the terminal's 16 ANSI color values, you would
 see the correct, specific values for the Solarized palette).
 
-Again, I recommend just changing your terminal colors to Solarized values 
+Again, I recommend just changing your terminal colors to Solarized values
 either manually or via one of the many terminal schemes available for import.
 
 Advanced Configuration
@@ -116,21 +113,21 @@ but does include several variables that can be customized.
 
 *   solarized-bold | solarized-underline | solarized-italic
 
-    If you wish to stop Solarized from displaying bold, underlined or 
+    If you wish to stop Solarized from displaying bold, underlined or
     italicized typefaces, simply set the appropriate variable to `nil`.
 
 *   solarized-contrast
 
-    Stick with normal! It's been carefully tested. Setting this option to high 
+    Stick with normal! It's been carefully tested. Setting this option to high
     or low does use the same Solarized palette but simply shifts some values
     up or down in order to expand or compress the tonal range displayed.
 
 *   solarized-visibility
 
     Special characters such as trailing whitespace, tabs, newlines, when
-    displayed using `:set list` can be set to one of three levels depending on 
+    displayed using `:set list` can be set to one of three levels depending on
     your needs. Default value is `normal` with `high` and `low` options.
-    
+
 *   solarized-broken-srgb
 
     Emacs [bug #8402](http://debbugs.gnu.org/cgi/bugreport.cgi?bug=8402)
@@ -148,7 +145,7 @@ I have attempted to modularize the creation of Emacs colorschemes in this script
 The Values
 ----------
 
-L\*a\*b values are canonical (White D65, Reference D50), other values are 
+L\*a\*b values are canonical (White D65, Reference D50), other values are
 matched in sRGB space.
 
     SOLARIZED HEX     16/8 TERMCOL  XTERM/HEX   L*A*B      RGB         HSB
@@ -169,13 +166,12 @@ matched in sRGB space.
     blue      #268bd2  4/4 blue      33 #0087ff 55 -10 -45  38 139 210 205  82  82
     cyan      #2aa198  6/6 cyan      37 #00afaf 60 -35 -05  42 161 152 175  74  63
     green     #859900  2/2 green     64 #5f8700 60 -20  65 133 153   0  68 100  60
-    
+
 ### Bug Reporting
 
 Here are some things to keep in mind when submitting a bug report:
 
 *   include the output of `M-x version` in your report,
-*   mention whether you’re using color-theme or the Emacs 24 theme,
 *   include the names of Emacs faces that you have a problem with (`M-: (face-at-point)` and `M-x describe-face` will tell you the name of the face at point),
 *   include the output of `M-: (display-color-cells)` (that lets us know which set of colors your Emacs is using),
 *   screenshots are very helpful (before and after if you made a change),
