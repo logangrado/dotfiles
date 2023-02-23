@@ -1,21 +1,21 @@
 backups
 
 # Emacs ignores
-emacs.d/auto-save-list/
-emacs.d/backups/
-emacs.d/bookmarks
-emacs.d/elpa/
-emacs.d/ac-comphist.dat
-emacs.d/srecode-map.el
-emacs.d/transient
-emacs.d/projectile-bookmarks.eld
-emacs.d/elpy
-emacs.d/eshell
-emacs.d/request
-emacs.d/url
-emacs.d/.local
-emacs.d/.org-id-locations
-emacs.d/org-roam.db
+emacs.vanilla/auto-save-list/
+emacs.vanilla/backups/
+emacs.vanilla/bookmarks
+emacs.vanilla/elpa/
+emacs.vanilla/ac-comphist.dat
+emacs.vanilla/srecode-map.el
+emacs.vanilla/transient
+emacs.vanilla/projectile-bookmarks.eld
+emacs.vanilla/elpy
+emacs.vanilla/eshell
+emacs.vanilla/request
+emacs.vanilla/url
+emacs.vanilla/.local
+emacs.vanilla/.org-id-locations
+emacs.vanilla/org-roam.db
 
 
 *.log

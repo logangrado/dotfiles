@@ -1,5 +1,5 @@
 [submodule "emacs.d/hideshow-orgmode"]
-	path = emacs.d/hideshow-orgmode
+	path = emacs.vanilla/hideshow-orgmode
 	url = https://github.com/logangrado/hideshow-orgmode.git
 [submodule "pyenv/plugins/pyenv-implict"]
 	path = pyenv/plugins/pyenv-implict
