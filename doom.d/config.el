@@ -83,3 +83,7 @@
       (insert (+workspace--tabline))))
   (run-with-idle-timer 1 t #'display-workspaces-in-minibuffer)
   (+workspace/display))
+
+;; Auto-dim other buffers
+(after! auto-dim-other-buffers
+  auto-dim-other-buffers-mode)

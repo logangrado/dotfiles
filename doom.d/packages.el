@@ -11,6 +11,7 @@
 
 (package! jsonnet-mode)
 (package! json-navigator)
+(package! auto-dim-other-buffers)
 
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:
