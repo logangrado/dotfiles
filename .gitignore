@@ -1,4 +1,6 @@
 backups
+
+# Emacs ignores
 emacs.d/auto-save-list/
 emacs.d/backups/
 emacs.d/bookmarks
@@ -11,6 +13,11 @@ emacs.d/elpy
 emacs.d/eshell
 emacs.d/request
 emacs.d/url
+emacs.d/.local
+emacs.d/.org-id-locations
+emacs.d/org-roam.db
+
+
 *.log
 *.err
 *.out

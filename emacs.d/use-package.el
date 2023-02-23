@@ -60,7 +60,7 @@
   :after python
   :hook (python-mode . python-black-on-save-mode)
   :config
-  (setq python-black-extra-args (list "-l 120"))
+  ;(setq python-black-extra-args (list "-l 120"))
   )
 
 ;; General
@@ -98,14 +98,19 @@
 (use-package ibuffer-projectile
   :ensure t
   :init
-  (add-hook 'ibuffer-mode-hook
-            (lambda ()
-              (ibuffer-projectile-set-filter-groups)
-              (ibuffer-do-sort-by-filename/process)
-              (visual-line-mode -1)
-              (setq truncate-lines t)))
-      ;; (unless (eq ibuffer-sorting-mode 'alphabetic)
-      ;;   (ibuffer-do-sort-by-alphabetic))))
+  ;; (add-hook 'ibuffer-mode-hook
+  ;;           (lambda ()
+  ;;             (ibuffer-projectile-set-filter-groups)
+  ;;             (ibuffer-do-sort-by-filename/process)
+  ;;             (visual-line-mode -1)
+  ;;             (setq truncate-lines t)))
+  ;;     ;; (unless (eq ibuffer-sorting-mode 'alphabetic)
+  ;;     ;;   (ibuffer-do-sort-by-alphabetic))))
+  (add-hook 'ibuffer-hook
+    (lambda ()
+      (ibuffer-projectile-set-filter-groups)
+      (unless (eq ibuffer-sorting-mode 'alphabetic)
+        (ibuffer-do-sort-by-alphabetic))))
   :config
   ;; define size-h column (human readable)
   (define-ibuffer-column size-h
@@ -258,6 +263,10 @@
   :ensure t
   :init
   (global-undo-tree-mode)
+  (setq undo-tree-auto-save-history nil) ;;Don't create undo tree history files
+  (setq undo-tree-history-directory-alist '(("." . "~/.emacs.d./.cache"))) ;; This should save undo history in emacs cache, but doesn't appear to work.
+  ;; Just disable history for now
+  
   ;; Keybindings:
   ;;   C-_   : Undo,
   ;;   M-_   : Redo,
