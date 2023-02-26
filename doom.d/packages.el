@@ -11,6 +11,7 @@
 
 (package! jsonnet-mode)
 (package! json-navigator)
+(package! ibuffer-projectile)
 (package! auto-dim-other-buffers)
 (package! origami)
 
