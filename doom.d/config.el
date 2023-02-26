@@ -129,3 +129,8 @@
         "t" #'origami-recursively-toggle-node
         "T" #'origami-toggle-all-nodes)
  )
+
+(use-package dockerfile-mode
+  :init
+  (add-to-list 'auto-mode-alist '("Dockerfile.*\\'" . dockerfile-mode))
+ )
