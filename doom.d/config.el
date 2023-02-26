@@ -18,7 +18,7 @@
 ;; accept.
 (if (string-equal system-type "darwin")
     (setq doom-font (font-spec :family "Menlo" :size 12))
-    (setq doom-font (:size 12)))
+    (setq doom-font (font-spec :size 12)))
 (setq doom-theme 'doom-one)
 (setq display-line-numbers-type t)
 
