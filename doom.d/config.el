@@ -16,7 +16,9 @@
 ;;----
 ;; See 'C-h v doom-font' for documentation and more examples of what they
 ;; accept.
-(setq doom-font (font-spec :family "Menlo" :size 12))
+(if (string-equal system-type "darwin")
+    (setq doom-font (font-spec :family "Menlo" :size 12))
+    (setq doom-font (:size 12)))
 (setq doom-theme 'doom-one)
 (setq display-line-numbers-type t)
 
