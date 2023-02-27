@@ -170,3 +170,5 @@
   :init
   (add-to-list 'auto-mode-alist '("Dockerfile.*\\'" . dockerfile-mode))
  )
+
+(mapc 'load (file-expand-wildcards "~/.doom.d/packages/*.el"))
