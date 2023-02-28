@@ -65,6 +65,7 @@
 (define-key evil-visual-state-map "3" 'comment-region)
 (define-key evil-visual-state-map "4" 'uncomment-region)
 (define-key evil-normal-state-map "\C-w" 'evil-delete)
+(define-key evil-normal-state-map "U" 'evil-redo)
 (define-key evil-insert-state-map "\C-w" 'evil-delete)
 (define-key evil-visual-state-map "\C-w" 'evil-delete)
 (define-key evil-normal-state-map "\C-y" 'yank)
@@ -97,9 +98,25 @@
                       ))
 
 ;; SAVE BUFFER ON INSERT MODE EXIT
-(add-hook 'evil-insert-state-exit-hook
-          (lambda ()
-            (call-interactively #'save-buffer)))
+;; (add-hook 'evil-insert-state-exit-hook
+;;           (lambda ()
+;;             (call-interactively #'save-buffer)))
+
+(defun my-save-if-bufferfilename ()
+  (if (buffer-file-name)
+      (progn
+        (save-buffer))
+    (message "no file is associated to this buffer: do nothing")))
+(add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
+
+;; Esc quits most things
+(define-key evil-normal-state-map [escape] 'keyboard-quit)
+(define-key evil-visual-state-map [escape] 'keyboard-quit)
+(define-key minibuffer-local-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-ns-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-completion-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
+(define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
 
 ;; DONT FORGET
 ;; Use '/' to search, n/N to move foward/backward
