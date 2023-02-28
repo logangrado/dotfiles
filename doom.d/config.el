@@ -59,6 +59,11 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
+;; SAVE BUFFER ON EXIT OF INSERT MODE
+(add-hook 'evil-insert-state-exit-hook
+          (lambda ()
+            (call-interactively #'save-buffer)))
+
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
 ;; Load all files in packages/
