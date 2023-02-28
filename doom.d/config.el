@@ -86,15 +86,17 @@
 
 ;; MAYBE DEFINE UP/DOWN to K/J (capital)?
 ;; However, J (bound to evil-join) seems pretty useful
+;; TODO Figure out how to move screen if point is within ~10/20 lines of top/bottom on scrolling
+;; Them remove the (evil-scroll-line-[up|down]])
 (define-key evil-normal-state-map (kbd "K") (lambda ()
                     (interactive)
-                    (previous-line 20)
-                    ;; (evil-scroll-line-up 10)
+                    (previous-line 10)
+                    (evil-scroll-line-up 10)
                     ))
 (define-key evil-normal-state-map (kbd "J") (lambda ()
                       (interactive)
-                      (next-line 20)
-                      ;; (evil-scroll-line-down 10)
+                      (next-line 10)
+                      (evil-scroll-line-down 10)
                       ))
 
 ;; SAVE BUFFER ON INSERT MODE EXIT
