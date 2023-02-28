@@ -59,10 +59,53 @@
 ;; You can also try 'gd' (or 'C-c c d') to jump to their definition and see how
 ;; they are implemented.
 
-;; SAVE BUFFER ON EXIT OF INSERT MODE
+;; GENERAL KEYBINDINGS
+;; ================================================================
+;; These keybindings maintain compatability
+(define-key evil-visual-state-map "3" 'comment-region)
+(define-key evil-visual-state-map "4" 'uncomment-region)
+(define-key evil-normal-state-map "\C-w" 'evil-delete)
+(define-key evil-insert-state-map "\C-w" 'evil-delete)
+(define-key evil-visual-state-map "\C-w" 'evil-delete)
+(define-key evil-normal-state-map "\C-y" 'yank)
+(define-key evil-insert-state-map "\C-y" 'yank)
+(define-key evil-visual-state-map "\C-y" 'yank)
+(define-key evil-normal-state-map "\C-k" 'kill-line)
+(define-key evil-insert-state-map "\C-k" 'kill-line)
+(define-key evil-visual-state-map "\C-k" 'kill-line)
+(define-key evil-normal-state-map "Q" 'call-last-kbd-macro)
+(define-key evil-visual-state-map "Q" 'call-last-kbd-macro)
+;; Not sure what this one does, but let's us toggle beginnign/end
+;; of line with TAB
+(define-key evil-normal-state-map (kbd "TAB") 'evil-undefine)
+(defun evil-undefine ()
+ (interactive)
+ (let (evil-mode-map-alist)
+   (call-interactively (key-binding (this-command-keys)))))
+
+;; MAYBE DEFINE UP/DOWN to K/J (capital)?
+;; However, J (bound to evil-join) seems pretty useful
+(define-key evil-normal-state-map (kbd "K") (lambda ()
+                    (interactive)
+                    (previous-line 20)
+                    ;; (evil-scroll-line-up 10)
+                    ))
+(define-key evil-normal-state-map (kbd "J") (lambda ()
+                      (interactive)
+                      (next-line 20)
+                      ;; (evil-scroll-line-down 10)
+                      ))
+
+;; SAVE BUFFER ON INSERT MODE EXIT
 (add-hook 'evil-insert-state-exit-hook
           (lambda ()
             (call-interactively #'save-buffer)))
+
+;; DONT FORGET
+;; Use '/' to search, n/N to move foward/backward
+;; You can then use :%s/<A>/<B> to REPLACE A with B (just like SED!) I'm sure it can handle regex too
+;; You can use :%s on it's own (cool!). Don't yet know how to navigate between matches, and accept/reject, OR
+;; how to limit
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
