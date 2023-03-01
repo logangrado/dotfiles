@@ -9,8 +9,11 @@
   ;;:defer 5
 
   :bind (:map evil-normal-state-map
+         ("M-[" . centaur-tabs-backward)
          ("M-]" . centaur-tabs-forward)
-         ("M-[" . centaur-tabs-backward))
+         ("H" . centaur-tabs-backward)
+         ("L" . centaur-tabs-forward)
+         )
 
   :hook
   ;; Disalbe tabs in vterm

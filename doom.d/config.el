@@ -26,6 +26,11 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
+;; Set cache directory to be within the user cache directory
+(if (string-equal system-type "darwin")
+    (setq doom-cache-dir "~/Library/Caches/doom.d")
+    (setq doom-cache-dir "~/.cache/doom.d"))
+
 
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
@@ -84,20 +89,20 @@
  (let (evil-mode-map-alist)
    (call-interactively (key-binding (this-command-keys)))))
 
-;; MAYBE DEFINE UP/DOWN to K/J (capital)?
-;; However, J (bound to evil-join) seems pretty useful
 ;; TODO Figure out how to move screen if point is within ~10/20 lines of top/bottom on scrolling
 ;; Them remove the (evil-scroll-line-[up|down]])
+;; This seems controllable with `scroll-margin' and `maximum-scroll-margin'
+;; (setq scroll-margin 10) -> leaves a margin of 10. Works smoothly scrolling down, but jumps on the way up.
+(setq scroll-margin 10) ;; Leave a margin of 10 at top/bottom.
+                        ;; FIXME Works smoothly scrolling down, but not up.
 (define-key evil-normal-state-map (kbd "K") (lambda ()
                     (interactive)
                     (previous-line 10)
-                    (evil-scroll-line-up 10)
-                    ))
-(define-key evil-normal-state-map (kbd "J") (lambda ()
+                    (evil-scroll-line-up 10)))
+(define-key evil-normal-state-map (kbd "J") (lambda () ;; Overrides evil-join, may want to re-bind
                       (interactive)
                       (next-line 10)
-                      (evil-scroll-line-down 10)
-                      ))
+                      (evil-scroll-line-down 10)))
 
 ;; SAVE BUFFER ON INSERT MODE EXIT
 ;; (add-hook 'evil-insert-state-exit-hook
@@ -108,7 +113,7 @@
   (if (buffer-file-name)
       (progn
         (save-buffer))
-    ))
+    (message "no file is associated to this buffer: do nothing")))
 (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 
 ;; Esc quits most things
