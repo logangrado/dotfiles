@@ -26,12 +26,6 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
-;; Set cache directory to be within the user cache directory
-(if (string-equal system-type "darwin")
-    (setq doom-cache-dir "~/Library/Caches/doom.d")
-    (setq doom-cache-dir "~/.cache/doom.d"))
-
-
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
