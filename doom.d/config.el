@@ -106,8 +106,7 @@
 (defun my-save-if-bufferfilename ()
   (if (buffer-file-name)
       (progn
-        (save-buffer))
-    (message "no file is associated to this buffer: do nothing")))
+        (save-buffer))))
 (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 
 ;; Esc quits most things
