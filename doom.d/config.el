@@ -106,7 +106,7 @@
   (if (buffer-file-name)
       (progn
         (save-buffer))
-    (message "no file is associated to this buffer: do nothing")))
+    ))
 (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 
 ;; Esc quits most things
@@ -117,6 +117,9 @@
 (define-key minibuffer-local-completion-map [escape] 'minibuffer-keyboard-quit)
 (define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
 (define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
+
+;; Exclude these modes from evil escape (remove vterm mode from default)
+(setq evil-escape-excluded-major-modes nil)
 
 ;; DONT FORGET
 ;; Use '/' to search, n/N to move foward/backward
