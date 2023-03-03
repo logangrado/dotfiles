@@ -51,12 +51,6 @@ alias lsa='ls -CFGa'
 alias del='rmtrash'
 alias g++='g++ -std=c++11'
 
-#python aliases
-#alias python='python3'
-#alias pip='pip3'
-#alias ipython='ipython3'
-#alias pylab='ipython3 --pylab'
-
 #git aliases
 alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
@@ -75,9 +69,6 @@ alias glaf="gitlogall-full"
 alias gcm='git commit -m'
 alias gca='git commit --amend'
 alias gcan='git commit --amend --no-edit'
-
-#google cloud
-alias gci="gcloud compute instances"
 
 setopt nosharehistory                 # Prevent command history from being shared within windows
 # These lines prevent command-matching when moving through command history
