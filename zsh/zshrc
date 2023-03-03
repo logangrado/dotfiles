@@ -121,7 +121,12 @@ case "${unameOut}" in
         ;;
     MINGW*)  ;;
 esac
-    
+
+# WSL specific config
+if uname -r |grep -q 'Microsoft' ; then
+    export DISPLAY="`grep nameserver /etc/resolv.conf | sed 's/nameserver //'`:0"
+fi
+
 # Computer specific config
 #======================================================
 case $HOST in
