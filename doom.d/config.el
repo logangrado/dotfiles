@@ -100,8 +100,13 @@
 
 ;; Move to new window on creation
 (map! :leader
+      ;; Move to new window on creation
       "w s" #'+evil/window-split-and-follow
-      "w v" #'+evil/window-vsplit-and-follow)
+      "w v" #'+evil/window-vsplit-and-follow
+      ;; Bind keys to swap workspaces
+      "TAB {" #'+workspace/swap-left
+      "TAB }" #'+workspace/swap-right
+      )
 
 ;; SAVE BUFFER ON INSERT MODE EXIT
 (defun my-save-if-bufferfilename ()
