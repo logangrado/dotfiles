@@ -98,11 +98,12 @@
                       (next-line 10)
                       (evil-scroll-line-down 10)))
 
-;; SAVE BUFFER ON INSERT MODE EXIT
-;; (add-hook 'evil-insert-state-exit-hook
-;;           (lambda ()
-;;             (call-interactively #'save-buffer)))
+;; Move to new window on creation
+(map! :leader
+      "w s" #'+evil/window-split-and-follow
+      "w v" #'+evil/window-vsplit-and-follow)
 
+;; SAVE BUFFER ON INSERT MODE EXIT
 (defun my-save-if-bufferfilename ()
   (if (buffer-file-name)
       (progn
