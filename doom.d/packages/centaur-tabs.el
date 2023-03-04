@@ -23,12 +23,15 @@
   (centaur-tabs-mode t)
   (setq centaur-tabs-height 32
         centaur-tabs-style "bar"
-        centaur-tabs-set-icons nil
+        centaur-tabs-set-icons t
         centaur-tabs-set-modified-marker t
-        centaur-tabs-set-bar 'ler  ;;'under
+        centaur-tabs-set-bar 'left  ;;'under doesn't work
         centaur-tabs-set-close-button nil
         )
-  (centaur-tabs-group-by-projectile-project)
+
+  ;; The default seems to do a good job
+  (centaur-tabs-group-buffer-groups) ;; Default
+  ;; (centaur-tabs-group-by-projectile-project) ;; This shows magit buffers, which we dont want!
 
   ;; ;; These seem to help keep vterm tabs out of tabbar group?
   ;; (defun centaur-tabs-buffer-groups ()
