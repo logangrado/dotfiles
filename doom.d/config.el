@@ -115,6 +115,12 @@
         (save-buffer))))
 (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 
+;; Always switch to normal mode when switching windows or buffers
+(defun my-set-mode ()
+  (evil-normal-state)
+  )
+(add-hook 'doom-switch-window-hook 'my-set-mode)
+
 ;; Esc quits most things
 (define-key evil-normal-state-map [escape] 'keyboard-quit)
 (define-key evil-visual-state-map [escape] 'keyboard-quit)
