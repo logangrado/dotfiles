@@ -26,6 +26,10 @@
 ;; change `org-directory'. It must be set before org loads!
 (setq org-directory "~/org/")
 
+;;autorevert - automatically reload files changed on disk
+(global-auto-revert-mode t)
+(setq vc-follow-symlinks t) ;; Automatically open link (set to t for target)
+
 ;; Whenever you reconfigure a package, make sure to wrap your config in an
 ;; `after!' block, otherwise Doom's defaults may override your settings. E.g.
 ;;
