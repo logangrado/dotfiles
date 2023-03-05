@@ -6,13 +6,13 @@
   (origami-mode)
   :config
   (map! :map evil-normal-state-map
-        :prefix ("z" . "origami")
+        :prefix ("c" . "origami")
         "j" #'origami-forward-fold  ;;origami-next-fold
         "k" #'origami-previous-fold  ;;origami-previous-fold
-        "o" #'origami-open-node-recursively
-        "O" #'origami-open-all-nodes
-        "c" #'origami-close-node-recursively
-        "C" #'origami-close-all-nodes
-        "t" #'origami-recursively-toggle-node
-        "T" #'origami-toggle-all-nodes)
+        "s" #'origami-open-node-recursively
+        "S" #'origami-open-all-nodes
+        "h" #'origami-close-node-recursively
+        "H" #'origami-close-all-nodes
+        "c" #'origami-recursively-toggle-node
+        "C" #'origami-toggle-all-nodes)
  )
