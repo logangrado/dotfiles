@@ -114,6 +114,6 @@ case "${unameOut}" in
 esac
 
 # WSL specific config
-if uname -r |grep -q 'Microsoft' ; then
+if uname -r | grep -q 'microsoft' ; then
     export DISPLAY="`grep nameserver /etc/resolv.conf | sed 's/nameserver //'`:0"
 fi
