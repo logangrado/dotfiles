@@ -143,6 +143,17 @@
 ;; You can use :%s on it's own (cool!). Don't yet know how to navigate between matches, and accept/reject, OR
 ;; how to limit
 
+;; Set modes for format-all-mode
+(setq +format-on-save-enabled-modes
+  '(not emacs-lisp-mode    ; elisp's mechanisms are good enough
+        sql-mode           ; sqlformat is currently broken
+        tex-mode           ; latexindent is broken
+        latex-mode
+        python-mode        ; Use python-black. Format all has a tendency to kill code in folds
+        org-msg-edit-mode) ; doesn't need a formatter
+   )
+
+
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
 ;; Load all files in packages/
