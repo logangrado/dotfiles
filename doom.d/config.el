@@ -113,11 +113,11 @@
       )
 
 ;; SAVE BUFFER ON INSERT MODE EXIT
-(defun my-save-if-bufferfilename ()
-  (if (buffer-file-name)
-      (progn
-        (save-buffer))))
-(add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
+;; (defun my-save-if-bufferfilename ()
+;;   (if (buffer-file-name)
+;;       (progn
+;;         (save-buffer))))
+;; (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 
 ;; Always switch to normal mode when switching windows or buffers
 (defun my-set-mode ()
