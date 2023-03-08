@@ -153,6 +153,18 @@
         org-msg-edit-mode) ; doesn't need a formatter
    )
 
+;; (setq evil-motion-state-cursor 'box)  ; █
+;; (setq evil-visual-state-cursor 'box)  ; █
+;; (setq evil-normal-state-cursor 'box)  ; █
+;; (setq evil-insert-state-cursor '(bar ,(doom-color 'red)))  ; |
+;; (setq evil-emacs-state-cursor  'hbar) ; _
+
+;; Auto-open magit when switching projects
+;; Would be great to combine with default action
+;; new workspace/switch to existing -> magit    2
+
+;; This might be breaking things
+;;(setq projectile-switch-project-action 'projectile-vc)
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
