@@ -6,11 +6,11 @@
   (setq magit-diff-refine-hunk t)
 
   (custom-set-faces!
-    `(magit-branch-local :foreground ,(doom-color 'blue) :bold t)
+    `(magit-branch-local :foreground ,(nth 2 (doom-themes--colors-p 'blue)) :bold t)
     `(magit-branch-current :inherit magit-branch-local :underline t)
-    `(magit-branch-remote :foreground ,(doom-color 'red) :bold t)
+    `(magit-branch-remote :foreground ,(nth 2 (doom-themes--colors-p 'green)) :bold t)
     `(magit-branch-remote-head :inherit magit-branch-remote :box nil :underline t)
-    )
+   )
 
   ;; Colors!
   ;; Branches and tags
