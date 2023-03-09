@@ -30,6 +30,14 @@
        (let (display-buffer-alist)
          (vterm (+vterm/get-workspace-buffer-name))))))
 
+  (defun +vterm/split-and-here-workspace (arg)
+    "Split window vertically, follow, and vterm!"
+    (interactive "P")
+    (split-window-vertically (floor (* 0.66 (window-height))))
+    (other-window 1)
+    (+vterm/here-workspace arg)
+    )
+
   :config
   (setq vterm-shell "zsh")
   ;; Define keys in vterm-mode-map, active in normal-state
@@ -50,6 +58,7 @@
         )
 
   (map! :leader
-        "o T" #'+vterm/here-workspace
+        "o h" #'+vterm/here-workspace
+        "o T" #'+vterm/split-and-here-workspace
         )
   )
