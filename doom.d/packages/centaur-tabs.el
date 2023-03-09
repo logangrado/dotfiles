@@ -11,8 +11,8 @@
   :bind (:map evil-normal-state-map
          ("M-[" . centaur-tabs-backward)
          ("M-]" . centaur-tabs-forward)
-         ("H" . centaur-tabs-backward)
-         ("L" . centaur-tabs-forward)
+         ;; ("H" . centaur-tabs-backward)
+         ;; ("L" . centaur-tabs-forward)
          )
 
   :hook

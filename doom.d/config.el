@@ -93,14 +93,14 @@
 ;; (setq scroll-margin 10) -> leaves a margin of 10. Works smoothly scrolling down, but jumps on the way up.
 (setq scroll-margin 10) ;; Leave a margin of 10 at top/bottom.
                         ;; FIXME Works smoothly scrolling down, but not up.
-(define-key evil-normal-state-map (kbd "K") (lambda ()
-                    (interactive)
-                    (previous-line 10)
-                    (evil-scroll-line-up 10)))
-(define-key evil-normal-state-map (kbd "J") (lambda () ;; Overrides evil-join, may want to re-bind
-                      (interactive)
-                      (next-line 10)
-                      (evil-scroll-line-down 10)))
+
+;; Map fast movement keys
+(map! :map evil-normal-state-map
+      "K" #'(lambda () (interactive) (previous-line 10) (evil-scroll-line-up 10))
+      "J" #'(lambda () (interactive) (next-line 10) (evil-scroll-line-down 10))
+      "H" #'evil-beginning-of-line
+      "L" #'evil-end-of-line
+      )
 
 ;; Move to new window on creation
 (map! :leader
