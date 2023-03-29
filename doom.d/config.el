@@ -116,8 +116,8 @@
 ;; (defun my-save-if-bufferfilename ()
 ;;   (if (buffer-file-name)
 ;;       (progn
-;;         (save-buffer))))
 ;; (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
+;;         (save-buffer))))
 
 ;; Always switch to normal mode when switching windows or buffers
 (defun my-set-mode ()
