@@ -118,7 +118,6 @@ $(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} '
 
 #PROMPT2='%{$fg[red]%}\ %{$reset_color%}'
 
-RPS1='${return_code} %{$fg[blue]%}%~%{$reset_color%} [%*]'
 
 # Git prompt variables
 #==============================================================
@@ -144,7 +143,13 @@ ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[red]%}§"
 
 # Unused symbols ◒ ✚ ✔ ● ✘
 
-TMOUT=1
-TRAPALRM() {
-	   zle reset-prompt
-	   }
+# This re-sets the prompt every 1 second. Now that we use emacs vterm, it's very annpying for scrolling
+if [[ -z ${INSIDE_EMACS} ]]; then
+    TMOUT=1
+    TRAPALRM() {
+        zle reset-prompt
+        }
+    RPS1='${return_code} %{$fg[blue]%}%~%{$reset_color%} [%*]'
+else
+    RPS1='${return_code} %{$fg[blue]%}%~%{$reset_color%}'
+fi

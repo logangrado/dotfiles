@@ -1,0 +1,7 @@
+
+* Colors
+** Theme color retrieval
+- You can retrieve a named theme color with (doom-themes--colos-p '<color-name).
+- This returns a 4-element list => (name, default-color, 256-color, 8-color)
+- To then get the default-color item, use (nth 2 <list>)
+  -Ex: (nth 2 (doom-themes--colors-p 'blue))

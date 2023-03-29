@@ -51,12 +51,6 @@ alias lsa='ls -CFGa'
 alias del='rmtrash'
 alias g++='g++ -std=c++11'
 
-#python aliases
-#alias python='python3'
-#alias pip='pip3'
-#alias ipython='ipython3'
-#alias pylab='ipython3 --pylab'
-
 #git aliases
 alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
@@ -75,9 +69,6 @@ alias glaf="gitlogall-full"
 alias gcm='git commit -m'
 alias gca='git commit --amend'
 alias gcan='git commit --amend --no-edit'
-
-#google cloud
-alias gci="gcloud compute instances"
 
 setopt nosharehistory                 # Prevent command history from being shared within windows
 # These lines prevent command-matching when moving through command history
@@ -121,24 +112,8 @@ case "${unameOut}" in
         ;;
     MINGW*)  ;;
 esac
-    
-# Computer specific config
-#======================================================
-case $HOST in
-    "rpic_00")
-        export CLUSTER_HOME=~/rpi-cluster
-        PATH=$PATH:$CLUSTER_HOME/bin
-        ;;
-    "grado_mpb")
-        # MSI aliases
-        alias msi='ssh msi'
-        alias mesabi='ssh msi -t ssh mesabi'
-        alias itasca='ssh msi -t ssh itasca'
-        alias msilab='ssh msi -t ssh lab'
-esac
-# The next line updates PATH for the Google Cloud SDK.
-if [ -f '/Users/grado/Applications/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/grado/Applications/google-cloud-sdk/path.zsh.inc'; fi
 
-# The next line enables shell command completion for gcloud.
-if [ -f '/Users/grado/Applications/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/grado/Applications/google-cloud-sdk/completion.zsh.inc'; fi
-[[ :$PATH: == *:$HOME/bin:* ]] || PATH=$HOME/bin:$PATH
+# WSL specific config
+if uname -r | grep -q 'microsoft' ; then
+    export DISPLAY="`grep nameserver /etc/resolv.conf | sed 's/nameserver //'`:0"
+fi

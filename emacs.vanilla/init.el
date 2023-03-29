@@ -90,39 +90,47 @@
 ;; Colors and Themes
 ;;-------------------------------------------------------------------
 (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/solarized")
+(setq solarized-termcolors 256)
+(setq solarized-broken-srgb t)
 (set-frame-parameter nil 'background-mode 'dark)    ;;GUI
 (set-terminal-parameter nil 'background-mode 'dark) ;;Terminal
 (load-theme 'solarized t) ;; Need to load last to make it work for
 
-;; works for colorizing daemon mode and regular mode
-;; Applys dark to terminal, light to GUI (I think)
-;; Doesn't apply to NeoTree for some reason
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (let ((mode (if (display-graphic-p frame) 'dark 'dark))) ;; Apply first mode to 
-              (set-frame-parameter frame 'background-mode mode)
-              (set-terminal-parameter frame 'background-mode mode))
-            (enable-theme 'solarized)
-            (set-custom-faces)
-            )
-          )
 
 
-;; Colorization
-(defun set-custom-faces ()
-  ;; Put all customizations into a func, so we can call for either daemon or normal mode
-  ;; Line Numbers
-  (set-face-background 'linum "brightblack")
-  (set-face-underline-p 'linum nil) ;;Dont underline linenumbers
-  (set-face-attribute 'linum nil :inverse-video nil)
-  ;; Paren matching
-  (set-face-background 'show-paren-match "brightcyan")
-  ;; General syntax highlighting
-  (set-face-attribute 'font-lock-comment-face nil           :foreground "brightred")
-  (set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "brightred")
-  (set-face-attribute 'font-lock-doc-face nil               :foreground "cyan")
-  )
-(set-custom-faces)
+(custom-set-faces
+ `(ansi-color-black ((t (:foreground "#002b36"))))
+ `(ansi-color-red ((t (:foreground "#d33682"))))
+ )
+
+;; ;;works for colorizing daemon mode and regular mode
+;; ;;Applys dark to terminal, light to GUI (I think)
+;; ;;Doesn't apply to NeoTree for some reason
+;; (add-hook 'after-make-frame-functions
+;;           (lambda (frame)
+;;             (let ((mode (if (display-graphic-p frame) 'dark 'dark))) ;; Apply first mode to 
+;;               (set-frame-parameter frame 'background-mode mode)
+;;               (set-terminal-parameter frame 'background-mode mode))
+;;             (enable-theme 'solarized)
+;;             (set-custom-faces)
+;;             )
+;;           )
+
+;; ;; Colorization
+;; (defun set-custom-faces ()
+;;   ;; Put all customizations into a func, so we can call for either daemon or normal mode
+;;   ;; Line Numbers
+;;   (set-face-background 'linum "brightblack")
+;;   (set-face-underline-p 'linum nil) ;;Dont underline linenumbers
+;;   (set-face-attribute 'linum nil :inverse-video nil)
+;;   ;; Paren matching
+;;   (set-face-background 'show-paren-match "brightcyan")
+;;   ;; General syntax highlighting
+;;   (set-face-attribute 'font-lock-comment-face nil           :foreground "brightred")
+;;   (set-face-attribute 'font-lock-comment-delimiter-face nil :foreground "brightred")
+;;   (set-face-attribute 'font-lock-doc-face nil               :foreground "cyan")
+;;   )
+;; (set-custom-faces)
 
 ;;set faces for git smerge
 (defun set-smerge-faces ()
