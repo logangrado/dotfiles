@@ -159,12 +159,8 @@
 ;; (setq evil-insert-state-cursor '(bar ,(doom-color 'red)))  ; |
 ;; (setq evil-emacs-state-cursor  'hbar) ; _
 
-;; Auto-open magit when switching projects
-;; Would be great to combine with default action
-;; new workspace/switch to existing -> magit    2
-
-;; This might be breaking things
-;;(setq projectile-switch-project-action 'projectile-vc)
+;; Auto-open magit status when switching to new workspacesk
+(setq +workspaces-switch-project-function #'projectile-vc)
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
