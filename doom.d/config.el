@@ -162,6 +162,10 @@
 ;; Auto-open magit status when switching to new workspacesk
 (setq +workspaces-switch-project-function #'projectile-vc)
 
+(setq dired-kill-when-opening-new-dired-buffer t)
+(map! :map dired-mode-map "<return>" #'dired-find-alternate-file)
+
+
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
 ;; Load all files in packages/
