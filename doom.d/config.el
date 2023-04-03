@@ -64,21 +64,27 @@
 
 ;; GENERAL KEYBINDINGS
 ;; ================================================================
+;; CUT/COPY/PASTE BINDINGS
+(map! :map (evil-normal-state-map evil-insert-state-map evil-visual-state-map vterm-mode-map vterm-copy-mode-map vterm-mode-map)
+      "M-w" #'kill-ring-save
+      )
+(map! :map (evil-normal-state-map evil-insert-state-map vterm-mode-map)
+      "C-w" #'kill-region
+      "C-y" #'yank
+      "M-y" #'yank-from-kill-ring
+      )
+(map! :map evil-normal-state-map
+      "X" #'kill-region
+      "P" #'yank
+      )
+
 ;; These keybindings maintain compatability
 (define-key evil-visual-state-map "3" 'comment-region)
 (define-key evil-visual-state-map "4" 'uncomment-region)
-(define-key evil-normal-state-map "\C-w" 'evil-delete)
 (define-key evil-normal-state-map "U" 'evil-redo)
-(define-key evil-insert-state-map "\C-w" 'evil-delete)
-(define-key evil-visual-state-map "\C-w" 'evil-delete)
-(define-key evil-normal-state-map "\C-y" 'yank)
-(define-key evil-insert-state-map "\C-y" 'yank)
-(define-key evil-visual-state-map "\C-y" 'yank)
-(define-key evil-normal-state-map "\C-k" 'kill-line)
-(define-key evil-insert-state-map "\C-k" 'kill-line)
-(define-key evil-visual-state-map "\C-k" 'kill-line)
 (define-key evil-normal-state-map "Q" 'call-last-kbd-macro)
 (define-key evil-visual-state-map "Q" 'call-last-kbd-macro)
+(define-key evil-normal-state-map "\C-t" nil) ;; Unbind C-t (creates new workspace)
 ;; Not sure what this one does, but let's us toggle beginnign/end
 ;; of line with TAB
 (define-key evil-normal-state-map (kbd "TAB") 'evil-undefine)
