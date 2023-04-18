@@ -12,6 +12,11 @@
     `(magit-branch-remote-head :inherit magit-branch-remote :box nil :underline t)
    )
 
+   (map! :map magit-mode-map
+         "K" #'(lambda () (interactive) (previous-line 10) (evil-scroll-line-up 10))
+         "J" #'(lambda () (interactive) (next-line 10) (evil-scroll-line-down 10))
+         )
+
   ;; Colors!
   ;; Branches and tags
   ;; (set-face-attribute 'magit-branch-local nil :inherit 'ansi-color-green :bold t)
