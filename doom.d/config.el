@@ -72,6 +72,7 @@
       "C-w" #'kill-region
       "C-y" #'yank
       "M-y" #'yank-from-kill-ring
+      "C-k" #'kill-line
       )
 (map! :map evil-normal-state-map
       "X" #'kill-region
@@ -171,6 +172,14 @@
 (setq dired-kill-when-opening-new-dired-buffer t)
 (map! :map dired-mode-map "<return>" #'dired-find-alternate-file)
 
+
+;; REFILE
+;; ======
+;; Case-insensitive LS (in dired)
+(require 'ls-lisp)
+;; (setq ls-lisp-use-insert-directory-program nil)
+(setq ls-lisp-ignore-case 't)
+(setq ls-lisp-use-string-collate nil)
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
