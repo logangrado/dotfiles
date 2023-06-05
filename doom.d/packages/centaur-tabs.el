@@ -11,8 +11,8 @@
   :bind (:map evil-normal-state-map
          ("M-[" . centaur-tabs-backward)
          ("M-]" . centaur-tabs-forward)
-         ;; ("H" . centaur-tabs-backward)
-         ;; ("L" . centaur-tabs-forward)
+         ("M-}" . centaur-tabs-move-current-tab-to-right)
+         ("M-{" . centaur-tabs-move-current-tab-to-left)
          )
 
   :hook
@@ -21,12 +21,14 @@
 
   :config
   (centaur-tabs-mode t)
+  (setq centaur-tabs-adjust-buffer-order t) ;;Auto-reorder tabs when switching
   (setq centaur-tabs-height 32
         centaur-tabs-style "bar"
         centaur-tabs-set-icons t
         centaur-tabs-set-modified-marker t
         centaur-tabs-set-bar 'left  ;;'under doesn't work
         centaur-tabs-set-close-button nil
+        centaur-tabs-show-navigation-buttons nil
         )
 
   ;; The default seems to do a good job
