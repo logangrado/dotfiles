@@ -45,10 +45,14 @@
   (map! :map vterm-mode-map
         "<normal-state> '" #'(lambda()(interactive) (vterm-send-key "<up>"))
         "<normal-state> \"" #'(lambda()(interactive) (vterm-send-key "<down>"))
-        ;; These are already bound
-        ;; "<normal-state> C-c C-c" #'(lambda()(interactive) (vterm-send-key "c" nil nil 0))
-        ;;"<normal-state> C-c C-d" #'(lambda()(interactive) (vterm-send-key "d" nil nil 0))
+        ;; Bind C-c/C-d to work the same way in insert AND normal mode: require double press to have effect
+        "<normal-state> C-c C-c" #'vterm--self-insert
         "<normal-state> C-d C-d" #'vterm--self-insert
+        "<insert-state> C-c C-c" #'vterm--self-insert
+        "<insert-state> C-d C-d" #'vterm--self-insert
+        ;; These are already bound
+        ;;"<normal-state> C-c C-c" #'(lambda()(interactive) (vterm-send-key "c" nil nil 0))
+        ;;"<normal-state> C-c C-d" #'(lambda()(interactive) (vterm-send-key "d" nil nil 0))
         ;;
         ;; Example keybindings using vterm-send-X (deprecated)
         ;; "<normal-state> '" #'vterm-send-up
