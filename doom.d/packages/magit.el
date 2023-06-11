@@ -17,6 +17,11 @@
          "J" #'(lambda () (interactive) (next-line 10) (evil-scroll-line-down 10))
          )
 
+   (magit-add-section-hook 'magit-status-sections-hook
+                           'magit-insert-modules
+                           'magit-insert-unpulled-from-upstream)
+   (setq magit-module-sections-nested nil)
+
   ;; Colors!
   ;; Branches and tags
   ;; (set-face-attribute 'magit-branch-local nil :inherit 'ansi-color-green :bold t)
