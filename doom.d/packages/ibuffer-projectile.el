@@ -6,9 +6,10 @@
   (add-hook 'ibuffer-hook
     (lambda ()
       (ibuffer-projectile-set-filter-groups)
-      (unless (eq ibuffer-sorting-mode 'alphabetic)
-        (ibuffer-do-sort-by-alphabetic))))
+      )
+    )
   :config
+  (setq ibuffer-default-sorting-mode 'alphabetic)
   ;; define size-h column (human readable)
   (define-ibuffer-column size-h
     (:name "Size" :inline t)
