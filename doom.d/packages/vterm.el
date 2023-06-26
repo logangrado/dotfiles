@@ -38,6 +38,75 @@
     (+vterm/here-workspace arg)
     )
 
+  (defun +vterm/toggle-window (arg)
+    "Toggles a terminal popup window at project root.
+
+    If prefix ARG is non-nil, recreate vterm buffer in the current
+    project's root.
+
+    Returns the vterm buffer."
+    (interactive "P")
+    (+vterm--configure-project-root-and-display
+      arg
+      (lambda ()
+        (let
+          (
+            ;; Get target buffer name, unique per window
+            (target_buffer_name
+              (if (string-prefix-p "*doom:vterm-popup:" (buffer-name))
+                (buffer-name)
+                (format "*doom:vterm-popup:%s:%s*"
+                        (if (bound-and-true-p persp-mode)
+                        (safe-persp-name (get-current-persp))
+                        "main")
+                        (nth 1 (split-string (format "%s" (selected-window))))
+                        )
+                )
+             )
+             confirm-kill-processes
+             current-prefix-arg
+          )
+          (when arg
+            (let ((buffer (get-buffer target_buffer_name))
+              (window (get-buffer-window target_buffer_name)))
+              (when (buffer-live-p buffer)
+              (kill-buffer buffer))
+              (when
+                (window-live-p window)
+                (delete-window window)
+              )
+            )
+          )
+          (if-let (win (get-buffer-window target_buffer_name))
+            (delete-window win)
+            (let
+              (
+                (buffer (or (cl-loop for buf in (doom-buffers-in-mode 'vterm-mode)
+                                        if (equal (buffer-local-value '+vterm--id buf)
+                                                target_buffer_name)
+                                        return buf)
+                                (get-buffer-create target_buffer_name)
+                         )
+                )
+              )
+              (with-current-buffer buffer
+                (setq-local +vterm--id target_buffer_name)
+                (unless (eq major-mode 'vterm-mode)
+                  (vterm-mode)
+                )
+              )
+              ;; Split window vertically, follow, and display the buffer!
+              (split-window-vertically (floor (* 0.65 (window-height))))
+              (other-window 1)
+              (set-window-buffer (selected-window) buffer)
+              (set-window-dedicated-p (selected-window) t) ;; Make dedicated! Maybe helps prevent resize
+            )
+          )
+          (get-buffer target_buffer_name)
+        )
+      )
+    )
+  )
   :config
   (setq vterm-shell "zsh")
   ;; Define keys in vterm-mode-map, active in normal-state
@@ -63,6 +132,7 @@
 
   (map! :leader
         "o h" #'+vterm/here-workspace
-        "o T" #'+vterm/split-and-here-workspace
+        "o t" #'+vterm/toggle-window
+        "o T" #'+vterm/toggle
         )
   )
