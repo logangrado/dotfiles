@@ -180,6 +180,14 @@
 ;; (setq ls-lisp-use-insert-directory-program nil)
 (setq ls-lisp-ignore-case 't)
 (setq ls-lisp-use-string-collate nil)
+(defun file-notify-rm-all-watches ()
+  "Remove all existing file notification watches from Emacs. For recovering from too many open pipes"
+  (interactive)
+  (maphash
+   (lambda (key _value)
+     (file-notify-rm-watch key))
+   file-notify-descriptors))
+
 ;; For some reason, we need this in order for format-all to run on save for jsonnet-mode.
 ;; Taken from this comment: https://github.com/doomemacs/doomemacs/issues/3626#issuecomment-712201800
 (add-hook 'before-save-hook #'+format/buffer nil t)
