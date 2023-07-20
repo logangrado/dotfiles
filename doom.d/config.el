@@ -102,7 +102,7 @@
                         ;; FIXME Works smoothly scrolling down, but not up.
 
 ;; Map fast movement keys
-(map! :map evil-normal-state-map
+(map! :map (evil-normal-state-map evil-visual-state-map)
       "K" #'(lambda () (interactive) (previous-line 10) (evil-scroll-line-up 10))
       "J" #'(lambda () (interactive) (next-line 10) (evil-scroll-line-down 10))
       "H" #'evil-beginning-of-line
