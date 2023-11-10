@@ -5,6 +5,10 @@
   :after org
   :init
   (setq org-roam-v2-ack t) ;; Acknowledge V2 upgrade
+  ;; Old default template, allows searching by tags or title
+  (setq org-roam-node-display-template
+        (concat "${title:40} "
+                (propertize "${tags:50}" 'face 'org-tag)))
   :custom
   (org-roam-directory "~/org/roam")
   :config
