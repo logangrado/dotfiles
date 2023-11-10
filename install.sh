@@ -11,10 +11,7 @@ function install_osx {
     wget \
     curl \
     reattach-to-user-namespace \
-    emacs \
     libevent \
-    tmux \
-    python \
     zsh \
     pyenv \
     pipx \
@@ -102,13 +99,7 @@ if [ ! -d "$HOME/.oh-my-zsh" ]; then
     echo "Installing oh-my-zshell..."
     sh -c "$(wget https://raw.githubusercontent.com/robbyrussell/oh-my-zsh/master/tools/install.sh -O -)" --unattended
 fi
-    
-# Install TPM (tmux plugin manager)
-if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
-    echo "Installing tmux plugin manager..."
-    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-fi
-echo "Don't forget to install TMUX plugins by running \`prefix+I\`"
+
 
 # Make an ssh directory if it doesn't exist
 if [ ! -d $HOME/.ssh ]; then
