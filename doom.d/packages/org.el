@@ -1,33 +1,16 @@
 ;;; ../.dotfiles/doom.d/packages/org.el -*- lexical-binding: t; -*-
 
-(after! org
-  ;; (setq org-todo-keywords
-  ;;       '((sequence "TODO(t)" "PROG(p)" "|" "DONE(d)" "CANCELED(c)")))
+(use-package! org
+  :bind (:map org-mode-map
+    ("S-<return>" . org-insert-item)
+    ("M-S-<return>" . org-insert-heading)
+    ("C-M-<return>" . org-insert-subheading)
 
-  ;; Org colors
-  ;; (setq org-todo-keyword-faces
-  ;;     '(("TODO" .    (:foreground "red" :weight bold :inverse-video t))
-  ;;       ("PROG" . (:foreground "yellow" :weight bold :inverse-video t))
-  ;;       ("WAITING" . (:foreground "cyan" :weight bold :inverse-video t))
-  ;;       ;; ("PENDING REVIEW" . (:foreground "cyan" :weight bold :inverse-video t))
-  ;;       ;; ("IN REVIEW" . (:foreground "yellow" :weight bold :inverse-video t))
-  ;;       ("DONE" .    (:foreground "green" :weight bold))
-  ;;       ("CANCELED" .    (:foreground "red" :weight bold))))
-  ;; (setq org-todo-keyword-faces
-  ;;   '(
-  ;;     ;; DEFAULTS
-  ;;        ("[-]" . +org-todo-active)
-  ;;        ("STRT" . +org-todo-active)
-  ;;        ("[?]" . +org-todo-onhold)
-  ;;        ("WAIT" . +org-todo-onhold)
-  ;;        ("HOLD" . +org-todo-onhold)
-  ;;        ("PROJ" . +org-todo-project)
-  ;;        ("NO" . +org-todo-cancel)
-  ;;        ("KILL" . +org-todo-cancel)
-  ;;        ;; CUSTOM
-  ;;        ("PROG" . +org-todo-cancel)
-  ;;        )
-  ;;   )
+    )
+
+  :config
+  ;; (global-unset-key (kbd "M-s-<return>"))
+  ;; (global-set-key (kbd "M-s-<return>") 'org-insert-subheading)
   (custom-set-faces!
     `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)) :box t)
     )
