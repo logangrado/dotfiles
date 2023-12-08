@@ -80,6 +80,8 @@
 
   (setq org-tags-column -80)
 
+  ;; Make ORG look better
+  (setq org-hide-emphasis-markers t) ;;Hide emphasis markers (bold, italic, etc))
   )
 ;; (use-package! org
 ;;   ;; :bind
