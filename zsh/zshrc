@@ -15,6 +15,7 @@ export PATH=$HOME/venvs/bin:$PATH         # bins for isolated venv installs of p
 export PATH=$HOME/.local/bin:$PATH        # pipx bin location
 export PATH=$HOME/.poetry/bin:$PATH       # Poetry path
 export PATH=$HOME/.emacs.d/bin:$PATH      # DOOM emacs
+export PATH=$HOME/.cargo/bin:$PATH
 
 # PYENV Configuration
 #=====================================================
