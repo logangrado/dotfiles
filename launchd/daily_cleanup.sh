@@ -4,11 +4,12 @@
 LOG_DIR=$HOME/.dotfiles/launchd
 LOG_FILE=$LOG_DIR/daily_cleanup.log
 
-TODAY="${HOME}/Downloads/today"
-YESTERDAY="${HOME}/Downloads/yesterday"
-LAST_WEEK="${HOME}/Downloads/last_week"
-LAST_MONTH="${HOME}/Downloads/last_month"
-TRASH="${HOME}/.Trash"
+DOWNLOADS=${HOME}/Downloads
+TODAY=${DOWNLOADS}/0_today
+YESTERDAY=${DOWNLOADS}/1_yesterday
+LAST_WEEK=${DOWNLOADS}/2_last_week
+LAST_MONTH=${DOWNLOADS}/3_last_month
+TRASH=${HOME}/.Trash
 
 function cleanup_logs() {
     LOG_SIZE=0
@@ -60,16 +61,23 @@ function main() {
     echo ""
     log "Running daily cleanup"
 
+    # Check that we have access to downloads
+    if ! ls $DOWNLOADS >/dev/null; then
+        echo "Unable to access downloads folder!"
+        echo "ensure /bin/bash has full disk access"
+        exit 1
+    fi
+
     cleanup_logs
     make_dirs $TODAY $YESTERDAY $LAST_WEEK $LAST_MONTH
 
     # Clean up downloads folder. Move from Today -> Yesterday, Yesterday -> Last Week, and remove old entries in Last Week
     
     # Meant to be run at 4AM
-    cleanup_helper $LAST_MONTH $TRASH +30d
+    cleanup_helper $TODAY $YESTERDAY +0
+    cleanup_helper $YESTERDAY $LAST_WEEK +1d
     cleanup_helper $LAST_WEEK $LAST_MONTH +7d
-    cleanup_helper $YESTERDAY $LAST_WEEK +1d4h
-    cleanup_helper $TODAY $YESTERDAY +4h
+    cleanup_helper $LAST_MONTH $TRASH +30d
 
     # Empty trash
     rm -rf $TRASH/*

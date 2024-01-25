@@ -5,6 +5,7 @@
   <key>Label</key>
   <string>com.grado.daily_cleanup</string>
 
+  <!-- unload/load this script to force it to run, for debugging -->
   <!-- <key>RunAtLoad</key> -->
   <!-- <true/> -->
   <!-- <key>KeepAlive</key> -->
