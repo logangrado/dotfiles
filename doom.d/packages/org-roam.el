@@ -10,12 +10,12 @@
         (concat "${title:40} "
                 (propertize "${tags:50}" 'face 'org-tag)))
   :custom
-  (org-roam-directory "~/org/roam")
+  (setq org-roam-directory (concat org-directory "roam/"))
   (org-roam-completion-everywhere t)
   ;; More detail in default catpure template
   (org-roam-dailies-capture-templates
-    '(("d" "default" entry "* %<%I:%M %p>: %?"
-       :if-new (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
+   '(("d" "default" entry "* %<%I:%M %p>: %?"
+      :if-new (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
   :bind
   (("C-c n f" . org-roam-node-find)
    ("C-c n r" . org-roam-node-random)

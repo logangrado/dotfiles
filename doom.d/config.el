@@ -18,13 +18,13 @@
 ;; accept.
 (if (string-equal system-type "darwin")
     (setq doom-font (font-spec :family "Menlo" :size 12))
-    (setq doom-font (font-spec :size 12)))
+  (setq doom-font (font-spec :size 12)))
 (setq doom-theme 'doom-one)
 (setq display-line-numbers-type t)
 
 ;; If you use `org' and don't want your org files in the default location below,
 ;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/org/")
+(setq org-directory "~/Documents/org/")
 
 ;;autorevert - automatically reload files changed on disk
 (global-auto-revert-mode t)
@@ -90,16 +90,16 @@
 ;; of line with TAB
 (define-key evil-normal-state-map (kbd "TAB") 'evil-undefine)
 (defun evil-undefine ()
- (interactive)
- (let (evil-mode-map-alist)
-   (call-interactively (key-binding (this-command-keys)))))
+  (interactive)
+  (let (evil-mode-map-alist)
+    (call-interactively (key-binding (this-command-keys)))))
 
 ;; TODO Figure out how to move screen if point is within ~10/20 lines of top/bottom on scrolling
 ;; Them remove the (evil-scroll-line-[up|down]])
 ;; This seems controllable with `scroll-margin' and `maximum-scroll-margin'
 ;; (setq scroll-margin 10) -> leaves a margin of 10. Works smoothly scrolling down, but jumps on the way up.
 (setq scroll-margin 10) ;; Leave a margin of 10 at top/bottom.
-                        ;; FIXME Works smoothly scrolling down, but not up.
+;; FIXME Works smoothly scrolling down, but not up.
 
 ;; Map fast movement keys
 (map! :map (evil-normal-state-map evil-visual-state-map)
@@ -152,13 +152,13 @@
 
 ;; Set modes for format-all-mode
 (setq +format-on-save-enabled-modes
-  '(not emacs-lisp-mode    ; elisp's mechanisms are good enough
+      '(not emacs-lisp-mode    ; elisp's mechanisms are good enough
         sql-mode           ; sqlformat is currently broken
         tex-mode           ; latexindent is broken
         latex-mode
         python-mode        ; Use python-black. Format all has a tendency to kill code in folds
         org-msg-edit-mode) ; doesn't need a formatter
-   )
+      )
 
 ;; (setq evil-motion-state-cursor 'box)  ; █
 ;; (setq evil-visual-state-cursor 'box)  ; █
@@ -167,11 +167,14 @@
 ;; (setq evil-emacs-state-cursor  'hbar) ; _
 
 ;; Auto-open magit status when switching to new workspacesk
-(setq +workspaces-switch-project-function #'projectile-vc)
+;; (setq +workspaces-switch-project-function #'projectile-vc)
 
 (setq dired-kill-when-opening-new-dired-buffer t)
 (map! :map dired-mode-map "<return>" #'dired-find-alternate-file)
 
+;; PROJECTILE
+;; Use native indexing method, works with TRAMP connections
+(setq projectile-indexing-method 'native)
 
 ;; REFILE
 ;; ======

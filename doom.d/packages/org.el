@@ -1,12 +1,12 @@
-;;; ../.dotfiles/doom.d/packages/org.el -*- lexical-binding: t; -*-
+;;; ../.Dotfiles/doom.d/packages/org.el -*- lexical-binding: t; -*-
 
 (use-package! org
   :bind (:map org-mode-map
-    ("S-<return>" . org-insert-item)
-    ("M-S-<return>" . org-insert-heading)
-    ("C-M-<return>" . org-insert-subheading)
+              ("S-<return>" . org-insert-item)
+              ("M-S-<return>" . org-insert-heading)
+              ("C-M-<return>" . org-insert-subheading)
 
-    )
+              )
 
   :config
   ;; (global-unset-key (kbd "M-s-<return>"))
@@ -22,10 +22,10 @@
     (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
 
   (custom-set-faces!
-   `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'yellow)))
-   `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)))
-   `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)))
-   `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)))
+    `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'yellow)))
+    `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)))
+    `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)))
+    `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)))
     )
 
   (setq org-todo-keywords
