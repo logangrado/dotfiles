@@ -9,8 +9,8 @@
   (setq org-roam-node-display-template
         (concat "${title:40} "
                 (propertize "${tags:50}" 'face 'org-tag)))
-  :custom
   (setq org-roam-directory (concat org-directory "roam/"))
+  :custom
   (org-roam-completion-everywhere t)
   ;; More detail in default catpure template
   (org-roam-dailies-capture-templates
