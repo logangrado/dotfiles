@@ -216,13 +216,25 @@ frame if FRAME is nil, and to 1 if AMT is nil."
   (interactive "p")
   (acg/zoom-frame (- (or amt 1)) frame))
 
-(global-set-key (kbd "C-x C-=") 'acg/zoom-frame)
-(global-set-key (kbd "C-x C--") 'acg/zoom-frame-out)
-;; Move to new window on creation
 (map! :leader
       "=" #'acg/zoom-frame
       "-" #'acg/zoom-frame-out
       )
+
+(defun resize-current-window-to-fraction (fraction)
+  "Resize the current window to a specific FRACTION of the frame's total height."
+  (interactive "nResize to fraction of frame height: ")
+  (let* ((total-lines (frame-total-lines))
+         (target-height (floor (* fraction total-lines)))
+         (current-height (window-height))
+         (delta (- target-height current-height)))
+    (window-resize nil delta)))
+(map! :leader
+      "w 2" #'(lambda () (interactive) (resize-current-window-to-fraction 0.33))
+      "w 3" #'(lambda () (interactive) (resize-current-window-to-fraction 0.33))
+      "w #" #'(lambda () (interactive) (resize-current-window-to-fraction 0.66))
+      )
+
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
