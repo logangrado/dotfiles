@@ -86,6 +86,12 @@
 (define-key evil-normal-state-map "Q" 'call-last-kbd-macro)
 (define-key evil-visual-state-map "Q" 'call-last-kbd-macro)
 (define-key evil-normal-state-map "\C-t" nil) ;; Unbind C-t (creates new workspace)
+;; Make evil-mode up/down operate in screen lines instead of logical lines
+(define-key evil-motion-state-map "j" 'evil-next-visual-line)
+(define-key evil-motion-state-map "k" 'evil-previous-visual-line)
+;; Also in visual mode
+(define-key evil-visual-state-map "j" 'evil-next-visual-line)
+(define-key evil-visual-state-map "k" 'evil-previous-visual-line)
 ;; Not sure what this one does, but let's us toggle beginnign/end
 ;; of line with TAB
 (define-key evil-normal-state-map (kbd "TAB") 'evil-undefine)
