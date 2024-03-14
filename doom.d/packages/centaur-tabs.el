@@ -9,15 +9,15 @@
   ;;:defer 5
 
   :bind (:map evil-normal-state-map
-         ("M-[" . centaur-tabs-backward)
-         ("M-]" . centaur-tabs-forward)
-         ("M-}" . centaur-tabs-move-current-tab-to-right)
-         ("M-{" . centaur-tabs-move-current-tab-to-left)
-         )
+              ("M-[" . centaur-tabs-backward)
+              ("M-]" . centaur-tabs-forward)
+              ("M-}" . centaur-tabs-move-current-tab-to-right)
+              ("M-{" . centaur-tabs-move-current-tab-to-left)
+              )
 
-  :hook
-  ;; Disalbe tabs in vterm
-  ((vterm-mode vterm-toggle--mode) . centaur-tabs-local-mode)
+  ;; :hook
+  ;; ;; Disalbe tabs in vterm
+  ;; ((vterm-mode vterm-toggle--mode) . centaur-tabs-local-mode)
 
   :config
   (centaur-tabs-mode t)
@@ -33,22 +33,47 @@
 
   ;; The default seems to do a good job
   (centaur-tabs-group-buffer-groups) ;; Default
-  ;; (centaur-tabs-group-by-projectile-project) ;; This shows magit buffers, which we dont want!
 
-  ;; ;; These seem to help keep vterm tabs out of tabbar group?
-  ;; (defun centaur-tabs-buffer-groups ()
-  ;;   (list
-  ;;    (cond
-  ;;     ((string-match "vterm" (format "%s" (buffer-name))) "Emacs")
-  ;;     (t (centaur-tabs-get-group-name (current-buffer))))))
-  ;;
+  ;; CUSTOM TABS GROUPING
+  ;; Based off default centaur-tabs-buffer-group
+  (defun my/centaur-tabs-buffer-groups ()
+    "`centaur-tabs-buffer-groups' control buffers' group rules.
 
-  ;; (defun my-show-only-vterm ()
-  ;;   (when (bound-and-true-p centaur-tabs-mode)
-  ;;         (if (string-match "vterm" (format "%s" (buffer-name)))
-  ;;             (centaur-tabs-local-mode)
-  ;;           (centaur-tabs-local-mode 0))))
+        Group centaur-tabs with mode if buffer is derived from `eshell-mode'
+        `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
+        All buffer name start with * will group to \"Emacs\".
+        Other buffer group by `centaur-tabs-get-group-name' with project name."
+    (list
+     (cond
+      ;; GROUP VTERM BY PROJECT
+      ((eq major-mode 'vterm-mode)
+       (let ((project-name (projectile-project-name)))
+         (if (not (string= "-" project-name))
+             ;; Group by project name for vterm buffers
+             (concat "vterm: " project-name)
+           ;; Fallback group name for vterm buffers not in a project
+           "vterm")))
+      ((or (string-equal "*" (substring (buffer-name) 0 1))
+	   (memq major-mode '(magit-process-mode
+			      magit-status-mode
+			      magit-diff-mode
+			      magit-log-mode
+			      magit-file-mode
+			      magit-blob-mode
+			      magit-blame-mode
+			      )))
+       "Emacs")
+      ((derived-mode-p 'eshell-mode)
+       "EShell")
+      ((derived-mode-p 'emacs-lisp-mode)
+       "Elisp")
+      ((derived-mode-p 'dired-mode)
+       "Dired")
+      ((memq major-mode '(org-mode org-agenda-mode diary-mode))
+       "OrgMode")
+      (t
+       (centaur-tabs-get-group-name (current-buffer))))))
 
-  ;; ;; (add-hook! 'window-configuration-change-hook 'my-show-only-vterm)
-  ;; (add-hook! 'buffer-list-update-hook 'my-show-only-vterm)
+  ;; Set the custom grouping function
+  (setq centaur-tabs-buffer-groups-function 'my/centaur-tabs-buffer-groups)
   )
