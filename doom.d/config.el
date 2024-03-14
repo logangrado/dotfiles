@@ -235,6 +235,11 @@ frame if FRAME is nil, and to 1 if AMT is nil."
       "w #" #'(lambda () (interactive) (resize-current-window-to-fraction 0.66))
       )
 
+;; Bind key to change a workspace's default directory
+(map! :leader
+      "TAB c" #'cd
+      )
+
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
