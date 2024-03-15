@@ -3,7 +3,7 @@
 	
 [user]
 	name = Logan Grado
-	email = lgrado@apple.com
+	email = logan.grado@amd.com
 
 [commit]
 	template = ~/.gitmessage
