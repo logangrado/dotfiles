@@ -1,22 +1,20 @@
 #!/bin/bash
 
-ALL=("zsh/zshrc $HOME/.zshrc"
-     "zsh/zshrc-work $HOME/.zshrc-work"
-     "zsh/grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
-     "tmux/tmux.conf $HOME/.tmux.conf"                
+ALL=(
+    #"zsh/grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
      "doom.d $HOME/.doom.d"
      "git/gitconfig $HOME/.gitconfig"
      "git/gitignore_global $HOME/.gitignore_global"
      "git/gitmessage $HOME/.gitmessage"
-     "pyenv/plugins $HOME/.pyenv/plugins"
-    )
+)
 
-OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
-     "iterm2/com.googlecode.iterm2.plist $HOME/Library/Preferences/com.googlecode.iterm2.plist"
-     "matplotlib $HOME/.matplotlib"
-    )
+# OSX=(
+#     "tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
+#      "iterm2/com.googlecode.iterm2.plist $HOME/Library/Preferences/com.googlecode.iterm2.plist"
+#      "matplotlib $HOME/.matplotlib"
+#     )
 
-LINUX=("matplotlib $HOME/.config/matplotlib")
+# LINUX=("matplotlib $HOME/.config/matplotlib")
 
 # Determine OS
 unameOut="$(uname -s)"

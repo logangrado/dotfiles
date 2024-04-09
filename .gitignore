@@ -22,3 +22,6 @@ emacs.vanilla/org-roam.db
 *.err
 *.out
 zsh/zshrc-work
+
+result
+*nix.swp
