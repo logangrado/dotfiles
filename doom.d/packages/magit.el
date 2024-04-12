@@ -27,4 +27,14 @@
   (setq transient-display-buffer-action '(display-buffer-at-bottom)
         magit-display-buffer-function #'+magit-display-buffer-fn
         magit-bury-buffer-function #'magit-mode-quit-window)
+
+  (transient-append-suffix 'magit-log "-A"
+    '("=p" "First parent" "--first-parent" :level 1))
+
+  ;; Wrap lines in diff view
+  (defun my-wrap-lines ()
+    "Disable `truncate-lines' in the current buffer."
+    (setq truncate-lines nil))
+
+  (add-hook 'magit-diff-mode-hook #'my-wrap-lines)
   )
