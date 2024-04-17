@@ -180,7 +180,6 @@
 
 ;; PROJECTILE
 ;; Use native indexing method, works with TRAMP connections
-(setq projectile-indexing-method 'native)
 
 ;; REFILE
 ;; ======

@@ -5,4 +5,6 @@
 
   (add-to-list 'projectile-globally-ignored-directories "^venv$")
   (add-to-list 'projectile-globally-ignored-directories "^\\.venv$")
+
+  (setq projectile-indexing-method 'native)
   )
