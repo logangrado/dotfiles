@@ -3,6 +3,27 @@
 
 (use-package! vterm
   :init
+  (defun +vterm/configure-project-root-and-display-custom (arg display-fn)
+    "Sets the environment variable PROOT and displays a terminal using `display-fn`.
+     If prefix ARG is non-nil, cd into `default-directory' instead of project root.
+     Returns the vterm buffer.
+
+     NOTE: I (Logan) copied this from source. For some reason, this function is
+     undefined on startup, unless you call the built in vterm/toggle. Defining a
+     custom version here fixes this issue.
+     Additionally, customizing this will hopefully let me change a workspace directory
+     correctly in the future"
+    (unless (fboundp 'module-load)
+      (user-error "Your build of Emacs lacks dynamic modules support and cannot load vterm"))
+    (let* ((project-root (or (doom-project-root) default-directory))
+           (default-directory
+             (if arg
+                 default-directory
+               project-root)))
+      (setenv "PROOT" project-root)
+      (funcall display-fn)))
+
+
   (defun +vterm/get-workspace-buffer-name ()
     "Retrieve vterm buffer name for this workspace"
     (format "*vterm:%s"
@@ -18,7 +39,7 @@
      If prefix ARG is non-nil, cd into `default-directory' instead of project root.
      Returns the vterm buffer."
     (interactive "P")
-    (+vterm--configure-project-root-and-display
+    (+vterm/configure-project-root-and-display-custom
      arg
      (lambda()
        (require 'vterm)
