@@ -1,9 +1,9 @@
 ;;; ../.dotfiles/doom.d/packages/origami.el -*- lexical-binding: t; -*-
 
+;;; DEPRECATED IN FAVOR OF OUTLINE-MINOR-MODE
+;;; Origami mode doesn't seem to work anymore. no idea what changed
 (use-package!  origami
-  :hook python-mode
-  :init
-  (origami-mode)
+  :hook (prog-mode . origami-mode)
   :config
   (map! :map evil-normal-state-map
         :prefix ("c" . "origami")
@@ -15,4 +15,4 @@
         "H" #'origami-close-all-nodes
         "c" #'origami-recursively-toggle-node
         "C" #'origami-toggle-all-nodes)
- )
+  )
