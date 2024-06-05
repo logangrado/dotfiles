@@ -178,8 +178,6 @@
 (setq dired-kill-when-opening-new-dired-buffer t)
 (map! :map dired-mode-map "<return>" #'dired-find-alternate-file)
 
-;; PROJECTILE
-;; Use native indexing method, works with TRAMP connections
 
 ;; REFILE
 ;; ======
