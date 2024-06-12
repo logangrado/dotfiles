@@ -206,6 +206,8 @@ frame if FRAME is nil, and to 1 if AMT is nil."
          (amt (or amt 1))
          (new-size (+ size amt)))
     (set-frame-font (font-spec :size new-size) t `(,frame))
+    ;; Also set fixed-pitch height to match default
+    (set-face-attribute 'fixed-pitch frame :height (face-attribute 'default :height frame))
     (message "Frame's font new size: %d" new-size)))
 
 (defun acg/zoom-frame-out (&optional amt frame)

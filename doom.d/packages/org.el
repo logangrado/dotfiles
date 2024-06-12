@@ -1,71 +1,132 @@
 ;;; ../.Dotfiles/doom.d/packages/org.el -*- lexical-binding: t; -*-
 
 (use-package! org
-  :bind (:map org-mode-map
-              ("S-<return>" . org-insert-item)
-              ("M-S-<return>" . org-insert-heading)
-              ("C-M-<return>" . org-insert-subheading)
-
-              )
-
+  :hook
+  (org-mode . mixed-pitch-mode)
   :config
-  ;; (global-unset-key (kbd "M-s-<return>"))
-  ;; (global-set-key (kbd "M-s-<return>") 'org-insert-subheading)
-  (custom-set-faces!
-    `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)) :box t)
-    )
+  (setq-default org-startup-indented t
+                org-pretty-entities t ;; Ensure we render equations and such
+                org-use-sub-superscripts "{}" ;; Force using {} for sup/super scripts
+                org-hide-emphasis-markers t ;; Auto-hide emphasis markers
+                org-startup-with-inline-images t
+                org-image-actual-width '(300)
+                )
 
-  (with-no-warnings
-    (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
-    (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
-    (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
-    (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
+  ;; Use bullets for list markers (auto-sub for '-' character)
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
-  (custom-set-faces!
-    `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'yellow)))
-    `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)))
-    `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)))
-    `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)))
-    )
+  ;; Ensure these faces are fixed-pitch in variable-potch mode
+  (custom-set-faces
+   '(org-block ((t (:inherit fixed-pitch))))
+   '(org-table ((t (:inherit fixed-pitch))))
+   '(org-code ((t (:inherit fixed-pitch))))
+   '(org-document-info-keyword ((t (:inherit (shadow fixed-pitch)))))
+   '(org-meta-line ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+   '(org-verbatim ((t (:inherit (shadow fixed-pitch)))))
+   '(org-special-keyword ((t (:inherit (font-lock-comment-face fixed-pitch)))))
+   '(org-property-value ((t (:inherit fixed-pitch))) t)
+   '(org-document-info ((t (:inherit fixed-pitch)))))
 
-  (setq org-todo-keywords
-        '((sequence
-           "TODO(t)"  ; A task that needs doing & is ready to do
-           "PROJ(p)"  ; A project, which usually contains other tasks
-           "LOOP(r)"  ; A recurring task
-           "STRT(s)"  ; A task that is in progress
-           "WAIT(w)"  ; Something external is holding up this task
-           "HOLD(h)"  ; This task is paused/on hold because of me
-           "IDEA(i)"  ; An unconfirmed and unapproved task or notion
-           "|"
-           "DONE(d)"  ; Task successfully completed
-           "KILL(k)") ; Task was cancelled, aborted or is no longer applicable
-          (sequence
-           "[ ](T)"   ; A task that needs doing
-           "[-](S)"   ; Task is in progress
-           "[?](W)"   ; Task is being held up or paused
-           "|"
-           "[X](D)")  ; Task was completed
-          (sequence
-           "|"
-           "OKAY(o)"
-           "YES(y)"
-           "NO(n)"))
-        org-todo-keyword-faces
-        '(("[-]"  . +org-todo-active)
-          ("STRT" . +org-todo-active)
-          ("[?]"  . +org-todo-onhold)
-          ("WAIT" . +org-todo-onhold)
-          ("HOLD" . +org-todo-onhold)
-          ("PROJ" . +org-todo-project)
-          ("NO"   . +org-todo-cancel)
-          ("KILL" . +org-todo-cancel)))
+  (set-face-attribute 'org-level-1 nil :height 1.5 :weight 'bold)
+  (set-face-attribute 'org-level-2 nil :height 1.3 :weight 'bold)
+  (set-face-attribute 'org-level-3 nil :height 1.2 :weight 'bold)
+  (set-face-attribute 'org-level-4 nil :height 1.1 :weight 'bold)
+  (set-face-attribute 'org-level-5 nil :height 1.1 :weight 'bold)
+  (set-face-attribute 'org-level-6 nil :height 1.1 :weight 'bold)
+  (set-face-attribute 'org-level-7 nil :height 1.1 :weight 'bold)
+  (set-face-attribute 'org-level-8 nil :height 1.1 :weight 'bold)
 
-  (setq org-tags-column -80)
-
-  ;; Make ORG look better
-  (setq org-hide-emphasis-markers t) ;;Hide emphasis markers (bold, italic, etc))
   )
+
+;; When editing sections with emphasis, show the hideen emphasis!
+(use-package! org-appear
+  :hook (org-mode . org-appear-mode)
+  :config
+  (setq org-appear-autolinks t
+        org-appear-autosubmarkers t
+        org-appear-autokeywords t
+        org-appear-inside-latex t))
+
+;; Use pretty org-bullets
+(use-package! org-bullets
+  :config
+  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+
+;; Mixed pitch mode!
+(use-package! mixed-pitch
+  )
+
+;; (use-package! org
+;;   :bind (:map org-mode-map
+;;               ("S-<return>" . org-insert-item)
+;;               ("M-S-<return>" . org-insert-heading)
+;;               ("C-M-<return>" . org-insert-subheading)
+
+;;               )
+
+;;   :config
+;;   ;; (global-unset-key (kbd "M-s-<return>"))
+;;   ;; (global-set-key (kbd "M-s-<return>") 'org-insert-subheading)
+;;   (custom-set-faces!
+;;     `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)) :box t)
+;;     )
+
+;;   (with-no-warnings
+;;     (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
+;;     (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
+;;     (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
+;;     (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
+
+;;   (custom-set-faces!
+;;     `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'yellow)))
+;;     `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)))
+;;     `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)))
+;;     `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)))
+;;     )
+
+;;   (setq org-todo-keywords
+;;         '((sequence
+;;            "TODO(t)"  ; A task that needs doing & is ready to do
+;;            "PROJ(p)"  ; A project, which usually contains other tasks
+;;            "LOOP(r)"  ; A recurring task
+;;            "STRT(s)"  ; A task that is in progress
+;;            "WAIT(w)"  ; Something external is holding up this task
+;;            "HOLD(h)"  ; This task is paused/on hold because of me
+;;            "IDEA(i)"  ; An unconfirmed and unapproved task or notion
+;;            "|"
+;;            "DONE(d)"  ; Task successfully completed
+;;            "KILL(k)") ; Task was cancelled, aborted or is no longer applicable
+;;           (sequence
+;;            "[ ](T)"   ; A task that needs doing
+;;            "[-](S)"   ; Task is in progress
+;;            "[?](W)"   ; Task is being held up or paused
+;;            "|"
+;;            "[X](D)")  ; Task was completed
+;;           (sequence
+;;            "|"
+;;            "OKAY(o)"
+;;            "YES(y)"
+;;            "NO(n)"))
+;;         org-todo-keyword-faces
+;;         '(("[-]"  . +org-todo-active)
+;;           ("STRT" . +org-todo-active)
+;;           ("[?]"  . +org-todo-onhold)
+;;           ("WAIT" . +org-todo-onhold)
+;;           ("HOLD" . +org-todo-onhold)
+;;           ("PROJ" . +org-todo-project)
+;;           ("NO"   . +org-todo-cancel)
+;;           ("KILL" . +org-todo-cancel)))
+
+;;   (setq org-tags-column -80)
+
+;;   ;; Make ORG look better
+;;   (setq org-hide-emphasis-markers t) ;;Hide emphasis markers (bold, italic, etc))
+;;   )
+
+;; VERY OLD CONFIG!!
+;; ==================================================================================
 ;; (use-package! org
 ;;   ;; :bind
 ;;   ;; ("s-ret" . org-insert-heading-respect-content)
@@ -99,7 +160,6 @@
 ;;   ;;(global-set-key (kbd "C-c a") 'org-agenda)
 ;;   ;;(global-set-key (kbd "C-c r") 'org-capture)
 ;;   ;;(global-set-key (kbd "M-t") 'org-todo)
-
 
 ;;   ;; Org Archive
 ;;   (setq org-archive-location ".%s_archive::") ;; Hide org archive files
@@ -136,8 +196,6 @@
 ;;   (setq org-highest-priority 1)
 ;;   (setq org-default-priority 5)
 ;;   (setq org-lowest-priority 9)
-
-
 
 ;;   ;; I don't tink we need this anymore, as doom in GUI does this for us
 ;;   ;; ;; Checkbox colors
