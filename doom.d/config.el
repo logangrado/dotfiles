@@ -239,6 +239,8 @@ frame if FRAME is nil, and to 1 if AMT is nil."
       "TAB c" #'cd
       )
 
+;; Disable smart-parans, which just annoys me
+(remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
