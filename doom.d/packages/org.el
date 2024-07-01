@@ -1,8 +1,11 @@
 ;;; ../.Dotfiles/doom.d/packages/org.el -*- lexical-binding: t; -*-
 
-(use-package! org
-  :hook
-  (org-mode . mixed-pitch-mode)
+(after! org
+  ;; :hook
+  ;; (org-mode . mixed-pitch-mode)
+  :init
+  (setq org-directory "~/Documents/org/")
+
   :config
   (setq-default org-startup-indented t
                 org-pretty-entities t ;; Ensure we render equations and such
@@ -38,6 +41,97 @@
   (set-face-attribute 'org-level-7 nil :height 1.1 :weight 'bold)
   (set-face-attribute 'org-level-8 nil :height 1.1 :weight 'bold)
 
+  ;; TODO:
+  ;; Look into better agenda formating
+  (setq org-agenda-view-columns-initially t)
+  (setq org-overriding-columns-format "%TODO %3PRIORITY %ALLTAGS %ITEM")
+
+  ;; Investigate setting org-agenda-prefix-format
+  ;; Look into org-super-agenda
+  ;; Promising example: https://github.com/alphapapa/org-super-agenda/blob/master/examples.org#sebastian-schulze
+
+  ;; ORG AGENDA PREFIX FORMAT
+
+  ;; Declare new faces for todo states
+  (with-no-warnings
+    (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
+    (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
+    (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
+    (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
+
+  ;; Declare faces
+  (custom-set-faces!
+    `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)))
+    `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'yellow)))
+    `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)))
+    `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)))
+    `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)))
+    )
+  (set-face-attribute 'org-column nil :background 'unspecified)
+
+  (setq! org-todo-keywords
+         '((sequence
+            "TODO(t)"  ; A task that needs doing & is ready to do
+            "PROJ(p)"  ; A project, which usually contains other tasks
+            "LOOP(r)"  ; A recurring task
+            "STRT(s)"  ; A task that is in progress
+            "WAIT(w)"  ; Something external is holding up this task
+            "FLUP(f)"
+            "HOLD(h)"  ; This task is paused/on hold because of me
+            "IDEA(i)"  ; An unconfirmed and unapproved task or notion
+            "|"
+            "DONE(d)"  ; Task successfully completed
+            "KILL(k)") ; Task was cancelled, aborted or is no longer applicable
+           (sequence
+            "|"
+            "OKAY(o)"
+            "YES(y)"
+            "NO(n)"))
+         )
+
+  (setq! org-todo-keyword-faces
+         '(("FLUP"  . +org-todo-onhold)
+           ("STRT" . +org-todo-active)
+           ("[?]"  . +org-todo-onhold)
+           ("WAIT" . +org-todo-onhold)
+           ("HOLD" . +org-todo-onhold)
+           ("PROJ" . +org-todo-project)
+           ("NO"   . +org-todo-cancel)
+           ("KILL" . +org-todo-cancel)))
+
+  ;; ;; Adjust the display of priorities if desired
+  ;; (setq! org-priority-faces '((?0 . error)
+  ;;                             (?1 . warning)
+  ;;                             (?2 . success)
+  ;;                             (?3 . default)
+  ;;                             (?4 . default)
+  ;;                             (?5 . default)
+  ;;                             (?6 . default)
+  ;;                             (?7 . default)
+  ;;                             (?8 . default)
+  ;;                             (?9 . default)))
+
+  )
+
+(use-package! org-fancy-priorities
+  :hook (org-mode . org-fancy-priorities-mode)
+  :config
+  (setq! org-priority-highest 0
+         org-priority-default 2 ;; This displays as "^E" in agenda view, but I can't figure out how to fix it
+         ;; We can set it to ?2, and it will display as "2", but it will be at the bottom of the list (not good!)
+         org-priority-lowest 4)
+  (setq! org-fancy-priorities-list '(
+                                     (?0 . "P0")
+                                     (?1 . "P1")
+                                     (?2 . "P2")
+                                     (?3 . "P3")
+                                     (?4 . "P4"))
+
+         org-priority-faces '((?0 :foreground "DarkRed" :background "LightPink")
+                              (?1 :foreground "DarkOrange4" :background "LightGoldenrod")
+                              (?2 :foreground "gray20" :background "gray")
+                              (?3 :foreground "gray20" :background "gray")
+                              (?4 :foreground "gray20" :background "gray")))
   )
 
 ;; When editing sections with emphasis, show the hideen emphasis!
@@ -50,13 +144,20 @@
         org-appear-inside-latex t))
 
 ;; Use pretty org-bullets
-(use-package! org-bullets
-  :config
-  (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+;; (use-package! org-bullets
+;;   :config
+;;   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
 ;; Mixed pitch mode!
 (use-package! mixed-pitch
   )
+
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable))
+  )
+
+;;OLD CODE
+;;================================================================================================
 
 ;; (use-package! org
 ;;   :bind (:map org-mode-map
@@ -72,6 +173,7 @@
 ;;   (custom-set-faces!
 ;;     `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)) :box t)
 ;;     )
+
 
 ;;   (with-no-warnings
 ;;     (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
