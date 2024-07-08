@@ -4,6 +4,8 @@
   ;;:ensure t
   :after org
   :init
+  (require 'vulpea)
+
   (setq org-roam-v2-ack t) ;; Acknowledge V2 upgrade
   ;; Old default template, allows searching by tags or title
   (setq org-roam-node-display-template
@@ -123,4 +125,9 @@
   (org-roam-setup)
   (require 'org-roam-dailies) ;; Ensure the keymap is available
   (org-roam-db-autosync-mode)
+  )
+
+(use-package! vulpea
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable))
+
   )

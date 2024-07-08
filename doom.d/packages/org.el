@@ -1,7 +1,8 @@
 ;;; ../.Dotfiles/doom.d/packages/org.el -*- lexical-binding: t; -*-
 
-(after! org
-  ;; :hook
+(use-package! org
+  :hook
+  (org-mode . (lambda () (setq line-spacing 0.25)))
   ;; (org-mode . mixed-pitch-mode)
   :init
   (setq org-directory "~/Documents/org/")
@@ -32,14 +33,14 @@
    '(org-property-value ((t (:inherit fixed-pitch))) t)
    '(org-document-info ((t (:inherit fixed-pitch)))))
 
-  (set-face-attribute 'org-level-1 nil :height 1.5 :weight 'bold)
-  (set-face-attribute 'org-level-2 nil :height 1.3 :weight 'bold)
-  (set-face-attribute 'org-level-3 nil :height 1.2 :weight 'bold)
-  (set-face-attribute 'org-level-4 nil :height 1.1 :weight 'bold)
-  (set-face-attribute 'org-level-5 nil :height 1.1 :weight 'bold)
-  (set-face-attribute 'org-level-6 nil :height 1.1 :weight 'bold)
-  (set-face-attribute 'org-level-7 nil :height 1.1 :weight 'bold)
-  (set-face-attribute 'org-level-8 nil :height 1.1 :weight 'bold)
+  (set-face-attribute 'org-level-1 nil :height 1.3 :weight 'bold)
+  (set-face-attribute 'org-level-2 nil :height 1.2 :weight 'bold)
+  (set-face-attribute 'org-level-3 nil :height 1.1 :weight 'bold)
+  (set-face-attribute 'org-level-4 nil :height 1.05 :weight 'bold)
+  (set-face-attribute 'org-level-5 nil :height 1.05 :weight 'bold)
+  (set-face-attribute 'org-level-6 nil :height 1.05 :weight 'bold)
+  (set-face-attribute 'org-level-7 nil :height 1.05 :weight 'bold)
+  (set-face-attribute 'org-level-8 nil :height 1.05 :weight 'bold)
 
   ;; TODO:
   ;; Look into better agenda formating
@@ -150,10 +151,6 @@
 
 ;; Mixed pitch mode!
 (use-package! mixed-pitch
-  )
-
-(use-package! vulpea
-  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable))
   )
 
 ;;OLD CODE
