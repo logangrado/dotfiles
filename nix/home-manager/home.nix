@@ -47,13 +47,24 @@
 
   # TODO: Set your username
   home = {
-    username = "your-username";
-    homeDirectory = "/home/your-username";
+    username = "grado";
+    homeDirectory = "/home/grado";
   };
 
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
-  # home.packages = with pkgs; [ steam ];
+  home.packages = with pkgs; [
+    git
+    zsh
+    emacs29
+    gnumake
+    cmake
+    libtool
+    ripgrep
+    coreutils
+    fd
+    clang
+  ];
 
   # Enable home-manager and git
   programs.home-manager.enable = true;
