@@ -53,6 +53,10 @@
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
   home.packages = with pkgs; [
+    docker
+    docker-compose
+    podman
+    podman-compose
     git
     zsh
     emacs29
@@ -83,6 +87,9 @@
       size = 10000;
       path = "${config.xdg.dataHome}/zsh/history";
     };
+    initExtra = ''
+      export PATH=~/.emacs.d/bin:$PATH
+    '';
     oh-my-zsh = {
       enable = true;
       plugins = [ "git" "thefuck" ];
