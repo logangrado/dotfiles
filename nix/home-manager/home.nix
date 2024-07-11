@@ -67,6 +67,7 @@
     coreutils
     fd
     clang
+    pipx
   ];
 
   # Enable home-manager and git
@@ -89,6 +90,7 @@
     };
     initExtra = ''
       export PATH=~/.emacs.d/bin:$PATH
+      export PATH=~/.local/bin:$PATH
     '';
     oh-my-zsh = {
       enable = true;
@@ -102,4 +104,9 @@
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
   home.stateVersion = "23.05";
+
+  home.activation.pipx-packages = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    mkdir -p ~/.nix_logs
+    ~/.dotfiles/nix/home-manager/pipx.sh > ~/.nix_logs/pipx.txt
+  '';
 }
