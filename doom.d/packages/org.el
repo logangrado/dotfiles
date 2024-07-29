@@ -33,15 +33,6 @@
    '(org-property-value ((t (:inherit fixed-pitch))) t)
    '(org-document-info ((t (:inherit fixed-pitch)))))
 
-  (set-face-attribute 'org-level-1 nil :height 1.3 :weight 'bold)
-  (set-face-attribute 'org-level-2 nil :height 1.2 :weight 'bold)
-  (set-face-attribute 'org-level-3 nil :height 1.1 :weight 'bold)
-  (set-face-attribute 'org-level-4 nil :height 1.05 :weight 'bold)
-  (set-face-attribute 'org-level-5 nil :height 1.05 :weight 'bold)
-  (set-face-attribute 'org-level-6 nil :height 1.05 :weight 'bold)
-  (set-face-attribute 'org-level-7 nil :height 1.05 :weight 'bold)
-  (set-face-attribute 'org-level-8 nil :height 1.05 :weight 'bold)
-
   ;; TODO:
   ;; Look into better agenda formating
   (setq org-agenda-view-columns-initially t)
@@ -60,8 +51,24 @@
     (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
     (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
 
+
+
   ;; Declare faces
   (custom-set-faces!
+    `(org-level-1 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.3)
+    `(org-level-2 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.2)
+    `(org-level-3 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.1)
+    `(org-level-4 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
+    `(org-level-5 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
+    `(org-level-6 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
+    `(org-level-7 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
+    `(org-level-8 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
+        ;;     `(org-tag ((t (:foreground "red" :weight normal :height 1.0))))
+        ;;     `(org-agenda-date-today ((t (:inherit org-agenda-date :weight bold :height 1.0))))
+        ;;     `(org-agenda-date ((t (:inherit org-agenda-date :weight normal :height 1.0))))
+        ;;     `(org-agenda-date-weekend ((t (:inherit org-agenda-date :weight normal :height 1.0))))j
+        ;;     `(org-agenda-structure ((t (:inherit default :weight normal :height 1.0))))
+        ;;     `(org-agenda-tags ((t (:inherit org-tag :weight normal :height 1.0))))
     `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)))
     `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'yellow)))
     `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)))
