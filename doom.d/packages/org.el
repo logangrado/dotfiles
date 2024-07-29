@@ -119,6 +119,55 @@
   ;;                             (?8 . default)
   ;;                             (?9 . default)))
 
+  (setq! org-priority-highest 0
+         org-priority-default 2 ;; This displays as "^E" in agenda view, but I can't figure out how to fix it
+         ;; We can set it to ?2, and it will display as "2", but it will be at the bottom of the list (not good!)
+         org-priority-lowest 4)
+
+
+  ;; When updating a todo state in agenda, ensure we retain the complete original state of the todo
+  ;;=====================
+  (defun my/org-agenda-todo-around (orig-fun &rest args)
+    "Around advice to preserve agenda view state while running `org-agenda-todo`."
+    (message "BEFORE AROUND")
+    (let ((buffer (current-buffer))
+          (point (point))
+          (window-start (window-start)))
+      (apply orig-fun args)
+      (with-current-buffer buffer
+        (goto-char point)
+        (set-window-start (selected-window) window-start))
+      (org-agenda-redo)
+      )
+    (message "AFTER AROUND")
+    )
+
+  (advice-add 'org-agenda-todo :around #'my/org-agenda-todo-around)
+  (advice-add 'org-agenda-priority :around #'my/org-agenda-todo-around)
+  ;;=====================
+
+  (defun org-columns-priority (&optional _arg)
+    "Change the PRIORITY state during column view."
+    (interactive "P")
+    (org-columns-edit-value "PRIORITY"))
+
+  (defun org-todo-list-priority ()
+    "Return the custom agenda command configuration for priority-based view."
+    (append
+     (cl-loop for priority in '(0 1 2 3 4)
+              collect
+              `(tags-todo ,(format "+PRIORITY=\"%d\"" priority)
+                ((org-agenda-overriding-header ,(format "Priority %d" priority))
+                 (org-agenda-sorting-strategy '(priority-down))
+                 (org-agenda-view-columns-initially t))))
+     ;; Add section for items with priority unset
+     '((tags-todo "-PRIORITY=\"0\"-PRIORITY=\"1\"-PRIORITY=\"2\"-PRIORITY=\"3\"-PRIORITY=\"4\""
+        ((org-agenda-overriding-header "Priority Unset")
+         (org-agenda-sorting-strategy '(priority-down))
+         (org-agenda-view-columns-initially t))))))
+
+  (setq org-agenda-custom-commands
+        `(("c" "Agenda by priority" ,(org-todo-list-priority))))
   )
 
 (use-package! org-fancy-priorities
