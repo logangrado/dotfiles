@@ -1,6 +1,5 @@
 ;;; ../.dotfiles/doom.d/packages/magit.el -*- lexical-binding: t; -*-
 
-
 (use-package magit
   :config
   (setq magit-diff-refine-hunk t)
@@ -38,3 +37,7 @@
 
   (add-hook 'magit-diff-mode-hook #'my-wrap-lines)
   )
+
+(use-package magit-todos
+  :after magit
+  :config (magit-todos-mode 1))
