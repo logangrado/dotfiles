@@ -48,11 +48,11 @@
   ;; ORG AGENDA PREFIX FORMAT
 
   ;; Declare new faces for todo states
-  (with-no-warnings
-    (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
-    (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
-    (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
-    (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
+  ;; (with-no-warnings
+  ;;   (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
+  ;;   (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
+  ;;   (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
+  ;;   (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
 
 
 
@@ -66,31 +66,39 @@
     `(org-level-6 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
     `(org-level-7 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
     `(org-level-8 :foreground ,(nth 2 (doom-themes--colors-p 'fg)) :weight bold :height 1.05)
-        ;;     `(org-tag ((t (:foreground "red" :weight normal :height 1.0))))
-        ;;     `(org-agenda-date-today ((t (:inherit org-agenda-date :weight bold :height 1.0))))
-        ;;     `(org-agenda-date ((t (:inherit org-agenda-date :weight normal :height 1.0))))
-        ;;     `(org-agenda-date-weekend ((t (:inherit org-agenda-date :weight normal :height 1.0))))j
-        ;;     `(org-agenda-structure ((t (:inherit default :weight normal :height 1.0))))
-        ;;     `(org-agenda-tags ((t (:inherit org-tag :weight normal :height 1.0))))
-    `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)))
-    `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'yellow)))
-    `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)))
-    `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)))
-    `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)))
+    ;;     `(org-tag ((t (:foreground "red" :weight normal :height 1.0))))
+    ;;     `(org-agenda-date-today ((t (:inherit org-agenda-date :weight bold :height 1.0))))
+    ;;     `(org-agenda-date ((t (:inherit org-agenda-date :weight normal :height 1.0))))
+    ;;     `(org-agenda-date-weekend ((t (:inherit org-agenda-date :weight normal :height 1.0))))j
+    ;;     `(org-agenda-structure ((t (:inherit default :weight normal :height 1.0))))
+    ;;     `(org-agenda-tags ((t (:inherit org-tag :weight normal :height 1.0))))
     )
+
+  ;; Declar todo faces
+  (custom-set-faces!
+    `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)) :weight bold)
+    `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'cyan)) :weight bold)
+    `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)) :weight bold)
+    `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)) :weight bold)
+    `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)) :weight bold)
+    )
+
   (set-face-attribute 'org-column nil :background 'unspecified)
 
   (setq! org-todo-keywords
          '((sequence
             "TODO(t)"  ; A task that needs doing & is ready to do
-            "PROJ(p)"  ; A project, which usually contains other tasks
-            "LOOP(r)"  ; A recurring task
-            "STRT(s)"  ; A task that is in progress
+            ;; "PROJ(p)"  ; A project, which usually contains other tasks
+            ;; "LOOP(r)"  ; A recurring task
+            "STRT"     ; Legacy in progress, delete in future
+            "PROG(p)"  ; A task that is in progress
             "WAIT(w)"  ; Something external is holding up this task
             "FLUP(f)"
+            "REVW(r)"  ; In review
             "HOLD(h)"  ; This task is paused/on hold because of me
-            "IDEA(i)"  ; An unconfirmed and unapproved task or notion
+            ;; "IDEA(i)"  ; An unconfirmed and unapproved task or notjion
             "|"
+            "DUPE"     ; Duplicate
             "DONE(d)"  ; Task successfully completed
             "KILL(k)") ; Task was cancelled, aborted or is no longer applicable
            (sequence
@@ -102,13 +110,19 @@
 
   (setq! org-todo-keyword-faces
          '(("FLUP"  . +org-todo-onhold)
+           ("PROG" . +org-todo-active)
            ("STRT" . +org-todo-active)
+           ;; ("PROJ" . +org-todo-project)
            ("[?]"  . +org-todo-onhold)
            ("WAIT" . +org-todo-onhold)
+           ("REVW" . +org-todo-onhold)
            ("HOLD" . +org-todo-onhold)
-           ("PROJ" . +org-todo-project)
+           ("REVW" . +org-todo-onhold)
+           ;; Cancel
            ("NO"   . +org-todo-cancel)
-           ("KILL" . +org-todo-cancel)))
+           ("KILL" . +org-todo-cancel)
+
+           ))
 
   ;; ;; Adjust the display of priorities if desired
   ;; (setq! org-priority-faces '((?0 . error)

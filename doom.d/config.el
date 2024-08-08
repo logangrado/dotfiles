@@ -22,10 +22,6 @@
 (setq doom-theme 'doom-one)
 (setq display-line-numbers-type t)
 
-;; If you use `org' and don't want your org files in the default location below,
-;; change `org-directory'. It must be set before org loads!
-(setq org-directory "~/Documents/org/")
-
 ;;autorevert - automatically reload files changed on disk
 (global-auto-revert-mode t)
 (setq vc-follow-symlinks t) ;; Automatically open link (set to t for target)
@@ -77,6 +73,10 @@
 (map! :map evil-normal-state-map
       "X" #'kill-region
       "P" #'yank
+      "ys" #'evil-surround-edit
+      "yS" #'evil-Surround-edit
+      "yc" #'evil-surround-change
+      "yd" #'evil-surround-delete
       )
 
 ;; These keybindings maintain compatability
@@ -235,6 +235,7 @@ frame if FRAME is nil, and to 1 if AMT is nil."
       )
 
 ;; Bind key to change a workspace's default directory
+;; Doesn't seem to work quite as expected
 (map! :leader
       "TAB c" #'cd
       )

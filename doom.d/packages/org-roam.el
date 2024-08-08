@@ -95,6 +95,12 @@
   ;; END ORG ROAM AGENDA
   ;; ===================
 
+  (defun org-roam-search ()
+    "Search org-roam directory using consult-ripgrep. With live-preview."
+    (interactive)
+    (let ((consult-ripgrep-command "rg --multiline --null --ignore-case --type org --line-buffered --color=always --max-columns=500 --no-heading --line-number . -e ARG OPTS"))
+      (consult-ripgrep org-roam-directory "")))
+
   :custom
   (org-roam-completion-everywhere t)
   ;; More detail in default catpure template
@@ -106,6 +112,7 @@
   :bind
   (("C-c n f" . org-roam-node-find)
    ("C-c n r" . org-roam-node-random)
+   ("C-c n s" . org-roam-search)
    :map org-mode-map
    ("C-c n i" . org-roam-node-insert)
    ("C-c n o" . org-id-get-create)
@@ -125,6 +132,8 @@
   (org-roam-setup)
   (require 'org-roam-dailies) ;; Ensure the keymap is available
   (org-roam-db-autosync-mode)
+
+
   )
 
 (use-package! vulpea
