@@ -3,11 +3,14 @@
 (use-package! org
   :hook
   (org-mode . (lambda () (setq line-spacing 0.25)))
+  (org-mode . visual-fill-column-mode)
   ;; (org-mode . mixed-pitch-mode)
   :init
   (setq org-directory "~/Documents/org/")
 
   :config
+  (setq! visual-fill-column-width 120)
+
   (setq-default org-startup-indented t
                 org-pretty-entities t ;; Ensure we render equations and such
                 org-use-sub-superscripts "{}" ;; Force using {} for sup/super scripts
