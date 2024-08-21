@@ -29,4 +29,30 @@
         (persp-rename new-persp-name))))
 
   (add-hook 'projectile-after-switch-project-hook 'my-projectile-after-switch-hook)
+
+  ;; Command to create new projects
+  ;; ==============================
+  (defun my/create-new-project ()
+    "Interactively prompt the user for a directory, creating it if it doesn't exist.
+The prompt starts at the user's home directory with completion enabled."
+    (interactive)
+    (let* ((dir (read-directory-name "New project path: " nil nil nil)))
+      (message "New directory: %s" dir)
+      (unless (file-directory-p dir)
+        (message "Created new directory: %s" dir)
+        (make-directory dir t)
+        )
+      (message "Initializing git repo")
+      (let ((default-directory dir))
+        (shell-command "git init")
+        )
+      (message "Adding to projectile")
+      (projectile-add-known-project dir)
+      (message "Switching to project")
+      (projectile-switch-project-by-name dir)
+      )
+    )
+  (map! :leader
+        :desc "Create new project"
+        "p n" #'my/create-new-project)
   )
