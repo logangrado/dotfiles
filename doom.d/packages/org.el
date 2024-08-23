@@ -73,7 +73,7 @@
     ;;     `(org-agenda-tags ((t (:inherit org-tag :weight normal :height 1.0))))
     )
 
-  ;; Declar todo faces
+  ;; Declare todo faces
   (custom-set-faces!
     `(org-todo :foreground ,(nth 2 (doom-themes--colors-p 'red)) :weight bold)
     `(+org-todo-active :foreground ,(nth 2 (doom-themes--colors-p 'cyan)) :weight bold)
@@ -82,7 +82,8 @@
     `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)) :weight bold)
     )
 
-  (set-face-attribute 'org-column nil :background 'unspecified)
+  ;; Fix face for org todo column view
+  (custom-set-faces! '(org-column :background nil))
 
   (setq! org-todo-keywords
          '((sequence
