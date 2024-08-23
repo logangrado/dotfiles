@@ -1,24 +1,25 @@
 [core]
-	excludesfile = ~/.gitignore_global	
-	
+    excludesfile = ~/.gitignore_global
+
 [user]
-	name = Logan Grado
-	email = logan.grado@amd.com
+    name = Logan Grado
+    email = grado.logan@gmail.com
 
 [commit]
-	template = ~/.gitmessage
+    template = ~/.gitmessage
         
 [pager]
-	branch = false
-        log = less -iXFR                # Leave on screen after exit
+    branch = false
+    log = less -iXFR                # Leave on screen after exit
+
 [filter "lfs"]
-	required = true
-	clean = git-lfs clean -- %f
-	smudge = git-lfs smudge -- %f
-	process = git-lfs filter-process
+    required = true
+    clean = git-lfs clean -- %f
+    smudge = git-lfs smudge -- %f
+    process = git-lfs filter-process
 
 [log]
-        date = format:"%y-%m-%d %H:%M"
+    date = format:"%y-%m-%d %H:%M"
 
 [format]
-        pretty = format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset"
+   pretty = format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset"
