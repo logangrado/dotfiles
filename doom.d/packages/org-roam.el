@@ -101,6 +101,79 @@
     (let ((consult-ripgrep-command "rg --multiline --null --ignore-case --type org --line-buffered --color=always --max-columns=500 --no-heading --line-number . -e ARG OPTS"))
       (consult-ripgrep org-roam-directory "")))
 
+  ;; Org roam weeklies
+  ;;==========================================================================================
+  (defun org-roam-weeklies--file-path (time)
+    "Return the file path for the weekly note corresponding to TIME."
+    (let ((filename (format-time-string "weekly/%Y-W%V.org" time)))
+      (expand-file-name filename org-roam-directory)))
+
+  (defun org-roam-weeklies-goto-today ()
+    "Find or create the weekly note for the current week."
+    (interactive)
+    (let ((file-path (org-roam-weeklies--file-path (current-time))))
+      (find-file file-path)
+      (unless (file-exists-p file-path)
+        (insert (format "#+title: Week %s, %s\n\n"
+                        (format-time-string "%V")
+                        (format-time-string "%Y")))
+        (save-buffer))))
+
+  (defun org-roam-weeklies--get-week-from-file ()
+    "Extract the year and week number from current weekly note filename.
+Returns a cons cell (YEAR . WEEK) or nil if not in a weekly note."
+    (when buffer-file-name
+      (when (string-match "/weekly/\\([0-9]\\{4\\}\\)-W\\([0-9]\\{2\\}\\)\\.org$"
+                          buffer-file-name)
+        (cons (string-to-number (match-string 1 buffer-file-name))
+              (string-to-number (match-string 2 buffer-file-name))))))
+
+  (defun org-roam-weeklies--time-for-week (year week offset)
+    "Create a time value for YEAR and WEEK with OFFSET weeks added."
+    ;; Convert to time using first day of the week (Monday)
+    (let* ((time (encode-time 0 0 0 1 1 year))
+           ;; Add weeks to get to target week
+           (target-week (+ week offset))
+           (seconds-per-week (* 60 60 24 7))
+           (offset-seconds (* seconds-per-week (1- target-week))))
+      (time-add time offset-seconds)))
+
+  (defun org-roam-weeklies-goto-next ()
+    "Go to the next weekly note.
+If not in a weekly note, go to next week from current week."
+    (interactive)
+    (let* ((week-info (or (org-roam-weeklies--get-week-from-file)
+                          (org-roam-weeklies--get-current-week)))
+           (year (car week-info))
+           (week (cdr week-info))
+           (next-time (org-roam-weeklies--time-for-week year week 1))
+           (file-path (org-roam-weeklies--file-path next-time)))
+      (find-file file-path)
+      (unless (file-exists-p file-path)
+        (insert (format "#+title: Week %s, %s\n\n"
+                        (format-time-string "%V" next-time)
+                        (format-time-string "%Y" next-time)))
+        (save-buffer))))
+
+  (defun org-roam-weeklies-goto-previous ()
+    "Go to the previous weekly note.
+If not in a weekly note, go to previous week from current week."
+    (interactive)
+    (let* ((week-info (or (org-roam-weeklies--get-week-from-file)
+                          (org-roam-weeklies--get-current-week)))
+           (year (car week-info))
+           (week (cdr week-info))
+           (prev-time (org-roam-weeklies--time-for-week year week -1))
+           (file-path (org-roam-weeklies--file-path prev-time)))
+      (find-file file-path)
+      (unless (file-exists-p file-path)
+        (insert (format "#+title: Week %s, %s\n\n"
+                        (format-time-string "%V" prev-time)
+                        (format-time-string "%Y" prev-time)))
+        (save-buffer))))
+  ;; END Org roam weeklies
+  ;;==========================================================================================
+
   :custom
   (org-roam-completion-everywhere t)
   ;; More detail in default catpure template
@@ -108,6 +181,9 @@
    '(("d" "default" entry "* %<%I:%M %p>: %?"
       :if-new (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
 
+  :bind-keymap
+  ("C-c n d" . org-roam-dailies-map)
+  ("C-c n w" . org-roam-weeklies-map)
 
   :bind
   (("C-c n f" . org-roam-node-find)
@@ -121,18 +197,21 @@
    ("C-c n l" . org-roam-buffer-toggle)
    :map org-roam-dailies-map
    ("Y" . org-roam-dailies-capture-yesterday)
-   ("T" . org-roam-dailies-capture-tomorrow))
+   ("T" . org-roam-dailies-capture-tomorrow)
+   :map org-roam-weeklies-map
+   ("w" . org-roam-weeklies-goto-today)
+   ("n" . org-roam-weeklies-goto-next)
+   ("p" . org-roam-weeklies-goto-previous)
+   )
 
-
-  :bind-keymap
-  ("C-c n d" . org-roam-dailies-map)
 
 
   :config
   (org-roam-setup)
   (require 'org-roam-dailies) ;; Ensure the keymap is available
   (org-roam-db-autosync-mode)
-
+  (defvar org-roam-weeklies-map (make-sparse-keymap)
+    "Keymap for weekly note commands.")
 
   )
 
