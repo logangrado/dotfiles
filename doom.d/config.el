@@ -222,16 +222,37 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 
 (defun resize-current-window-to-fraction (fraction)
   "Resize the current window to a specific FRACTION of the frame's total height."
-  (interactive "nResize to fraction of frame height: ")
+  (interactive "Resize to fraction of frame height: ")
   (let* ((total-lines (frame-total-lines))
-         (target-height (floor (* fraction total-lines)))
+         (target-height (ceiling (* fraction total-lines)))
          (current-height (window-height))
          (delta (- target-height current-height)))
     (window-resize nil delta)))
+
+
+;; WINDOW RESIZING
+(defun resize-window-to-1/3 ()
+  "Resize the current window to 1/3 of the frame width."
+  (interactive)
+  (resize-current-window-to-fraction 0.35))
+(defun resize-window-to-1/2 ()
+  "Resize the current window to 1/2 of the frame width."
+  (interactive)
+  (resize-current-window-to-fraction 0.5))
+(defun resize-window-to-2/3 ()
+  "Resize the current window to 2/3 of the frame width."
+  (interactive)
+  (resize-current-window-to-fraction 0.65))
+(defun resize-window-to-9/10 ()
+  "Resize the current window to 9/10 of the frame width."
+  (interactive)
+  (resize-current-window-to-fraction 0.9))
+
 (map! :leader
-      "w 2" #'(lambda () (interactive) (resize-current-window-to-fraction 0.33))
-      "w 3" #'(lambda () (interactive) (resize-current-window-to-fraction 0.33))
-      "w #" #'(lambda () (interactive) (resize-current-window-to-fraction 0.66))
+      "w 1" #'resize-window-to-9/10
+      "w 2" #'resize-window-to-1/2
+      "w 3" #'resize-window-to-1/3
+      "w #" #'resize-window-to-2/3
       )
 
 ;; Bind key to change a workspace's default directory
