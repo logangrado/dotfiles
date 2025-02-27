@@ -268,3 +268,8 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 ;;=================================================================
 ;; Load all files in packages/
 (mapc 'load (file-expand-wildcards "~/.doom.d/packages/*.el"))
+
+;; Final loads
+(add-hook 'doom-after-init-hook
+          (lambda ()
+            (load (expand-file-name "keybindings.el" doom-user-dir) t)))
