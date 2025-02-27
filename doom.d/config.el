@@ -61,28 +61,7 @@
 ;; GENERAL KEYBINDINGS
 ;; ================================================================
 ;; CUT/COPY/PASTE BINDINGS
-(map! :map (evil-normal-state-map evil-insert-state-map evil-visual-state-map vterm-mode-map vterm-copy-mode-map vterm-mode-map)
-      "M-w" #'kill-ring-save
-      )
-(map! :map (evil-normal-state-map evil-insert-state-map vterm-mode-map)
-      "C-w" #'kill-region
-      "C-y" #'yank
-      "M-y" #'yank-from-kill-ring
-      "C-k" #'kill-line
-      )
-(map! :map evil-normal-state-map
-      "X" #'kill-region
-      "P" #'yank
-      "ys" #'evil-surround-edit
-      "yS" #'evil-Surround-edit
-      "yc" #'evil-surround-change
-      "yd" #'evil-surround-delete
-      )
 
-;; These keybindings maintain compatability
-(define-key evil-visual-state-map "3" 'comment-region)
-(define-key evil-visual-state-map "4" 'uncomment-region)
-(define-key evil-normal-state-map "U" 'evil-redo)
 (define-key evil-normal-state-map "Q" 'call-last-kbd-macro)
 (define-key evil-visual-state-map "Q" 'call-last-kbd-macro)
 (define-key evil-normal-state-map "\C-t" nil) ;; Unbind C-t (creates new workspace)
