@@ -1,0 +1,10 @@
+[Unit]
+Description=Run daily cleanup script at 2 AM
+
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+Unit=daily_cleanup.service  # Explicitly linking to the service
+
+[Install]
+WantedBy=timers.target
