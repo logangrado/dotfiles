@@ -36,8 +36,39 @@
     (setq truncate-lines nil))
 
   (add-hook 'magit-diff-mode-hook #'my-wrap-lines)
+
+
+  (defun my/magit-log-branches ()
+    "Show logs for local branches and their remotes, plus main branches."
+    (interactive)
+    (let* ((local-branches (magit-list-local-branch-names))
+           (remote-branches (magit-list-remote-branch-names "origin"))
+           (remote-pairs (seq-filter
+                          (lambda (remote-ref)
+                            (member remote-ref remote-branches))
+                          (mapcar (lambda (branch)
+                                    (concat "origin/" branch))
+                                  local-branches)))
+           (main-branches (seq-filter
+                           (lambda (ref)
+                             (member ref remote-branches))
+                           '("origin/dev" "origin/main" "origin/master")))
+           (all-refs (append local-branches
+                             remote-pairs
+                             main-branches)))
+      (magit-log-setup-buffer
+       (delete-dups all-refs)
+       (list "--graph" "--decorate")
+       nil
+       "test message"
+       'magit-log-mode)))
+
+  (transient-append-suffix 'magit-log "b"
+    '("B" "my branches" my/magit-log-branches))
   )
 
-(use-package magit-todos
-  :after magit
-  :config (magit-todos-mode 1))
+;; (use-package magit-todos
+;;   :after magit
+;;   :config (magit-todos-mode 1)
+;;   (add-to-list 'magit-todos-exclude-globs "*.html")
+;;   )
