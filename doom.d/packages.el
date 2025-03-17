@@ -5,7 +5,6 @@
 ;; on the command line, then restart Emacs for the changes to take effect -- or
 ;; use 'M-x doom/reload'.
 
-
 ;; To install SOME-PACKAGE from MELPA, ELPA or emacsmirror:
                                         ;(package! some-package)
 
@@ -25,12 +24,20 @@
 (package! org-bullets)
 (package! org-roam-ui)
 (package! org-appear)
+(package! org-modern)
 (package! mixed-pitch)
 (package! vulpea)
 (package! org-fancy-priorities)
+(package! multiple-cursors)
+(package! adaptive-wrap)
+
+;; (package! magit-todos)
+
+(package! csv-mode)
 
 (package! visual-regexp)
 (package! visual-regexp-steroids)
+
 ;; To install a package directly from a remote git repo, you must specify a
 ;; `:recipe'. You'll find documentation on what `:recipe' accepts here:
 ;; https://github.com/radian-software/straight.el#the-recipe-format
@@ -61,7 +68,6 @@
 
 ;; Use `:pin' to specify a particular commit to install.
                                         ;(package! builtin-package :pin "1a2b3c4d5e")
-
 
 ;; Doom's packages are pinned to a specific commit and updated from release to
 ;; release. The `unpin!' macro allows you to unpin single packages...
