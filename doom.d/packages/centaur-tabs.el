@@ -21,7 +21,7 @@
 
   :config
   (centaur-tabs-mode t)
-  (setq centaur-tabs-adjust-buffer-order t) ;;Auto-reorder tabs when switching
+  (setq centaur-tabs-adjust-buffer-order nil) ;;Dont Auto-reorder tabs when switching
   (setq centaur-tabs-height 32
         centaur-tabs-style "bar"
         centaur-tabs-set-icons t
