@@ -26,7 +26,7 @@
 
   (defun +vterm/get-workspace-buffer-name ()
     "Retrieve vterm buffer name for this workspace"
-    (format "*vterm:%s"
+    (format "*v:%s"
             (if
                 (bound-and-true-p persp-mode)
                 (safe-persp-name (get-current-persp))
