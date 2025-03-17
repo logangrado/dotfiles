@@ -64,7 +64,10 @@
        'magit-log-mode)))
 
   (transient-append-suffix 'magit-log "b"
-    '("B" "my branches" my/magit-log-branches))
+    '("a" "Locals and refs" my/magit-log-branches))
+  (transient-append-suffix 'magit-log "b"
+    '("A" "All" magit-log-all))
+
   )
 
 ;; (use-package magit-todos
