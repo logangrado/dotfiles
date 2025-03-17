@@ -34,7 +34,7 @@
       "C-k" #'kill-line
       )
 
-(map! :map :n
+(map! :map (evil-normal-state-map)
       "X" #'kill-region
       "p" #'evil-paste-before
       "P" #'evil-paste-after
@@ -48,13 +48,13 @@
 
 ;; These keybindings maintain compatability
 ;; (define-key evil-visual-state-map "3" 'comment-region)
-(map! :map :v
+(map! :map (evil-visual-state-map)
       "3" #'comment-or-uncomment-region
       "4" #'uncomment-region
       )
 
 
-(map! :map :nv
+(map! :map (evil-normal-state-map evil-visual-state-map)
       "s" #'evil-snipe-s
       "S" #'evil-snipe-S
       "f" #'evil-snipe-f
