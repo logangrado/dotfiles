@@ -62,3 +62,7 @@
       ;; "x" #'evil-snipe-x
       ;; "X" #'evil-snipe-X
       )
+
+(map! :map (dired-mode-map)
+      "RET" #'find-alternate-file
+      )
