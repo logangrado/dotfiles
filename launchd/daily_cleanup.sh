@@ -37,13 +37,15 @@ function cleanup_helper() {
 
     IFS=$'\n' # Ensure spaces in the filename don't break everything
 
-    if [[ "$OS" == "Darwin" ]]; then
-        # macOS: Use `-newermt` to compare file modification times
-        FIND_CMD="find \"$SOURCE_DIR\"/* -type f -mtime +$AGE"
-    else
-        # Linux: Use `-newermt` to compare timestamps
-        FIND_CMD="find \"$SOURCE_DIR\"/* -type f -mtime +$AGE"
-    fi
+    # Don't recurse - just move top-level dirs/files
+    FIND_CMD="find \"$SOURCE_DIR\" -mindepth 1 -maxdepth 1 -mtime +$AGE"
+    # if [[ "$OS" == "Darwin" ]]; then
+    #     # macOS: Use `-newermt` to compare file modification times
+    #     FIND_CMD="find \"$SOURCE_DIR\"/* -type f -mtime +$AGE"
+    # else
+    #     # Linux: Use `-newermt` to compare timestamps
+    #     FIND_CMD="find \"$SOURCE_DIR\"/* -type f -mtime +$AGE"
+    # fi
 
     for SOURCE_PATH in $(eval "$FIND_CMD"); do
         SOURCE_NAME=$(basename "$SOURCE_PATH")
