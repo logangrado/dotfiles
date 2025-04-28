@@ -14,6 +14,28 @@
   (setq projectile-mode-line "Projectile") ;;https://emacs.stackexchange.com/a/17579
   (setq projectile--mode-line "Projectile") ;;https://emacs.stackexchange.com/a/17579
 
+  ;; NEW ATTEMPT AT OPTIMIZING TRAMP
+  ;; (setq tramp-use-ssh-controlmaster-options t)
+  ;; (setq tramp-ssh-controlmaster-options
+  ;;       "-o ControlMaster=auto -o ControlPath=~/.ssh/tramp.%%C -o ControlPersist=600")
+
+  (setq tramp-use-ssh-controlmaster-options t)
+  (setq tramp-ssh-controlmaster-options
+        (format "-o ControlMaster=auto -o ControlPath=%s -o ControlPersist=600"
+                (expand-file-name "tramp/%%C" "~/.ssh/")))
+
+  (defun my/projectile-auto-register-tramp-project ()
+    "Automatically register remote projects with Projectile."
+    (when (and (file-remote-p default-directory)
+               (not (projectile-project-p)))  ;; don't re-register
+      (let ((root (vc-root-dir)))
+        (when root
+          (projectile-add-known-project root)
+          (projectile-cache-project root)
+          (message "Projectile: Registered remote project %s" root)))))
+
+  (add-hook 'find-file-hook #'my/projectile-auto-register-tramp-project)
+
   ;; Below is a bunch of code I was using to try to optimize magit over tramp
   ;; Turns out magit over tramp is fine (tested against local server), it's just really slow on AMD server
   ;; Unclear if due to higher ping, or server configuration
