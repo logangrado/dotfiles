@@ -46,17 +46,23 @@ source $HOME/.dotfiles/zsh/emacsd.sh
 
 # ALIASES
 #======================================================
-
 alias ls='ls -CFG'
 alias lsa='ls -CFGa'
 alias del='rmtrash'
 alias g++='g++ -std=c++11'
 
-#git aliases
+# DOCKER ALIASES
+# Rootless/rootful
+alias docker-rootless='export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock && echo "Switched to rootless Docker"'
+alias docker-rootful='export DOCKER_HOST=unix:///var/run/docker.sock && echo "Switched to rootfull Docker"'
+alias dive="docker run -ti --rm  -v ${DOCKER_HOST#unix://}:/var/run/docker.sock wagoodman/dive" # Use DOCKER_HOST to work with rootless
+
+alias dua='du -ahd1 | sort -rh'
+
+# GIT ALIASES
 alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
 alias gh="cd $(git rev-parse --show-toplevel)"
-
 # git log, but just show current branch, master, and dev (if they exist, and their remotes)
 alias gitlog='git log $($HOME/.dotfiles/scripts/get_remotes master dev HEAD) --graph --color --decorate --first-parent -m'
 # git log, but just show current branch, master, and dev (if they exist, and their remotes)
