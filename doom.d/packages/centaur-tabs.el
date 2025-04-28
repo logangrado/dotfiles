@@ -76,4 +76,19 @@
 
   ;; Set the custom grouping function
   (setq centaur-tabs-buffer-groups-function 'my/centaur-tabs-buffer-groups)
+
+  ;; Make centaur-tabs use the same buffer list as persp mode
+  (defun my/centaur-tabs-buffer-list ()
+    "Return buffers visible in the current workspace."
+    (let ((buffers (persp-buffer-list)))
+      (cl-remove-if
+       (lambda (buffer)
+         (or (string-prefix-p " " (buffer-name buffer)) ; internal buffers
+             ;; (string-prefix-p "*" (buffer-name buffer)) ; hidden buffers
+             (not (buffer-live-p buffer))))
+       buffers)))
+  (setq centaur-tabs-buffer-list-function #'my/centaur-tabs-buffer-list)
+
+  (add-hook 'persp-switch-hook #'centaur-tabs-headline-match)
+  ;; Update tabs on switching perspectives (workspaces)
   )
