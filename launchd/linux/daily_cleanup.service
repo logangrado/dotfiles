@@ -4,4 +4,4 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/Users/grado/.dotfiles/launchd/daily_cleanup.sh
+ExecStart=/home/grado/.dotfiles/launchd/daily_cleanup.sh
