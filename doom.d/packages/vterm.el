@@ -15,11 +15,15 @@
      correctly in the future"
     (unless (fboundp 'module-load)
       (user-error "Your build of Emacs lacks dynamic modules support and cannot load vterm"))
-    (let* ((project-root (or (doom-project-root) default-directory))
+    (let* ((project-root (or
+                          (doom-project-root)     ;; Try doom project root first
+                          (expand-file-name "~/") ;; Then home
+                          ;;default-directory     ;; Don't  use `default-directory`
+                          ))
            (default-directory
-             (if arg
-                 default-directory
-               project-root)))
+            (if arg
+                default-directory
+              project-root)))
       (setenv "PROOT" project-root)
       (funcall display-fn)))
 
