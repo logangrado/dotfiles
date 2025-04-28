@@ -93,6 +93,29 @@
       "H" #'evil-beginning-of-line
       "L" #'evil-end-of-line
       )
+;; (defun my/evil-previous-10-lines ()
+;;   (interactive)
+;;   (message "Previous function called in state: %s" evil-state)
+;;   (dotimes (_ 10)
+;;     (evil-previous-visual-line)))
+
+;; (defun my/evil-next-10-lines ()
+;;   (interactive)
+;;   (message "Next function called in state: %s" evil-state)
+;;   (dotimes (_ 10)
+;;     (evil-next-visual-line)))
+
+;; ;; Define keys for normal and visual states using map!
+;; (map! :map (evil-normal-state-map evil-visual-state-map)
+;;       "K" #'my/evil-previous-10-lines
+;;       "J" #'my/evil-next-10-lines
+;;       "H" #'evil-beginning-of-line
+;;       "L" #'evil-end-of-line)
+
+;; ;; Define keys specifically for visual-line-mode using evil-define-key
+;; (evil-define-key 'visual-line evil-visual-state-map
+;;   "K" #'my/evil-previous-10-lines
+;;   "J" #'my/evil-next-10-lines)
 
 ;; Move to new window on creation
 (map! :leader
@@ -242,6 +265,13 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 
 ;; Disable smart-parans, which just annoys me
 (remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
+
+
+(advice-add '+workspace/new :after
+            (lambda (&rest _)
+              (cd "~")
+              ))
+
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
