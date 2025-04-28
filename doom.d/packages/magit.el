@@ -55,7 +55,9 @@
                            '("origin/dev" "origin/main" "origin/master")))
            (all-refs (append local-branches
                              remote-pairs
-                             main-branches)))
+                             main-branches
+                             (magit-list-stashes)
+                             )))
       (magit-log-setup-buffer
        (delete-dups all-refs)
        (list "--graph" "--decorate")
