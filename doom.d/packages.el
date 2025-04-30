@@ -30,6 +30,7 @@
 (package! org-fancy-priorities)
 (package! multiple-cursors)
 (package! adaptive-wrap)
+(package! treesit-fold)
 
 ;; (package! magit-todos)
 
