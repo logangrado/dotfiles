@@ -126,6 +126,10 @@
 (define-key minibuffer-local-must-match-map [escape] 'minibuffer-keyboard-quit)
 (define-key minibuffer-local-isearch-map [escape] 'minibuffer-keyboard-quit)
 
+(setq evil-escape-key-sequence "jk"
+      ;; evil-escape-delay 0.2
+      ) ;; You can increase this slightly if you type slowly
+
 ;; Exclude these modes from evil escape (remove vterm mode from default)
 (setq evil-escape-excluded-major-modes nil)
 
