@@ -30,6 +30,7 @@
 (package! org-fancy-priorities)
 (package! multiple-cursors)
 (package! adaptive-wrap)
+(package! exec-path-from-shell)
 
 ;; (package! magit-todos)
 
