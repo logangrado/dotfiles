@@ -31,6 +31,18 @@ function git_ahead_behind_diverged() {
     fi    
 }
 
+function k8s_info() {
+  (( $+commands[kubectl] )) || return
+
+  local ctx ns
+  ctx=$(kubectl config current-context 2>/dev/null) || return
+  ns=$(kubectl config view --minify --output 'jsonpath={..namespace}' 2>/dev/null)
+  [[ -z "$ns" ]] && ns="default"
+
+  ktx_str="<k8s:$ctx/$ns>"
+  echo "%{$fg[magenta]%}$ktx_str%{$reset_color%} "
+}
+
 function my_git_prompt() {
   tester=$(git rev-parse --git-dir 2> /dev/null) || return
   
@@ -173,9 +185,9 @@ function set-prompt() {
   # Bottom right:  Yellow current time.
 
 
-  local top_left="┌ %{$fg[green]%}%n%{$reset_color%}@%{$fg[green]%}%m%{$fg[cyan]%} $(get_virtualenv_name)"
+  local top_left="┌ %{$fg[green]%}%n%{$reset_color%}@%{$fg[green]%}%m%{$fg[cyan]%} $(get_virtualenv_name)$(k8s_info)"
   local top_right="%{$fg[blue]%}%~%{$reset_color%}"
-  local bottom_left="└ %{$fg[red]%}%c$(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} "
+  local bottom_left="└ %{$fg[blue]%}%c$(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} "
   local bottom_right="${return_code}"
 
   local REPLY

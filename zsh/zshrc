@@ -1,3 +1,5 @@
+#!/usr/bin/env zsh
+
 # Source any extra zsh configs
 for CONFIG in $(find ~ -maxdepth 1 -name ".zshrc-*"); do
     source $CONFIG
@@ -80,6 +82,11 @@ alias gcan='git commit --amend --no-edit'
 alias pr='pdm run'
 alias pri="pdm run ipython"
 
+# KUBERNETES ALIASES
+alias ktl='kubectl'
+alias ktx='kubectx'
+alias kns='kubens'
+
 setopt nosharehistory                 # Prevent command history from being shared within windows
 # These lines prevent command-matching when moving through command history
 bindkey "\eOA" up-line-or-history    
@@ -137,3 +144,7 @@ if [ $TERM = dumb ]; then
     unsetopt zle
     PS1='$ '
 fi
+
+# Homebrew autocomplete
+autoload -Uz compinit
+compinit
