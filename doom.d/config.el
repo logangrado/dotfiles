@@ -247,6 +247,15 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 ;; Disable smart-parans, which just annoys me
 (remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
 
+;; HACK: Fix issue with PYENV_VERSION being set by some process somewhere
+(setenv "PYENV_VERSION" "")
+
+(map! :leader
+      :desc "Start :%s substitution"
+      "r" (lambda ()
+            (interactive)
+            (evil-ex "%s/")))
+
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
 ;; Load all files in packages/
