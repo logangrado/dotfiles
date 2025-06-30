@@ -1,20 +1,24 @@
 #!/bin/bash
 
-DEST_DIR=${HOME}/Library/LaunchAgents
-for SOURCE in $(find . -name "*.plist" -exec realpath {} \;); do
-    SOURCE_NAME=$(basename $SOURCE)
-    DEST=${DEST_DIR}/${SOURCE_NAME}
+set -euo pipefail
 
-    if [[ -L $DEST ]]; then
-        rm $DEST
-    fi
-    
-    echo "Linking... $SOURCE -> $DEST"
-    ln -s $SOURCE $DEST
-    echo "done"
+TEMPLATE_DIR="$(cd "$(dirname "$0")" && pwd)"
+DEST_DIR="${HOME}/Library/LaunchAgents"
 
-    echo -n "Loading... "
-    launchctl unload -w $DEST
-    launchctl load -w $DEST
-    echo "done"
+mkdir -p "$DEST_DIR"
+
+for TEMPLATE in "$TEMPLATE_DIR"/*.plist.in; do
+    BASENAME=$(basename "$TEMPLATE" .in)
+    DEST="$DEST_DIR/$BASENAME"
+    echo "Installing $BASENAME"
+
+    echo "  Generate plist: $DEST"
+    # Expand environment variables like $HOME
+    envsubst < "$TEMPLATE" > "$DEST"
+
+    echo "  Reloading LaunchAgent: $DEST"
+    launchctl unload -w "$DEST" 2>/dev/null || true
+    launchctl load -w "$DEST"
 done
+
+echo "Done"

@@ -4,8 +4,15 @@ All automated tasks are stored here, as defined in launchd format
 All services can be installed and enabled via the install script
 
 * Need to grant "full disk access" to the daily_cleanup scrip
+- Open system settings
+- Privacy and secirity
+- Click "+"
+- cmd-shift-G to search /bin/bash
 
 * UPDATE <2024-01-25 Thu>
 - It looks like you just need to give `/bin/bash` full disk access
   - Probably because the script has /bin/bash at the top
 - the `daily_cleanup.sh` doesn't appear to need full disk access
+
+* Debugging
+launchctl kickstart -k gui/$(id -u)/com.grado.daily_cleanup
