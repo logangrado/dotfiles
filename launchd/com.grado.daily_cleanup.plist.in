@@ -7,9 +7,9 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/bin/bash</string>
-    <string>-c</string>
-    <string>${HOME}/.dotfiles/launchd/daily_cleanup.sh</string>
+    <string>/usr/bin/env</string>
+    <string>python3</string>
+    <string>${HOME}/.dotfiles/launchd/daily_cleanup.py</string>
   </array>
 
   <key>StartCalendarInterval</key>
@@ -22,8 +22,8 @@
   <true/>
 
   <key>StandardOutPath</key>
-  <string>${HOME}/.dotfiles/launchd/daily_cleanup.out</string>
+  <string>${HOME}/.dotfiles/launchd/daily_cleanup.log</string>
   <key>StandardErrorPath</key>
-  <string>${HOME}/.dotfiles/launchd/daily_cleanup.out</string>
+  <string>${HOME}/.dotfiles/launchd/daily_cleanup.log</string>
 </dict>
 </plist>
