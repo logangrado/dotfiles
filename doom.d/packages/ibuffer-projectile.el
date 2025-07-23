@@ -4,10 +4,9 @@
   :init
   ;; Order buffers alphabetically within groups
   (add-hook 'ibuffer-hook
-    (lambda ()
-      (ibuffer-projectile-set-filter-groups)
-      )
-    )
+            (lambda ()
+              (unless ibuffer-filter-groups
+                (ibuffer-projectile-set-filter-groups))))
   :config
   (setq ibuffer-default-sorting-mode 'alphabetic)
   ;; define size-h column (human readable)
@@ -20,12 +19,12 @@
      (t (format "%8dB" (buffer-size)))))
 
   (setq ibuffer-formats
-      '((mark modified read-only " "
-              (name 25 25 :left :elide)
-              " "
-              (size-h 9 -1 :right)       ;; use human readable size
-              " "
-              (mode 16 16 :left :elide)
-              " "
-              project-relative-file)))   ;; Display filenames relative to project root
+        '((mark modified read-only " "
+           (name 25 25 :left :elide)
+           " "
+           (size-h 9 -1 :right)       ;; use human readable size
+           " "
+           (mode 16 16 :left :elide)
+           " "
+           project-relative-file)))   ;; Display filenames relative to project root
   )
