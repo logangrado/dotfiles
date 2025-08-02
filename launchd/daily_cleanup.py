@@ -19,7 +19,7 @@ def _cleanup(src, dst, age):
     now = datetime.datetime.now().timestamp()
     for item in src.glob("*"):
 
-        item_age = (now - item.stat().st_ctime) / 60 / 60 / 24
+        item_age = (now - item.stat().st_birthtime) / 60 / 60 / 24
 
         if item_age > age:
             # Determine dest name, adding suffix as required to avoid conflict
