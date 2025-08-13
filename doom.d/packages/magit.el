@@ -60,7 +60,7 @@
                              )))
       (magit-log-setup-buffer
        (delete-dups all-refs)
-       (list "--graph" "--decorate")
+       (list "--graph" "--decorate" "--ignore-missing")
        nil
        "test message"
        'magit-log-mode)))
