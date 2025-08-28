@@ -1,6 +1,10 @@
 ;;; ../.dotfiles/doom.d/packages/magit.el -*- lexical-binding: t; -*-
 
 (use-package magit
+  :init
+  (when (eq system-type 'darwin)
+    (setq magit-git-executable "/opt/homebrew/bin/git"))
+
   :config
   (setq magit-diff-refine-hunk t)
 
@@ -66,9 +70,9 @@
        'magit-log-mode)))
 
   (transient-append-suffix 'magit-log "b"
-    '("a" "Locals and refs" my/magit-log-branches))
+    '("l" "Locals and refs" my/magit-log-branches))
   (transient-append-suffix 'magit-log "b"
-    '("A" "All" magit-log-all))
+    '("c" "current" magit-log-current))
 
   )
 
