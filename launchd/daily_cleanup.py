@@ -3,6 +3,7 @@
 from pathlib import Path
 import shutil
 import datetime
+import os, sys
 
 LOG_FILE = Path.home() / ".dotfiles/launchd/daily_cleanup.log"
 
@@ -14,9 +15,21 @@ def _log(message):
         f.write(f"[{nonce}] {message}\n")
 
 
-def _cleanup(src, dst, age):
+# DEBUG LOGGING
+_log(f"UID={os.getuid()} GID={os.getgid()} exe={sys.executable}")
+_log(f"PATH={os.environ.get('PATH')}")
+try:
+    downloads = Path.home() / "Downloads"
+    entries = list(downloads.glob("*"))
+    _log(f"Downloads entries seen by launchd: {len(entries)}")
+except Exception as e:
+    _log(f"Error listing Downloads: {e!r}")
 
+
+def _cleanup(src, dst, age):
+    _log(f"  Moving items older than {age} {src} -> {dst}")
     now = datetime.datetime.now().timestamp()
+    items_moved = 0
     for item in src.glob("*"):
 
         item_age = (now - item.stat().st_birthtime) / 60 / 60 / 24
@@ -32,6 +45,8 @@ def _cleanup(src, dst, age):
 
             # Move the item
             shutil.move(item, item_dst)
+            items_moved += 1
+    _log(f"    Moved {items_moved} items")
 
 
 def _truncate_log_file(path, max_size):
@@ -59,6 +74,8 @@ def _truncate_log_file(path, max_size):
 
 def main():
     _log("Running daily cleanup")
+
+    _log(f"Home directory: {Path.home()}")
 
     downloads = Path.home() / "Downloads"
     dirs = [
