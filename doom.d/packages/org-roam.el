@@ -34,6 +34,7 @@
 
   (defun vulpea-project-update-tag ()
     (interactive)
+    (message "UPDATING VULPEA PROJECT TAG")
     "Update PROJECT tag in the current buffer."
     (when (and (not (active-minibuffer-window))
                (vulpea-buffer-p))
@@ -187,7 +188,7 @@ If not in a weekly note, go to previous week from current week."
 
   :bind
   (("C-c n f" . org-roam-node-find)
-   ("C-c n r" . org-roam-node-random)
+   ("C-c n r" . org-roam-db-sync)
    ("C-c n s" . org-roam-search)
    :map org-mode-map
    ("C-c n i" . org-roam-node-insert)

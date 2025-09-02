@@ -6,7 +6,7 @@
   (org-mode . auto-save-mode)
   ;; (org-mode . mixed-pitch-mode)
   :init
-  (setq org-directory "~/Documents/org/")
+  (setq org-directory "~/org/")
   (add-hook 'auto-save-hook 'org-save-all-org-buffers)`
 
   :config
@@ -88,14 +88,15 @@
   (setq! org-todo-keywords
          '((sequence
             "TODO(t)"  ; A task that needs doing & is ready to do
+            "PROG(p)"  ; A task that is in progress
+            "DELG(e)"  ; This task has been delegated, may require followup
+            "HOLD(h)"  ; This task is paused/on hold because of me
             ;; "PROJ(p)"  ; A project, which usually contains other tasks
             ;; "LOOP(r)"  ; A recurring task
-            "STRT"     ; Legacy in progress, delete in future
-            "PROG(p)"  ; A task that is in progress
+            ;; "STRT"     ; Legacy in progress, delete in future
             "WAIT(w)"  ; Something external is holding up this task
             "FLUP(f)"
             "REVW(r)"  ; In review
-            "HOLD(h)"  ; This task is paused/on hold because of me
             ;; "IDEA(i)"  ; An unconfirmed and unapproved task or notjion
             "|"
             "DUPE"     ; Duplicate
@@ -111,8 +112,7 @@
   (setq! org-todo-keyword-faces
          '(("FLUP"  . +org-todo-onhold)
            ("PROG" . +org-todo-active)
-           ("STRT" . +org-todo-active)
-           ;; ("PROJ" . +org-todo-project)
+           ("DELG" . +org-todo-active)
            ("[?]"  . +org-todo-onhold)
            ("WAIT" . +org-todo-onhold)
            ("REVW" . +org-todo-onhold)
