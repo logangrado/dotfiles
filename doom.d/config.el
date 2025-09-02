@@ -238,10 +238,14 @@ frame if FRAME is nil, and to 1 if AMT is nil."
       "w #" #'resize-window-to-2/3
       )
 
-;; Bind key to change a workspace's default directory
-;; Doesn't seem to work quite as expected
+
+;; KEYBINDING
+;; Begin moving/consolidating keybinds here that don't require extra function definitions
 (map! :leader
+      ;; Bind key to change a workspace's default directory
+      ;; Doesn't seem to work quite as expected
       "TAB c" #'cd
+      "b s" #'scratch-buffer
       )
 
 ;; Disable smart-parans, which just annoys me
@@ -263,3 +267,4 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 
 ;; Final loads
 (load (expand-file-name "keybindings.el" doom-user-dir) t)
+(load (expand-file-name "custom_funcs.el" doom-user-dir) t)
