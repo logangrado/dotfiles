@@ -6,7 +6,8 @@
   (add-to-list 'projectile-globally-ignored-directories "^venv$")
   (add-to-list 'projectile-globally-ignored-directories "^\\.venv$")
 
-  (setq projectile-indexing-method 'native)
+  (setq projectile-indexing-method 'alien)
+  (setq projectile-enable-caching t) ;; Enable caching. Options: `t`: cache for a session `persistent` cache across sessions
 
   ;; Update the projectile name to include the hostname
   ;; ==================================================
