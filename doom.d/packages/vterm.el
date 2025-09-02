@@ -3,6 +3,8 @@
 
 (use-package! vterm
   :init
+  (load! "vterm-reindex-buffers")
+
   (defun +vterm/configure-project-root-and-display-custom (arg display-fn)
     "Sets the environment variable PROOT and displays a terminal using `display-fn`.
      If prefix ARG is non-nil, cd into `default-directory' instead of project root.
