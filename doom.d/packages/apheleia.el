@@ -8,13 +8,13 @@
   (setf (alist-get 'black apheleia-formatters)
         '("black" "-l" "120" "-"))
   (setf (alist-get 'isort apheleia-formatters)
-        '("isort" "--stdout" "--profile" "--black" "-"))
+        '("isort" "--stdout" "--profile" "black" "-"))
   (setf (alist-get 'jsonnetfmt apheleia-formatters)
         '("jsonnetfmt" "-"))
 
   ;; Associate formatters
-  (add-to-list 'apheleia-mode-alist
-               '(jsonnet-mode . jsonnetfmt)
-               '(python-mode . (isort black))
-               )
+  (add-to-list 'apheleia-mode-alist '(jsonnet-mode . jsonnetfmt))
+  (add-to-list 'apheleia-mode-alist '(python-mode . (isort black)))
+  (add-to-list 'apheleia-mode-alist '(python-ts-mode . (isort black)))
+
   )
