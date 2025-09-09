@@ -32,7 +32,8 @@
 (package! adaptive-wrap)
 (package! gptel :recipe (:nonrecursive t))
 (package! exec-path-from-shell)
-
+(package! kubernetes-evil)
+(package! kubernetes)
 ;; (package! magit-todos)
 
 (package! csv-mode)
