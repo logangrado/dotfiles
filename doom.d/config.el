@@ -263,6 +263,7 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
 ;; Load all files in packages/
+(require 'ol)
 (mapc 'load (file-expand-wildcards "~/.doom.d/packages/*.el"))
 
 ;; Final loads

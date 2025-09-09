@@ -36,6 +36,12 @@
 (package! kubernetes)
 ;; (package! magit-todos)
 
+;;(package! glab)
+;;(package! gtea)
+;;(package! gogs)
+;;(package! buck)
+(package! code-review)
+
 (package! csv-mode)
 
 (package! visual-regexp)

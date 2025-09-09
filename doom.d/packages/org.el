@@ -1,6 +1,6 @@
 ;;; ../.Dotfiles/doom.d/packages/org.el -*- lexical-binding: t; -*-
 
-(use-package! org
+(after! org
   :hook
   (org-mode . (lambda () (setq line-spacing 0.25)))
   (org-mode . auto-save-mode)
