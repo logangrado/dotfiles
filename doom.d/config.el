@@ -263,7 +263,7 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
 ;; Load all files in packages/
-(require 'ol)
+;; (require 'ol) ;; TODO: DELETE AFTER 2026. was required to avoid `(void-function org-link-set-parameters)` startup error. However, it looks like renaming packages/org.el -> packages/org-config.el` fixes it, when used with forge
 (mapc 'load (file-expand-wildcards "~/.doom.d/packages/*.el"))
 
 ;; Final loads
