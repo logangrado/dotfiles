@@ -53,6 +53,10 @@
       "4" #'uncomment-region
       )
 
+(map! :leader
+      (:prefix ("f" . "file")
+       :desc "Save & format buffer"          "s" #'+format/save-buffer
+       :desc "Save w/o formatting (one-off)" "S" #'+format/save-buffer-no-reformat))
 
 (map! :map (evil-normal-state-map evil-visual-state-map)
       "s" #'evil-snipe-s

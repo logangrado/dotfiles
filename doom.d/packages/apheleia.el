@@ -13,8 +13,9 @@
         '("jsonnetfmt" "-"))
 
   ;; Associate formatters
-  (add-to-list 'apheleia-mode-alist '(jsonnet-mode . jsonnetfmt))
-  (add-to-list 'apheleia-mode-alist '(python-mode . (isort black)))
-  (add-to-list 'apheleia-mode-alist '(python-ts-mode . (isort black)))
+  ;; replace first matching cell for each mode
+  (setf (alist-get 'python-mode     apheleia-mode-alist nil nil #'eq) '(isort black)
+        (alist-get 'python-ts-mode  apheleia-mode-alist nil nil #'eq) '(isort black)
+        (alist-get 'jsonnet-mode    apheleia-mode-alist nil nil #'eq) 'jsonnetfmt)
 
   )
