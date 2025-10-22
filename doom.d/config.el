@@ -259,6 +259,8 @@ frame if FRAME is nil, and to 1 if AMT is nil."
       "r" (lambda ()
             (interactive)
             (evil-ex "%s/")))
+;; make :%s substitute all matches per line by default
+(setq evil-ex-substitute-global t)
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
