@@ -52,6 +52,9 @@
       "3" #'comment-or-uncomment-region
       "4" #'uncomment-region
       )
+(map! :map (evil-visual-state-map evil-normal-state-map)
+      "C--" #'comment-underline
+      )
 
 (map! :leader
       (:prefix ("f" . "file")
@@ -69,4 +72,40 @@
 
 (map! :map (dired-mode-map)
       "RET" #'find-alternate-file
+      )
+
+;; Windo resizing
+;; ---------------
+(map! :leader
+      "w 1" #'resize-window-to-9/10
+      "w 2" #'resize-window-to-1/2
+      "w 3" #'resize-window-to-1/3
+      "w #" #'resize-window-to-2/3
+      "=" #'acg/zoom-frame
+      "-" #'acg/zoom-frame-out
+      )
+
+;; KEYBINDING
+;; Begin moving/consolidating keybinds here that don't require extra function definitions
+(map! :leader
+      ;; Bind key to change a workspace's default directory
+      ;; Doesn't seem to work quite as expected
+      "TAB c" #'cd
+      "b s" #'scratch-buffer
+      )
+
+(map! :leader
+      :desc "Start :%s substitution"
+      "r" (lambda ()
+            (interactive)
+            (evil-ex "%s/")))
+
+;; Move to new window on creation
+(map! :leader
+      ;; Move to new window on creation
+      "w s" #'+evil/window-split-and-follow
+      "w v" #'+evil/window-vsplit-and-follow
+      ;; Bind keys to swap workspaces
+      "TAB {" #'+workspace/swap-left
+      "TAB }" #'+workspace/swap-right
       )

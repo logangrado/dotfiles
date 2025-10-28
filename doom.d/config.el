@@ -79,12 +79,8 @@
   (let (evil-mode-map-alist)
     (call-interactively (key-binding (this-command-keys)))))
 
-;; TODO Figure out how to move screen if point is within ~10/20 lines of top/bottom on scrolling
-;; Them remove the (evil-scroll-line-[up|down]])
-;; This seems controllable with `scroll-margin' and `maximum-scroll-margin'
-;; (setq scroll-margin 10) -> leaves a margin of 10. Works smoothly scrolling down, but jumps on the way up.
-(setq scroll-margin 10) ;; Leave a margin of 10 at top/bottom.
-;; FIXME Works smoothly scrolling down, but not up.
+
+(setq scroll-margin 10) ;; Smoothly scroll with margin at top/bottom of file
 
 ;; Map fast movement keys
 (map! :map (evil-normal-state-map evil-visual-state-map)
@@ -94,15 +90,6 @@
       "L" #'evil-end-of-line
       )
 
-;; Move to new window on creation
-(map! :leader
-      ;; Move to new window on creation
-      "w s" #'+evil/window-split-and-follow
-      "w v" #'+evil/window-vsplit-and-follow
-      ;; Bind keys to swap workspaces
-      "TAB {" #'+workspace/swap-left
-      "TAB }" #'+workspace/swap-right
-      )
 
 ;; SAVE BUFFER ON INSERT MODE EXIT
 ;; (defun my-save-if-bufferfilename ()
@@ -169,84 +156,6 @@
 ;; (setq ls-lisp-use-insert-directory-program nil)
 (setq ls-lisp-ignore-case 't)
 (setq ls-lisp-use-string-collate nil)
-(defun file-notify-rm-all-watches ()
-  "Remove all existing file notification watches from Emacs. For recovering from too many open pipes"
-  (interactive)
-  (maphash
-   (lambda (key _value)
-     (file-notify-rm-watch key))
-   file-notify-descriptors))
-
-;; Resize the whole frame, and not only a window
-;; Adapted from https://stackoverflow.com/a/24714383/5103881
-(defun acg/zoom-frame (&optional amt frame)
-  "Increaze FRAME font size by amount AMT. Defaults to selected
-frame if FRAME is nil, and to 1 if AMT is nil."
-  (interactive "p")
-  (let* ((frame (or frame (selected-frame)))
-         (font (face-attribute 'default :font frame))
-         (size (font-get font :size))
-         (amt (or amt 1))
-         (new-size (+ size amt)))
-    (set-frame-font (font-spec :size new-size) t `(,frame))
-    ;; Also set fixed-pitch height to match default
-    (set-face-attribute 'fixed-pitch frame :height (face-attribute 'default :height frame))
-    (message "Frame's font new size: %d" new-size)))
-
-(defun acg/zoom-frame-out (&optional amt frame)
-  "Call `acg/zoom-frame' with negative argument."
-  (interactive "p")
-  (acg/zoom-frame (- (or amt 1)) frame))
-
-(map! :leader
-      "=" #'acg/zoom-frame
-      "-" #'acg/zoom-frame-out
-      )
-
-(defun resize-current-window-to-fraction (fraction)
-  "Resize the current window to a specific FRACTION of the frame's total height."
-  (interactive "Resize to fraction of frame height: ")
-  (let* ((total-lines (frame-total-lines))
-         (target-height (ceiling (* fraction total-lines)))
-         (current-height (window-height))
-         (delta (- target-height current-height)))
-    (window-resize nil delta)))
-
-
-;; WINDOW RESIZING
-(defun resize-window-to-1/3 ()
-  "Resize the current window to 1/3 of the frame width."
-  (interactive)
-  (resize-current-window-to-fraction 0.35))
-(defun resize-window-to-1/2 ()
-  "Resize the current window to 1/2 of the frame width."
-  (interactive)
-  (resize-current-window-to-fraction 0.5))
-(defun resize-window-to-2/3 ()
-  "Resize the current window to 2/3 of the frame width."
-  (interactive)
-  (resize-current-window-to-fraction 0.65))
-(defun resize-window-to-9/10 ()
-  "Resize the current window to 9/10 of the frame width."
-  (interactive)
-  (resize-current-window-to-fraction 0.9))
-
-(map! :leader
-      "w 1" #'resize-window-to-9/10
-      "w 2" #'resize-window-to-1/2
-      "w 3" #'resize-window-to-1/3
-      "w #" #'resize-window-to-2/3
-      )
-
-
-;; KEYBINDING
-;; Begin moving/consolidating keybinds here that don't require extra function definitions
-(map! :leader
-      ;; Bind key to change a workspace's default directory
-      ;; Doesn't seem to work quite as expected
-      "TAB c" #'cd
-      "b s" #'scratch-buffer
-      )
 
 ;; Disable smart-parans, which just annoys me
 (remove-hook 'doom-first-buffer-hook #'smartparens-global-mode)
@@ -254,11 +163,6 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 ;; HACK: Fix issue with PYENV_VERSION being set by some process somewhere
 (setenv "PYENV_VERSION" "")
 
-(map! :leader
-      :desc "Start :%s substitution"
-      "r" (lambda ()
-            (interactive)
-            (evil-ex "%s/")))
 ;; make :%s substitute all matches per line by default
 (setq evil-ex-substitute-global t)
 
@@ -269,5 +173,5 @@ frame if FRAME is nil, and to 1 if AMT is nil."
 (mapc 'load (file-expand-wildcards "~/.doom.d/packages/*.el"))
 
 ;; Final loads
-(load (expand-file-name "keybindings.el" doom-user-dir) t)
 (load (expand-file-name "custom_funcs.el" doom-user-dir) t)
+(load (expand-file-name "keybindings.el" doom-user-dir) t)
