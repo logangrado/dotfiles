@@ -5,7 +5,7 @@
   :init
   (load! "vterm-reindex-buffers")
 
-  (defun +vterm/configure-project-root-and-display-custom (arg display-fn)
+  (defun lg/vterm-configure-project-root-and-display-custom (arg display-fn)
     "Sets the environment variable PROOT and displays a terminal using `display-fn`.
      If prefix ARG is non-nil, cd into `default-directory' instead of project root.
      Returns the vterm buffer.
@@ -30,7 +30,7 @@
       (funcall display-fn)))
 
 
-  (defun +vterm/get-workspace-buffer-name ()
+  (defun lg/vterm-get-workspace-buffer-name ()
     "Retrieve vterm buffer name for this workspace"
     (format "*v:%s"
             (if
@@ -40,12 +40,12 @@
 
     )
 
-  (defun +vterm/here-workspace (arg)
+  (defun lg/vterm-here-workspace (arg)
     "Open a terminal buffer in the current window at project root.
      If prefix ARG is non-nil, cd into `default-directory' instead of project root.
      Returns the vterm buffer."
     (interactive "P")
-    (+vterm/configure-project-root-and-display-custom
+    (lg/vterm-configure-project-root-and-display-custom
      arg
      (lambda()
        (require 'vterm)
@@ -53,20 +53,20 @@
        (save-window-excursion
          (pop-to-buffer "*scratch*"))
        (let (display-buffer-alist)
-         (vterm (+vterm/get-workspace-buffer-name))))))
+         (vterm (lg/vterm-get-workspace-buffer-name))))))
 
-  (defun +vterm/get-or-create-for-workspace ()
+  (defun lg/vterm-get-or-create-for-workspace ()
     "Switch to an existing vterm buffer for the current workspace, or create one if none exists."
     (interactive)
-    (let ((workspace-vterm-buffer-name (+vterm/get-workspace-buffer-name)))
+    (let ((workspace-vterm-buffer-name (lg/vterm-get-workspace-buffer-name)))
       ;; Check if the workspace-specific vterm buffer already exists
       (if (get-buffer workspace-vterm-buffer-name)
           ;; If it exists, switch to the vterm buffer
           (switch-to-buffer workspace-vterm-buffer-name)
-        ;; If it does not exist, call +vterm/here-workspace to create it
-        (+vterm/here-workspace nil))))
+        ;; If it does not exist, call lg/vterm-here-workspace to create it
+        (lg/vterm-here-workspace nil))))
 
-  (defun +vterm/toggle-window ()
+  (defun lg/vterm-toggle-window ()
     "Switch to an existing vterm buffer below the current window, or create one
      if none exists. Do nothing if in a vterm buffer."
     (interactive)
@@ -79,8 +79,8 @@
           ;; Else, create a new vterm window below
           (split-window-vertically (floor (* 0.65 (window-height)))) ;; Split vertically
           (other-window 1) ;; Move to the new window
-          ;; (+vterm/here-workspace nil) ;; Start vterm in the new window
-          (+vterm/get-or-create-for-workspace)
+          ;; (lg/vterm-here-workspace nil) ;; Start vterm in the new window
+          (lg/vterm-get-or-create-for-workspace)
           ;; (set-window-dedicated-p (selected-window) t) ;; Make dedicated! Maybe helps prevent resize
           ))))
 
@@ -108,8 +108,8 @@
         )
 
   (map! :leader
-        "o h" #'+vterm/here-workspace
-        "o t" #'+vterm/toggle-window
-        "o T" #'+vterm/toggle
+        "o h" #'lg/vterm-here-workspace
+        "o t" #'lg/vterm-toggle-window
+        "o T" #'lg/vterm-toggle
         )
   )

@@ -144,7 +144,7 @@
 
   ;; When updating a todo state in agenda, ensure we retain the complete original state of the todo
   ;;=====================
-  (defun my/org-agenda-todo-around (orig-fun &rest args)
+  (defun lg/org-agenda-todo-around (orig-fun &rest args)
     "Around advice to preserve agenda view state while running `org-agenda-todo`."
     (message "BEFORE AROUND")
     (let ((buffer (current-buffer))
@@ -159,8 +159,8 @@
     (message "AFTER AROUND")
     )
 
-  (advice-add 'org-agenda-todo :around #'my/org-agenda-todo-around)
-  (advice-add 'org-agenda-priority :around #'my/org-agenda-todo-around)
+  (advice-add 'org-agenda-todo :around #'lg/org-agenda-todo-around)
+  (advice-add 'org-agenda-priority :around #'lg/org-agenda-todo-around)
   ;;=====================
 
   (defun org-columns-priority (&optional _arg)

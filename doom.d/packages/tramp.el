@@ -2,11 +2,11 @@
 
 (after! tramp
   ;; Disable LSP for remote editing
-  (defun my/lsp-mode-setup ()
+  (defun lg/lsp-mode-setup ()
     ;; Disable LSP for remote files (TRAMP)
     (when (file-remote-p default-directory)
       (setq lsp-enable-lsp nil)))
-  (add-hook 'lsp-mode-hook 'my/lsp-mode-setup)
+  (add-hook 'lsp-mode-hook 'lg/lsp-mode-setup)
 
 
   ;; Optimizations to make tramp run faster with projectile

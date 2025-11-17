@@ -5,22 +5,22 @@
 (require 'centaur-tabs nil t)   ;; loads centaur-tabs if available
 (require 'tab-line nil t)       ;; built-in since Emacs 27; safe if not present
 
-(defun my/vterm--workspace-name ()
+(defun lg/vterm--workspace-name ()
   (if (bound-and-true-p persp-mode)
       (safe-persp-name (get-current-persp))
     "main"))
 
-(defun my/vterm--base-name (&optional ws-name)
-  (format "*v:%s" (or ws-name (my/vterm--workspace-name))))
+(defun lg/vterm--base-name (&optional ws-name)
+  (format "*v:%s" (or ws-name (lg/vterm--workspace-name))))
 
-(defun my/vterm--is-vterm-in-workspace-p (buf ws-name)
+(defun lg/vterm--is-vterm-in-workspace-p (buf ws-name)
   (and (buffer-live-p buf)
        (with-current-buffer buf (eq major-mode 'vterm-mode))
        (let* ((name (buffer-name buf))
               (re (format "\\`\\*v:%s\\(?:<\\([0-9]+\\)>\\)?\\'" (regexp-quote ws-name))))
          (string-match re name))))
 
-(defun my/centaur-or-tabline--buffers-in-visual-order ()
+(defun lg/centaur-or-tabline--buffers-in-visual-order ()
   "Return buffers in the current tab group in visible left-to-right order.
 Tries centaur-tabs, then tab-line, then falls back to buffer list."
   ;; 1) centaur-tabs path (some versions expose helpers)
@@ -61,14 +61,14 @@ Tries centaur-tabs, then tab-line, then falls back to buffer list."
     (buffer-list))))
 
 ;;;###autoload
-(defun my/vterm-reindex-buffers (&optional dryrun)
+(defun lg/vterm-reindex-buffers (&optional dryrun)
   "Rename vterm buffers in this workspace to match the current tab *visual* order.
 C-u for DRYRUN preview."
   (interactive "P")
-  (let* ((ws (my/vterm--workspace-name))
-         (base (my/vterm--base-name ws))
-         (visual (my/centaur-or-tabline--buffers-in-visual-order))
-         (ordered (seq-filter (lambda (b) (my/vterm--is-vterm-in-workspace-p b ws)) visual)))
+  (let* ((ws (lg/vterm--workspace-name))
+         (base (lg/vterm--base-name ws))
+         (visual (lg/centaur-or-tabline--buffers-in-visual-order))
+         (ordered (seq-filter (lambda (b) (lg/vterm--is-vterm-in-workspace-p b ws)) visual)))
     (unless ordered
       (user-error "No vterm buffers for workspace '%s' are visible to reindex" ws))
     (let* ((targets (cl-loop for buf in ordered

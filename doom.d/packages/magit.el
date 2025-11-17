@@ -42,7 +42,7 @@
   (add-hook 'magit-diff-mode-hook #'my-wrap-lines)
 
 
-  (defun my/magit-log-branches ()
+  (defun lg/magit-log-branches ()
     "Show logs for local branches and their remotes, plus main branches."
     (interactive)
     (let* ((local-branches (magit-list-local-branch-names))
@@ -70,7 +70,7 @@
        'magit-log-mode)))
 
   (transient-append-suffix 'magit-log "b"
-    '("l" "Locals and refs" my/magit-log-branches))
+    '("l" "Locals and refs" lg/magit-log-branches))
   (transient-append-suffix 'magit-log "b"
     '("c" "current" magit-log-current))
 

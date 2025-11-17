@@ -33,7 +33,7 @@
 
   ;; Command to create new projects
   ;; ==============================
-  (defun my/create-new-project ()
+  (defun lg/create-new-project ()
     "Interactively prompt the user for a directory, creating it if it doesn't exist.
 The prompt starts at the user's home directory with completion enabled."
     (interactive)
@@ -55,5 +55,5 @@ The prompt starts at the user's home directory with completion enabled."
     )
   (map! :leader
         :desc "Create new project"
-        "p n" #'my/create-new-project)
+        "p n" #'lg/create-new-project)
   )
