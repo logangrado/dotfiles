@@ -20,11 +20,11 @@ export PATH=$HOME/.emacs.d/bin:$PATH      # DOOM emacs
 export PATH=$HOME/.cargo/bin:$PATH
 export PATH=/usr/local/go/bin:$PATH
 
-# PYENV Configuration
-#=====================================================
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init - --no-rehash)"
+# # PYENV Configuration
+# #=====================================================
+# export PYENV_ROOT="$HOME/.pyenv"
+# [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+# eval "$(pyenv init - --no-rehash)"
 
 # Set ZSH 
 #=========================================================
@@ -57,10 +57,11 @@ alias g++='g++ -std=c++11'
 # Rootless/rootful
 alias docker-rootless='export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock && echo "Switched to rootless Docker"'
 alias docker-rootful='export DOCKER_HOST=unix:///var/run/docker.sock && echo "Switched to rootfull Docker"'
-alias dive="docker run -ti --rm  -v ${DOCKER_HOST#unix://}:/var/run/docker.sock wagoodman/dive" # Use DOCKER_HOST to work with rootless
+alias dive="docker run -ti --rm  -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive" # Use DOCKER_HOST to work with rootless
 
-alias dua='du -ahd1 | sort -rh'
-
+# alias dua='du -ahd1 | sort -rh'
+alias dua='du -sh ./* .* | sort -hr' #mac
+#
 # GIT ALIASES
 alias grm='git ls-files --deleted -z | xargs -0 git rm'
 alias gf='git fetch --all --prune'
@@ -86,6 +87,7 @@ alias pri="pdm run ipython"
 alias ktl='kubectl'
 alias ktx='kubectx'
 alias kns='kubens'
+alias ktlgp='kubectl get pods --sort-by=.metadata.creationTimestamp'
 
 setopt nosharehistory                 # Prevent command history from being shared within windows
 # These lines prevent command-matching when moving through command history
@@ -144,6 +146,10 @@ if [ $TERM = dumb ]; then
     unsetopt zle
     PS1='$ '
 fi
+
+kex() {
+  kubectl exec -it "$1" -- /bin/bash
+}
 
 # Homebrew autocomplete
 autoload -Uz compinit

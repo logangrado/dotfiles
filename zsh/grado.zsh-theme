@@ -188,7 +188,7 @@ function set-prompt() {
   local top_left="┌ %{$fg[green]%}%n%{$reset_color%}@%{$fg[green]%}%m%{$fg[cyan]%} $(get_virtualenv_name)$(k8s_info)"
   local top_right="%{$fg[blue]%}%~%{$reset_color%}"
   local bottom_left="└ %{$fg[blue]%}%c$(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} "
-  local bottom_right="${return_code}"
+  local bottom_right="${return_code} [%*]"
 
   local REPLY
   fill-line "$top_left" "$top_right"
@@ -200,3 +200,9 @@ function set-prompt() {
 setopt no_prompt_{bang,subst} prompt_{cr,percent,sp}
 autoload -Uz add-zsh-hook
 add-zsh-hook precmd set-prompt
+
+# Reset prompt every second (so clock ticks). Also updates if context switches, etc
+# TMOUT=1
+# TRAPALRM() {
+#   zle reset-prompt
+# }
