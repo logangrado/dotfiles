@@ -61,7 +61,7 @@ main() {
     case "$(uname -s)" in
         Darwin)
             install_macos
-            print("REMINDER: Grant full disk access to /usr/bin/python3")
+            echo "REMINDER: Grant full disk access to /usr/bin/python3"
             ;;
         Linux)
             install_linux
