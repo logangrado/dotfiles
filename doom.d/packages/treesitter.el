@@ -14,6 +14,68 @@
 (use-package! treesit-fold
   :hook (prog-mode . treesit-fold-mode)
   :config
+
+  (defun lg/treesit-fold--top-level-overlays-in (beg end)
+    "Return top-level treesit-fold overlays between BEG and END.
+
+Top-level here means overlays that are not strictly contained
+inside another treesit-fold overlay in the same region."
+    (let* ((ovs (treesit-fold--overlays-in 'invisible 'treesit-fold beg end))
+           (sorted (sort (copy-sequence ovs)
+                         (lambda (a b)
+                           (< (overlay-start a) (overlay-start b)))))
+           res)
+      (dolist (ov sorted)
+        (let ((s (overlay-start ov))
+              (e (overlay-end ov))
+              (add t))
+          ;; skip overlays strictly contained in any already-accepted overlay
+          (dolist (prev res)
+            (when (and (<= (overlay-start prev) s)
+                       (>= (overlay-end prev)   e)
+                       (or (< (overlay-start prev) s)
+                           (> (overlay-end prev)   e)))
+              (setq add nil)))
+          (when add
+            (push ov res)))
+        (nreverse res))))
+
+  (defun lg/treesit-fold-cycle ()
+    "Cycle folding at the treesit node on this line's indentation.
+
+States:
+1. Node and children fully open:
+     -> fold node and all children.
+2. Node folded (but children also have folds underneath):
+     -> open just this node (keep children folded).
+3. Node open, some children folded:
+     -> open children."
+    (interactive)
+    (treesit-fold--ensure-ts
+      (save-excursion
+        (back-to-indentation)
+        (when-let* ((node (treesit-fold--foldable-node-at-pos (point))))
+          (let* ((beg      (treesit-node-start node))
+                 (end      (treesit-node-end   node))
+                 (self-ov  (treesit-fold-overlay-at node))
+                 (all-ovs  (treesit-fold--overlays-in 'invisible 'treesit-fold beg end))
+                 (child-ovs (if self-ov (remq self-ov all-ovs) all-ovs)))
+            (cond
+             ;; 2. Node folded -> open just the node, keep children folded
+             (self-ov
+              (delete-overlay self-ov)
+              (run-hooks 'treesit-fold-on-fold-hook))
+
+             ;; 3. Node open, children folded -> open children
+             (child-ovs
+              (mapc #'delete-overlay child-ovs)
+              (run-hooks 'treesit-fold-on-fold-hook))
+
+             ;; 1. Fully open -> fold node + all children
+             (t
+              (save-restriction
+                (narrow-to-region beg end)
+                (treesit-fold-close-all)))))))))
   ;; Some builds/package versions provide these; if not, define simple fallbacks.
   ;; (unless (fboundp 'treesit-fold-next)
   ;;   (defun treesit-fold-next ()
@@ -79,5 +141,6 @@
         "O" #'treesit-fold-open-all
         "c" #'treesit-fold-close
         "C" #'treesit-fold-close-all
+        "x" #'lg/treesit-fold-cycle
         )
   )
