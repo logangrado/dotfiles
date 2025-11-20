@@ -23,21 +23,59 @@
 ;; `leader` -> (map! :localleader
 ;;     Equivalent to (map! :map (doom-localleader-map)
 
+;; COPY/PASTE EDITING:
+;; NORMAL/VISUAL MODE:
+;; y : yank (copy)
+;; x : cut
+;; p/P : paste/paste after
+
+;; COPY/PASTE
+;; -----------
+;; Copy (visual and vterm)
+(map! :map (evil-visual-state-map vterm-copy-mode-map)
+      "y" #'kill-ring-save
+      )
+;; Cut (visual only)
+(map! :map (evil-visual-state-map)
+      "x" #'evil-delete ;; Better than kill-region, works in various visual states
+      )
+;; Paste
+(map! :map (evil-normal-state-map)
+      "p" #'evil-paste-before
+      "P" #'evil-paste-after
+      "zp" #'yank-from-kill-ring
+      "zP" #'lg/yank-from-kill-ring-after
+      )
+;; Paste insert mode
+(map! :map (evil-insert-state-map)
+      "C-p" #'yank
+      "C-S-p" #'yank-from-kill-ring
+      )
+;; Paste in vterm. Must use vterm-yank commands
+(map! :map vterm-mode-map
+      ;; "p" #'vterm-yank
+      ;; "P" #'lg/vterm-yank-from-kill-ring
+      :n "p" #'vterm-yank
+      :n "P" #'lg/vterm-yank-from-kill-ring
+      :i "C-p" #'vterm-yank
+      :i "C-S-P" #'lg/vterm-yank-from-kill-ring
+      )
+
+
+;; LEGACY - DELETE ATER 25-01
+;; ---------------------------
 (map! :map (evil-normal-state-map evil-insert-state-map evil-visual-state-map vterm-mode-map vterm-copy-mode-map)
       "M-w" #'kill-ring-save
       )
-
 (map! :map (evil-normal-state-map evil-insert-state-map vterm-mode-map evil-vi)
       "C-w" #'kill-region
       "C-y" #'yank
       "M-y" #'yank-from-kill-ring
       "C-k" #'kill-line
       )
+;; ---------------------------
 
 (map! :map (evil-normal-state-map)
-      "X" #'kill-region
-      "p" #'evil-paste-before
-      "P" #'evil-paste-after
       "ys" #'evil-surround-edit
       "yS" #'evil-Surround-edit
       "yc" #'evil-surround-change

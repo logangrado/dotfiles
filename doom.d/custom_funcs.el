@@ -133,3 +133,31 @@ frame if FRAME is nil, and to 1 if AMT is nil."
          (current-height (window-height))
          (delta (- target-height current-height)))
     (window-resize nil delta)))
+
+(defun lg/yank-from-kill-ring-after ()
+  "Use `yank-from-kill-ring` but insert text *after* point,
+similar to `evil-paste-after`."
+  (interactive)
+  ;; Move one char forward if possible, so insertion is “after”
+  (when (not (eobp))
+    (forward-char))
+  (call-interactively #'yank-from-kill-ring))
+
+(defun lg/vterm-yank-from-kill-ring ()
+  "Use `yank-from-kill-ring` (or its remap) to choose an entry,
+then send the chosen text to the current vterm, but strip any
+trailing newlines so the command is not executed immediately."
+  (interactive)
+  (unless (derived-mode-p 'vterm-mode)
+    (user-error "Not in a vterm buffer"))
+  (let* ((raw-text
+          (with-temp-buffer
+            (let ((inhibit-read-only t))
+              ;; Show the same UI & options as your normal `yank-from-kill-ring`
+              (call-interactively #'yank-from-kill-ring)
+              (buffer-substring-no-properties (point-min) (point-max)))))
+         ;; Remove *only* trailing newlines to avoid immediate execution.
+         ;; Internal newlines are preserved.
+         (text (string-trim-right raw-text "\n+")))
+    (when (and text (not (string-empty-p text)))
+      (vterm-send-string text))))
