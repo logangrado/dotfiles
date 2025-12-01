@@ -55,14 +55,12 @@
             (apply #'vulpea-buffer-tags-set tags))))))
 
   (defun lg/vulpea-buffer-p ()
-    "Return non-nil if the currently visited buffer is a note."
+    "Return non-nil if the currently visited buffer is an org-roam note."
     (and buffer-file-name
+         (derived-mode-p 'org-mode)
          (string-prefix-p
           (expand-file-name (file-name-as-directory org-roam-directory))
           (file-name-directory buffer-file-name))))
-
-  (add-hook 'find-file-hook #'lg/vulpea-project-update-tag)
-  (add-hook 'before-save-hook #'lg/vulpea-project-update-tag)
 
   ;; Functions for BUILDING THE AGENDA
   (defun lg/vulpea-project-files ()
@@ -82,8 +80,16 @@
     (interactive)
     (setq org-agenda-files (lg/vulpea-project-files)))
 
-  (advice-add 'org-agenda :before #'lg/vulpea-agenda-files-update)
-  (advice-add 'org-todo-list :before #'lg/vulpea-agenda-files-update)
+  (defun lg/vulpea-project-auto-update-setup ()
+    "Set up automatic PROJECT tag updates for org-roam project notes.
+
+     Runs once on visiting the file and then on every save, but only
+     for org-roam org buffers."
+    (when (lg/vulpea-buffer-p)
+      ;; Run once when the buffer is opened
+      (lg/vulpea-project-update-tag)
+      ;; Then keep it up to date on save (buffer-local hook)
+      (add-hook 'before-save-hook #'lg/vulpea-project-update-tag nil t)))
 
   (defun lg/vulpea-update-all-project-states ()
     (interactive)
@@ -93,6 +99,11 @@
                                (find-file-noselect file))
         (lg/vulpea-project-update-tag)
         (save-buffer))))
+
+  (add-hook 'org-mode-hook #'lg/vulpea-project-auto-update-setup)
+  (advice-add 'org-agenda :before #'lg/vulpea-agenda-files-update)
+  (advice-add 'org-todo-list :before #'lg/vulpea-agenda-files-update)
+
   ;; END ORG ROAM AGENDA
   ;; ===================
 
