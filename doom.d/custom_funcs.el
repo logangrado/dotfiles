@@ -161,3 +161,15 @@ trailing newlines so the command is not executed immediately."
          (text (string-trim-right raw-text "\n+")))
     (when (and text (not (string-empty-p text)))
       (vterm-send-string text))))
+
+(defun lg/reset-emacs ()
+  "Reload Doom as if freshly started, without killing buffers."
+  (interactive)
+  (let ((buffers (buffer-list)))
+    ;; Reload core bindings, modules, variables
+    (doom/reload)
+    ;; Revisit buffers to ensure modes and defaults reload
+    (dolist (b buffers)
+      (with-current-buffer b
+        (when (buffer-file-name b)
+          (revert-buffer :ignore-auto :noconfirm))))))

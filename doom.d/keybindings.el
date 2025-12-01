@@ -33,7 +33,7 @@
 ;; -----------
 ;; Copy (visual and vterm)
 (map! :map (evil-visual-state-map vterm-copy-mode-map)
-      "y" #'kill-ring-save
+      "y" #'evil-yank ;; Better than kill-ring-save, works in various visual states
       )
 ;; Cut (visual only)
 (map! :map (evil-visual-state-map)
@@ -60,6 +60,7 @@
       :i "C-p" #'vterm-yank
       :i "C-S-P" #'lg/vterm-yank-from-kill-ring
       )
+
 
 
 ;; LEGACY - DELETE ATER 25-01
@@ -146,4 +147,12 @@
       ;; Bind keys to swap workspaces
       "TAB {" #'+workspace/swap-left
       "TAB }" #'+workspace/swap-right
+      )
+(map! :leader
+      (:desc "Reset (top-level)"
+             "h r s" #'top-level
+             )
+      (:desc "Full reset (reload doom + revert buffers"
+             "h r R" #'lg/reset-emacs
+             )
       )
