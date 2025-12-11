@@ -9,7 +9,38 @@
   :config
   ;; populate auto-mode-alist with ts modes where available
   (treesit-auto-add-to-auto-mode-alist)
-  (global-treesit-auto-mode))
+  (global-treesit-auto-mode)
+
+  ;; ==========================================================
+  ;; FIX: TREESIT-AUTO MAKES OPENING FILES SLOW
+  ;; Global treesit mode makes opening files slow -> this is especially painful for magit commit buffer.
+  ;; Issue: https://github.com/renzmann/treesit-auto/issues/135
+  ;; One commenter suggests caching the treesit-language-available-p call: https://github.com/jeremyf/dotemacs/blob/75410e2f56273b2be4abf10d0d72627ec4ad6a85/emacs.d/init.el#L5176-L5197
+
+  (defvar lg/treesit-lang-cache
+    (make-hash-table :test 'equal)
+    "Cache the expensive computation of treelit language availability.
+     See `lg/treesit-language-available-p' for usage.")
+
+  (defun lg/treesit-language-available-p (fn lang &rest rest)
+    "Caching around the CPU expensive `treesit-language-available-p'."
+    ;; I did some profiling of `treesit-language-available-p', and found
+    ;; that when moving around via consult (and therefore preview) this
+    ;; function was contributing to 75% of the CPU time.  And it was run
+    ;; each time.
+    (let ((cached-value
+           (gethash lang lg/treesit-lang-cache 'miss)))
+      (if (eq 'miss cached-value)
+          (let ((value
+                 (apply fn lang rest)))
+            (puthash lang value lg/treesit-lang-cache)
+            value)
+        cached-value)))
+  (advice-add #'treesit-language-available-p
+              :around #'lg/treesit-language-available-p)
+  ;; END FIX
+  ;; ==========================================================
+  )
 
 (use-package! treesit-fold
   :hook (prog-mode . treesit-fold-mode)
