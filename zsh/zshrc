@@ -89,6 +89,10 @@ alias ktx='kubectx'
 alias kns='kubens'
 alias ktlgp='kubectl get pods --sort-by=.metadata.creationTimestamp'
 
+# UV ALIASES
+alias uvr="uv run"
+alias ur="uv run"
+
 setopt nosharehistory                 # Prevent command history from being shared within windows
 # These lines prevent command-matching when moving through command history
 bindkey "\eOA" up-line-or-history    
