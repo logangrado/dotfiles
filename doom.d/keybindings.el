@@ -90,6 +90,8 @@
 (map! :map (evil-visual-state-map)
       "3" #'comment-or-uncomment-region
       "4" #'uncomment-region
+      "M-h" #'lg/indent-rigidly-left-visual
+      "M-l" #'lg/indent-rigidly-right-visual
       )
 (map! :map (evil-visual-state-map evil-normal-state-map)
       "C--" #'comment-underline

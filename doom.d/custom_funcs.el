@@ -172,6 +172,7 @@ trailing newlines so the command is not executed immediately."
     (dolist (b buffers)
       (with-current-buffer b
         (when (buffer-file-name b)
+
           (revert-buffer :ignore-auto :noconfirm))))))
 
 (defun lg/ipdb-insert ()
@@ -257,3 +258,12 @@ first non-empty line starting at the current line)."
       (lg/ipdb-remove)
     (user-error
      (lg/ipdb-insert))))
+(defun lg/indent-rigidly-left-visual ()
+  (interactive)
+  (indent-rigidly-left (region-beginning) (region-end))
+  (evil-visual-restore))
+
+(defun lg/indent-rigidly-right-visual ()
+  (interactive)
+  (indent-rigidly-right (region-beginning) (region-end))
+  (evil-visual-restore))
