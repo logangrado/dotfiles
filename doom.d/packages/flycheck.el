@@ -5,7 +5,7 @@
 
   (setq flycheck-flake8-maximum-line-length 120)
 
-  (map! :map evil-normal-state-map
+  (map! :leader
         :prefix ("e" . "flycheck")
         "j" #'flycheck-next-error
         "k" #'flycheck-previous-error
