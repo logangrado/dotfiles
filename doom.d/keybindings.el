@@ -156,3 +156,5 @@
              "h r R" #'lg/reset-emacs
              )
       )
+(map! :leader
+      (:desc "Toggle ipdb" "c b" #'lg/ipdb-toggle))

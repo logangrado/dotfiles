@@ -173,3 +173,87 @@ trailing newlines so the command is not executed immediately."
       (with-current-buffer b
         (when (buffer-file-name b)
           (revert-buffer :ignore-auto :noconfirm))))))
+
+(defun lg/ipdb-insert ()
+  "Insert a Ruff/Black fmt-off ipdb breakpoint block above the current line.
+
+Indentation is taken from the first non-empty line starting at the current line
+and scanning downward (including the current line). After inserting, move point
+to the inserted `ipdb.set_trace()` line."
+  (interactive)
+  (let* ((indent
+          (save-excursion
+            (beginning-of-line)
+            ;; Find the first non-empty line at/after point.
+            (while (and (looking-at-p "^[[:space:]]*$")
+                        (not (eobp)))
+              (forward-line 1)
+              (beginning-of-line))
+            (current-indentation)))
+         (pad (make-string indent ?\s))
+         (insert-marker (save-excursion
+                          (beginning-of-line)
+                          (point-marker))))
+    ;; Insert above current line.
+    (save-excursion
+      (goto-char insert-marker)
+      (insert pad "# fmt: off\n"
+              pad "import ipdb; ipdb.set_trace()\n"
+              pad "# fmt: on\n"))
+    ;; Jump to the inserted `ipdb.set_trace()` line.
+    (goto-char insert-marker)  ; now at "# fmt: off"
+    (forward-line 1)           ; now at "import ipdb; ipdb.set_trace()"
+    (end-of-line)))
+
+(defun lg/ipdb-remove ()
+  "Delete a Ruff/Black fmt-off ipdb breakpoint block if point is on it.
+
+A block is exactly:
+  # fmt: off
+  import ipdb; ipdb.set_trace()
+  # fmt: on
+
+Leading indentation is allowed. Point may be on any of the three lines."
+  (interactive)
+  (save-excursion
+    (let* ((re-off  "^[[:space:]]*# fmt: off[[:space:]]*$")
+           (re-mid  "^[[:space:]]*import ipdb; ipdb\\.set_trace()[[:space:]]*$")
+           (re-on   "^[[:space:]]*# fmt: on[[:space:]]*$")
+           (start nil))
+      ;; Decide which line we're on and compute the block start.
+      (beginning-of-line)
+      (cond
+       ((looking-at-p re-off) (setq start (point)))
+       ((looking-at-p re-mid) (setq start (save-excursion (forward-line -1) (point))))
+       ((looking-at-p re-on)  (setq start (save-excursion (forward-line -2) (point))))
+       (t (user-error "Not on an ipdb fmt-off block")))
+
+      ;; Validate the 3-line structure starting at `start`.
+      (goto-char start)
+      (unless (looking-at-p re-off)
+        (user-error "Expected '# fmt: off' at block start"))
+      (forward-line 1)
+      (unless (looking-at-p re-mid)
+        (user-error "Expected 'import ipdb; ipdb.set_trace()' on block middle line"))
+      (forward-line 1)
+      (unless (looking-at-p re-on)
+        (user-error "Expected '# fmt: on' at block end"))
+
+      ;; Delete the whole 3-line region (including trailing newlines).
+      (goto-char start)
+      (delete-region (point)
+                     (save-excursion
+                       (forward-line 3)
+                       (point))))))
+
+(defun lg/ipdb-toggle ()
+  "Toggle an ipdb fmt-off breakpoint block.
+
+If point is on an existing 3-line block, delete it.
+Otherwise, insert the block above the current line (with indent chosen from the
+first non-empty line starting at the current line)."
+  (interactive)
+  (condition-case _
+      (lg/ipdb-remove)
+    (user-error
+     (lg/ipdb-insert))))
