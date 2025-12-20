@@ -25,10 +25,12 @@
   ;; ---------- Define formatter commands ----------
   ;; Use uvx so tools don’t have to be in the project venv.
   (setf (alist-get 'ruff-fix apheleia-formatters)
-        '("uvx" "ruff" "check" "--fix-only" "--line-length" "120" "--stdin-filename" filepath "-"))
+        '("uvx" "ruff" "check" "--fix-only" "--line-length" "120" "--ignore" "F401" "--stdin-filename" filepath "-"))
   (setf (alist-get 'ruff-format apheleia-formatters)
         '("uvx" "ruff" "format" "--line-length" "120" "--stdin-filename" filepath "-"))
-
+  (setf (alist-get 'ruff-remove-unused-imports apheleia-formatters)
+        '("uvx" "ruff" "check" "--fix-only" "--line-length" "120" "--stdin-filename" filepath "-"))
+  
   ;; Legacy formatters (Black/isort) kept for projects not yet on Ruff.
   (setf (alist-get 'black apheleia-formatters)
         '("uvx" "black" "-l" "120" "-"))
@@ -39,7 +41,17 @@
   (setf (alist-get 'python-mode    apheleia-mode-alist nil nil #'eq) '(ruff-fix ruff-format)
         (alist-get 'python-ts-mode apheleia-mode-alist nil nil #'eq) '(ruff-fix ruff-format))
 
+  (defun lg/apheleia-ruff-remove-unused-imports ()
+    "Run Ruff to remove unused imports (F401) in the current buffer."
+    (interactive)
+    (apheleia-format-buffer 'ruff-remove-unused-imports))
 
+  (map! :leader
+        :prefix ("c")
+        :desc "Remove unused imports" "F" #'lg/apheleia-ruff-remove-unused-imports
+        )
+  
+  
   ;; ---------- Project-aware selector ----------
   (defun lg/file-contains-p (file regex)
     "Return non-nil if FILE exists and contains REGEX."
