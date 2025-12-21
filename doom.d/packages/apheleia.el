@@ -25,7 +25,8 @@
   ;; ---------- Define formatter commands ----------
   ;; Use uvx so tools don’t have to be in the project venv.
   (setf (alist-get 'ruff-fix apheleia-formatters)
-        '("uvx" "ruff" "check" "--fix-only" "--line-length" "120" "--ignore" "F401" "--stdin-filename" filepath "-"))
+        '("uvx" "ruff" "check" "--fix-only" "--line-length" "120" "--extend-ignore" "F401" "--stdin-filename" filepath "-")
+        )
   (setf (alist-get 'ruff-format apheleia-formatters)
         '("uvx" "ruff" "format" "--line-length" "120" "--stdin-filename" filepath "-"))
   (setf (alist-get 'ruff-remove-unused-imports apheleia-formatters)
