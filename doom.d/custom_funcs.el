@@ -267,3 +267,15 @@ first non-empty line starting at the current line)."
   (interactive)
   (indent-rigidly-right (region-beginning) (region-end))
   (evil-visual-restore))
+
+(defun lg/kill-current-buffer ()
+  "Kill current buffer even if visible elsewhere, but ask to save if modified."
+  (interactive)
+  (kill-buffer (current-buffer)))
+
+(defun lg/kill-current-buffer-force ()
+  "Kill current buffer even if visible in other windows."
+  (interactive)
+  (let ((buf (current-buffer)))
+    (set-buffer-modified-p nil)
+    (kill-buffer buf)))

@@ -151,12 +151,9 @@
       "TAB }" #'+workspace/swap-right
       )
 (map! :leader
-      (:desc "Reset (top-level)"
-             "h r s" #'top-level
-             )
-      (:desc "Full reset (reload doom + revert buffers"
-             "h r R" #'lg/reset-emacs
-             )
+      (:desc "Reset (top-level)" "h r s" #'top-level)
+      (:desc "Full reset (reload doom + revert buffers" "h r R" #'lg/reset-emacs)
+      (:desc "Toggle ipdb" "c b" #'lg/ipdb-toggle)
+      (:desc "Kill current buffer" "b d" #'lg/kill-current-buffer)
+      (:desc "Force kill current buffer" "b D" #'lg/kill-current-buffer-force)
       )
-(map! :leader
-      (:desc "Toggle ipdb" "c b" #'lg/ipdb-toggle))
