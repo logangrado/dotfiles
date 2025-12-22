@@ -139,7 +139,7 @@
       :desc "Start :%s substitution"
       "r" (lambda ()
             (interactive)
-            (evil-ex "%s/")))
+            (evil-ex "%s/\\v")))
 
 ;; Move to new window on creation
 (map! :leader
