@@ -13,7 +13,15 @@
   ;; '(+workspace-tab-face :inherit default :family "Jost" :height 135)
   ;; '(+workspace-tab-selected-face :inherit (highlight +workspace-tab-face)))
 
-  (defun workspaces-formatted ()
+  ;; ALWAYS SHOW WORKSPACES - but not in the minibuffer
+  ;; --------------------------------------------------
+  ;; https://discourse.doomemacs.org/t/permanently-display-workspaces-in-the-tab-bar/4088
+  (defun lg/invisible-current-workspace ()
+    "The tab bar doesn't update when only faces change (i.e. the
+current workspace), so we invisibly print the current workspace
+name as well to trigger updates"
+    (propertize (safe-persp-name (get-current-persp)) 'invisible t))
+  (defun lg/workspaces-formatted ()
     ;; fancy version as in screenshot
     (+doom-dashboard--center (frame-width)
                              (let ((names (or persp-names-cache nil))
@@ -33,5 +41,27 @@
                                                                  '+workspace-tab-selected-face
                                                                '+workspace-tab-face))))
                                 " "))))
+
+  (customize-set-variable 'tab-bar-format '(lg/workspaces-formatted tab-bar-format-align-right lg/invisible-current-workspace))
+
+  ;; don't show current workspaces when we switch, since we always see them
+  (advice-add #'+workspace/display :override #'ignore)
+  ;; same for renaming and deleting (and saving, but oh well)
+  (advice-add #'+workspace-message :override #'ignore)
+
+  ;; Ensure swap-left/right updates tabbar
+  (defun lg/refresh-workspace-tab-bar (&rest _)
+    "Force tab-bar to refresh after workspace reordering."
+    ;; Update Doom's cache if you're using it in rendering
+    (when (boundp 'persp-names-cache)
+      (setq persp-names-cache (persp-names-current-frame-fast-ordered)))
+    ;; Force tab-bar recompute + redraw
+    (when (fboundp 'tab-bar--invalidate-cache)
+      (tab-bar--invalidate-cache))
+    (force-mode-line-update t)
+    (redraw-display))
+  (advice-add #'+workspace/swap-left  :after #'lg/refresh-workspace-tab-bar)
+  (advice-add #'+workspace/swap-right :after #'lg/refresh-workspace-tab-bar)
+  ;; --------------------------------------------------
 
   )
