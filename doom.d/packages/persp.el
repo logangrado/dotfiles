@@ -65,3 +65,9 @@ name as well to trigger updates"
   ;; --------------------------------------------------
 
   )
+
+(after! tab-bar
+  ;; Used to show workspaces
+  (tab-bar-mode 1)
+  (setq tab-bar-show 1) 
+  )
