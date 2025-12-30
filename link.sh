@@ -9,6 +9,7 @@ ALL=("zsh/zshrc $HOME/.zshrc"
      "git/gitignore_global $HOME/.gitignore_global"
      "git/gitmessage $HOME/.gitmessage"
      "pyenv/plugins $HOME/.pyenv/plugins"
+     "ruff/ruff.toml $HOME/.config/ruff/ruff.toml"
     )
 
 OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
