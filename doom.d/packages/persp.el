@@ -22,25 +22,33 @@ current workspace), so we invisibly print the current workspace
 name as well to trigger updates"
     (propertize (safe-persp-name (get-current-persp)) 'invisible t))
   (defun lg/workspaces-formatted ()
-    ;; fancy version as in screenshot
-    (+doom-dashboard--center (frame-width)
-                             (let ((names (or persp-names-cache nil))
-                                   (current-name (safe-persp-name (get-current-persp))))
-                               (mapconcat
-                                #'identity
-                                (cl-loop for name in names
-                                         for i to (length names)
-                                         collect
-                                         (concat (propertize (format " %d" (1+ i)) 'face
-                                                             `(:inherit ,(if (equal current-name name)
-                                                                             '+workspace-tab-selected-face
-                                                                           '+workspace-tab-face)
-                                                               :weight bold))
-                                                 (propertize (format " %s " name) 'face
-                                                             (if (equal current-name name)
-                                                                 '+workspace-tab-selected-face
-                                                               '+workspace-tab-face))))
-                                " "))))
+    "Render Doom workspaces in the tab bar, centered.
+     Also ensure `none` workspace is filtered out"
+    (+doom-dashboard--center
+     (frame-width)
+     (let* ((names (or persp-names-cache
+                       (persp-names-current-frame-fast-ordered)))
+            ;; Drop the nil workspace (usually named `persp-nil-name`, e.g. \"none\")
+            (names (cl-remove persp-nil-name names :test #'string=))
+            (current-name (safe-persp-name (get-current-persp)))
+            (i 0))
+       (mapconcat
+        #'identity
+        (cl-loop
+         for name in names
+         do (cl-incf i)
+         collect
+         (concat
+          (propertize (format " %d" i)
+                      'face `(:inherit ,(if (equal current-name name)
+                                            '+workspace-tab-selected-face
+                                          '+workspace-tab-face)
+                              :weight bold))
+          (propertize (format " %s " name)
+                      'face (if (equal current-name name)
+                                '+workspace-tab-selected-face
+                              '+workspace-tab-face))))
+        " "))))
 
   (customize-set-variable 'tab-bar-format '(lg/workspaces-formatted tab-bar-format-align-right lg/invisible-current-workspace))
 
