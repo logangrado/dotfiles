@@ -68,12 +68,36 @@
        nil
        "test message"
        'magit-log-mode)))
+  (defun lg/magit-log-current-and-main ()
+    "Show logs for current branch (and its remote) plus main branches."
+    (interactive)
+    (let* ((current (magit-get-current-branch))
+           (remote-branches (magit-list-remote-branch-names "origin"))
+           (local-branches (magit-list-local-branch-names))
+           ;; Current branch + its remote if it exists
+           (current-refs (when current
+                           (if (member (concat "origin/" current) remote-branches)
+                               (list current (concat "origin/" current))
+                             (list current))))
+           ;; Main branches - local and remote
+           (main-names '("dev" "main" "master"))
+           (main-local (seq-filter (lambda (b) (member b local-branches)) main-names))
+           (main-remote (seq-filter (lambda (r) (member r remote-branches))
+                                    (mapcar (lambda (b) (concat "origin/" b)) main-names)))
+           (all-refs (delete-dups (append current-refs main-local main-remote))))
+      (magit-log-setup-buffer
+       all-refs
+       (list "--graph" "--decorate" "--ignore-missing")
+       nil
+       nil
+       'magit-log-mode)))
 
   (transient-append-suffix 'magit-log "b"
-    '("l" "Locals and refs" lg/magit-log-branches))
+    '("l" "locals and refs" lg/magit-log-branches))
   (transient-append-suffix 'magit-log "b"
-    '("c" "current" magit-log-current))
-
+    '("c" "current and main" lg/magit-log-current-and-main))
+  (transient-append-suffix 'magit-log "b"
+    '("C" "current" magit-log-current))
   )
 
 ;; (use-package magit-todos
