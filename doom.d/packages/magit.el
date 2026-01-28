@@ -98,6 +98,21 @@
     '("c" "current and main" lg/magit-log-current-and-main))
   (transient-append-suffix 'magit-log "b"
     '("C" "current" magit-log-current))
+
+  (transient-define-prefix my/magit-x-transient ()
+    "Extra actions (discard / resolve conflicts)."
+    ["Discard"
+     ("x" "Discard (same as old `x`)" magit-discard)]
+    ["Resolve conflicts (smerge)"
+     ("u" "Keep upper/ours (hunk)" magit-smerge-keep-upper)
+     ("l" "Keep lower/theirs (hunk)" magit-smerge-keep-lower)
+     ("a" "Keep all (hunk)" magit-smerge-keep-all)])
+
+  (transient-replace-suffix 'magit-dispatch "x"
+    '("x" "discard…" my/magit-x-transient :transient transient--do-replace))
+
+  ;; Also rebind `x` in the actual magit-status keymap
+  (define-key magit-hunk-section-map (kbd "x") #'my/magit-x-transient)
   )
 
 ;; (use-package magit-todos
