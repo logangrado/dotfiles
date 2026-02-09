@@ -2,6 +2,9 @@
 
 (use-package! lsp
   ;; https://emacs-lsp.github.io/lsp-mode/tutorials/how-to-turn-off/
+  ;; :hook (lsp-mode . lsp-enable-which-key-integration) ;; DON'T DO THIS! It breaks lsp-ui-doc-glance
+  :init
+  (setq lsp-keymap-prefix "C-l")
   :config
   (lsp-headerline-breadcrumb-mode)
   (setq
