@@ -45,3 +45,7 @@
   ;; (optional) auto-refresh when switching projects
   (add-hook 'projectile-after-switch-project-hook #'lsp-restart-workspace)
   )
+
+(use-package lsp-treemacs
+  :after lsp
+  )

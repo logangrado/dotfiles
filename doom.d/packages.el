@@ -34,6 +34,7 @@
 (package! exec-path-from-shell)
 (package! kubernetes-evil)
 (package! kubernetes)
+(package! lsp-treemacs)
 ;; (package! magit-todos)
 
 ;;(package! glab)
