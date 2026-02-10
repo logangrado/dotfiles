@@ -118,21 +118,8 @@
 ;; Windo resizing
 ;; ---------------
 (map! :leader
-      "w 1" #'resize-window-to-9/10
-      "w 2" #'resize-window-to-1/2
-      "w 3" #'resize-window-to-1/3
-      "w #" #'resize-window-to-2/3
       "=" #'acg/zoom-frame
       "-" #'acg/zoom-frame-out
-      )
-
-;; KEYBINDING
-;; Begin moving/consolidating keybinds here that don't require extra function definitions
-(map! :leader
-      ;; Bind key to change a workspace's default directory
-      ;; Doesn't seem to work quite as expected
-      "TAB c" #'cd
-      "b s" #'scratch-buffer
       )
 
 (map! :leader
@@ -143,17 +130,34 @@
 
 ;; Move to new window on creation
 (map! :leader
-      ;; Move to new window on creation
-      "w s" #'+evil/window-split-and-follow
-      "w v" #'+evil/window-vsplit-and-follow
-      ;; Bind keys to swap workspaces
-      "TAB {" #'+workspace/swap-left
-      "TAB }" #'+workspace/swap-right
+      (:prefix "TAB"
+               "c" #'cd
+               "{" #'+workspace/swap-left
+               "}" #'+workspace/swap-right
+               )
+      (:prefix "b"
+               (:desc "Kill current buffer" "d" #'lg/kill-current-buffer)
+               (:desc "Force kill current buffer" "D" #'lg/kill-current-buffer-force)
+               "s" #'scratch-buffer
+               )
+      (:prefix "c"
+               (:desc "Toggle ipdb" "b" #'lg/ipdb-toggle)
+               )
+      (:prefix "h"
+               (:prefix "r"
+                        (:desc "Reset (top-level)" "s" #'top-level)
+                        (:desc "Full reset (reload doom + revert buffers" "R" #'lg/reset-emacs)
+                        )
+               )
+      (:prefix "w"
+               (:desc "H-Split and follow" "s" #'+evil/window-split-and-follow)
+               (:desc "V-Split and follow" "v" #'+evil/window-vsplit-and-follow)
+               "1" #'resize-window-to-9/10
+               "2" #'resize-window-to-1/2
+               "3" #'resize-window-to-1/3
+               "#" #'resize-window-to-2/3
+               )
       )
-(map! :leader
-      (:desc "Reset (top-level)" "h r s" #'top-level)
-      (:desc "Full reset (reload doom + revert buffers" "h r R" #'lg/reset-emacs)
-      (:desc "Toggle ipdb" "c b" #'lg/ipdb-toggle)
-      (:desc "Kill current buffer" "b d" #'lg/kill-current-buffer)
-      (:desc "Force kill current buffer" "b D" #'lg/kill-current-buffer-force)
-      )
+
+;; TO MAP
+;; company-complete -> complete thing at point. NEED AVAILABLE IN INSERT MODE
