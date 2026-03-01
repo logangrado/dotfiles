@@ -1,0 +1,20 @@
+# .hatchery/docker.yaml — Docker sandbox configuration for this repo.
+#
+# mounts: extra host→container bind-mounts injected on every `hatchery` launch.
+# Format: "host_path:container_path[:mode]"
+#   ~ is expanded to your home directory.
+#   mode is optional and defaults to "ro" (read-only).
+#   Invalid entries are a hard error. Paths that do not exist are silently skipped.
+
+schema_version: 1
+mounts:
+  # Uncomment to share the UV cache (speed up installs)
+  - ~/.cache/uv:/home/claude/.cache/uv:rw
+  # Uncomment for k8s access (oci required)
+  # - "~/.kube:/home/claude/.kube:ro"
+  # - "~/.oci:/home/claude/.oci:ro"
+  # Uncomment for s3 access
+  # - "~/.aws:/home/claude/.aws:ro"
+  # DANGEROUS: Uncomment for ssh access
+  # - "~/.ssh:/home/claude/.ssh:ro"
+
