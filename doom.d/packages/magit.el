@@ -45,29 +45,29 @@
     "Post-process `magit-format-ref-labels' output.
 Changes the font-lock-face of local branch names that are checked out
 in another worktree from `magit-branch-local' to `magit-branch-worktree'."
-    (when-let* ((top (magit-toplevel))
-                (wt-branches (gethash (expand-file-name top)
-                                      lg/worktree--branch-cache)))
-      (let ((result (copy-sequence result)))
-        (dolist (bname wt-branches)
-          (let ((pos 0))
-            (while (string-match (regexp-quote bname) result pos)
-              (let ((start (match-beginning 0))
-                    (end   (match-end 0)))
-                ;; Guard: only reface if currently magit-branch-local and
-                ;; surrounded by spaces/boundaries (prevents substring matches)
-                (when (and (eq (get-text-property start 'font-lock-face result)
-                               'magit-branch-local)
-                           (or (= start 0)
-                               (eq (aref result (1- start)) ?\s))
-                           (or (= end (length result))
-                               (eq (aref result end) ?\s)))
-                  (put-text-property start end
-                                     'font-lock-face 'magit-branch-worktree
-                                     result))
-                (setq pos end)))))
+    (or (when-let* ((top (magit-toplevel))
+                    (wt-branches (gethash (expand-file-name top)
+                                          lg/worktree--branch-cache)))
+          (let ((result (copy-sequence result)))
+            (dolist (bname wt-branches)
+              (let ((pos 0))
+                (while (string-match (regexp-quote bname) result pos)
+                  (let ((start (match-beginning 0))
+                        (end   (match-end 0)))
+                    ;; Guard: only reface if currently magit-branch-local and
+                    ;; surrounded by spaces/boundaries (prevents substring matches)
+                    (when (and (eq (get-text-property start 'font-lock-face result)
+                                   'magit-branch-local)
+                               (or (= start 0)
+                                   (eq (aref result (1- start)) ?\s))
+                               (or (= end (length result))
+                                   (eq (aref result end) ?\s)))
+                      (put-text-property start end
+                                         'font-lock-face 'magit-branch-worktree
+                                         result))
+                    (setq pos end)))))
+            result))
         result))
-    result)   ; return original if no worktree data yet
 
   (advice-add 'magit-format-ref-labels :filter-return
               #'lg/magit--worktree-ref-labels)
