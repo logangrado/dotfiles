@@ -29,6 +29,14 @@
 ;; x : cut
 ;; p/P : paste/paste after
 
+
+;; REQUIRE STATEMENTS
+;;-------------------
+;; Ensure packages are loaded before binding keys
+(require 'claude-code)
+
+
+
 ;; COPY/PASTE
 ;; -----------
 ;; Copy (visual and vterm)
@@ -128,7 +136,6 @@
             (interactive)
             (evil-ex "%s/\\v")))
 
-;; Move to new window on creation
 (map! :leader
       (:prefix "TAB"
                "c" #'cd
@@ -142,6 +149,7 @@
                )
       (:prefix "c"
                (:desc "Toggle ipdb" "b" #'lg/ipdb-toggle)
+               (:desc "Claude Code" "c" claude-code-command-map)
                )
       (:prefix "h"
                (:prefix "r"

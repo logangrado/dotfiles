@@ -93,3 +93,68 @@ C-u for DRYRUN preview."
           (centaur-tabs-headline-match))
         (message "[vterm-reindex] Renamed %d buffer%s for workspace '%s'."
                  (length changes) (if (= (length changes) 1) "" "s") ws)))))
+
+;;;###autoload
+(defun lg/vterm-resort-buffers-by-name (&optional dryrun)
+  "Rename vterm buffers in this workspace so their names are in canonical order:
+  *v:WS*, *v:WS<1>*, *v:WS<2>*, ...
+
+This is a one-shot command (no auto sorting). With C-u, do a DRYRUN preview."
+  (interactive "P")
+  (let* ((ws (lg/vterm--workspace-name))
+         (base (lg/vterm--base-name ws))
+         ;; Collect *all* vterm buffers in this workspace (not visual order).
+         (bufs (seq-filter (lambda (b) (lg/vterm--is-vterm-in-workspace-p b ws))
+                           (buffer-list))))
+    (unless bufs
+      (user-error "No vterm buffers for workspace '%s' to sort" ws))
+
+    ;; Sort by the numeric suffix <N> if present; base name (no suffix) is treated as 0.
+    (cl-labels
+        ((idx-of (b)
+           (let* ((name (buffer-name b))
+                  (re (format "\\`\\*v:%s\\(?:<\\([0-9]+\\)>\\)?\\'"
+                              (regexp-quote ws))))
+             (when (string-match re name)
+               (if (match-string 1 name)
+                   (string-to-number (match-string 1 name))
+                 0))))
+         (name< (a b)
+           (let ((ia (idx-of a))
+                 (ib (idx-of b)))
+             (cond
+              ((and ia ib (/= ia ib)) (< ia ib))
+              ;; fallback: stable alphabetical if something unexpected happens
+              (t (string-lessp (buffer-name a) (buffer-name b)))))))
+
+      (setq bufs (sort (copy-sequence bufs) #'name<)))
+
+    (let* ((targets (cl-loop for buf in bufs
+                             for i from 0
+                             collect (cons buf (if (= i 0) base (format "%s<%d>" base i)))))
+           (changes (cl-remove-if (lambda (bp)
+                                    (string= (buffer-name (car bp)) (cdr bp)))
+                                  targets)))
+      (if dryrun
+          (if (null changes)
+              (message "[vterm-sort] Already canonical for workspace '%s'." ws)
+            (message "[vterm-sort] Would rename:\n%s"
+                     (mapconcat (lambda (bp)
+                                  (format "  %s -> %s" (buffer-name (car bp)) (cdr bp)))
+                                changes "\n")))
+        ;; two-phase rename to avoid collisions
+        (dolist (bp changes)
+          (with-current-buffer (car bp)
+            (rename-buffer (generate-new-buffer-name (concat (buffer-name) " @pending")) t)))
+        (dolist (bp targets)
+          (with-current-buffer (car bp)
+            (rename-buffer (cdr bp) t)))
+
+        ;; refresh tab UIs if present
+        (when (fboundp 'centaur-tabs-headline-match)
+          (centaur-tabs-headline-match))
+        (when (boundp 'tab-line-mode)
+          (force-mode-line-update t))
+
+        (message "[vterm-sort] Canonicalized %d buffer%s for workspace '%s'."
+                 (length changes) (if (= (length changes) 1) "" "s") ws)))))

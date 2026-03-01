@@ -6,6 +6,9 @@
   :init
   (setq lsp-keymap-prefix "C-l")
   :config
+  (map! :map lsp-mode-map
+        :desc "lsp" "C-l" lsp-command-map
+        )
   (lsp-headerline-breadcrumb-mode)
   (setq
    lsp-enable-symbol-highlighting t                    ;; Highlight symbol at point
@@ -46,6 +49,15 @@
   (add-hook 'projectile-after-switch-project-hook #'lsp-restart-workspace)
   )
 
-(use-package lsp-treemacs
-  :after lsp
-  )
+(after! lsp-treemacs
+  ;; Smaller icons
+  (setq treemacs-width 25)                    ;; narrower panel
+  (treemacs-resize-icons 12)                  ;; smaller icons (default is 22)
+
+  ;; More compact spacing
+  (setq treemacs-indentation 1)               ;; less indentation (default 2)
+  (setq treemacs-indentation-string " ")      ;; indentation character
+
+  ;; Smaller text
+  ;; (setq treemacs-text-scale -1)
+  )              ;; scale down text

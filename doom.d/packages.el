@@ -36,6 +36,12 @@
 (package! kubernetes)
 (package! lsp-treemacs)
 ;; (package! magit-todos)
+(package! claude-code
+  :recipe (:host github
+           :repo "stevemolitor/claude-code.el"
+           :branch "main"
+           :depth 1
+           :files ("*.el" (:exclude "images/*"))))
 
 ;;(package! glab)
 ;;(package! gtea)

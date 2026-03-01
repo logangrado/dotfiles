@@ -43,7 +43,7 @@ unset LSCOLORS
 
 # Emacs and Editor vars
 #======================================================
-export EDITOR="emacs"
+export EDITOR="emacsclient"
 source $HOME/.dotfiles/zsh/emacsd.sh
 
 # ALIASES

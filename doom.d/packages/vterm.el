@@ -96,6 +96,9 @@
         "<normal-state> C-d C-d" #'vterm--self-insert
         "<insert-state> C-c C-c" #'vterm--self-insert
         "<insert-state> C-d C-d" #'vterm--self-insert
+        "<insert-state> C-c C-e" #'(lambda () (interactive) (vterm-send-key "g" nil nil t)) ;; Send Ctrl-g
+        "<normal-state> C-c C-e" #'(lambda () (interactive) (vterm-send-key "g" nil nil t)) ;; Send Ctrl-g
+        "<insert-state> S-<return>" #'(lambda () (interactive) (vterm-send-string "\e[13;2u"))
         ;; These are already bound
         ;;"<normal-state> C-c C-c" #'(lambda()(interactive) (vterm-send-key "c" nil nil 0))
         ;;"<normal-state> C-c C-d" #'(lambda()(interactive) (vterm-send-key "d" nil nil 0))
@@ -111,5 +114,7 @@
         "o h" #'lg/vterm-here-workspace
         "o t" #'lg/vterm-toggle-window
         "o T" #'lg/vterm-toggle
+        "o r" #'lg/vterm-reindex-buffers
+        ;; "" #'lg/vterm-sort-tabs
         )
   )

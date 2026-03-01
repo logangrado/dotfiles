@@ -175,3 +175,24 @@
 ;; Final loads
 (load (expand-file-name "custom_funcs.el" doom-user-dir) t)
 (load (expand-file-name "keybindings.el" doom-user-dir) t)
+
+(defun my/helm-template-font-lock ()
+  "Extra highlighting for Helm (Go template) blocks inside YAML."
+  (font-lock-add-keywords
+   nil
+   `(
+     ;; {{ ... }} delimiters
+     (,(rx "{{" (*? anything) "}}") 0 font-lock-preprocessor-face keep)
+
+     ;; common Helm/Go-template words inside delimiters
+     (,(rx "{{" (*? anything)
+           (group (or "if" "else" "end" "range" "with" "define" "template" "block"))
+           (*? anything) "}}")
+      1 font-lock-keyword-face keep)
+
+     ;; variables like $foo inside delimiters
+     (,(rx "{{" (*? anything) (group "$" (+ (or word ?_ ?-))) (*? anything) "}}")
+      1 font-lock-variable-name-face keep)))
+  (font-lock-flush))
+
+(add-hook 'yaml-ts-mode-hook #'my/helm-template-font-lock)

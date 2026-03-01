@@ -219,14 +219,79 @@ If not in a weekly note, go to previous week from current week."
 
 
   :config
-  (org-roam-setup)
+  (org-roam-db-autosync-enable) ;; Was (org-roam-setup), but that is deprecated
   (require 'org-roam-dailies) ;; Ensure the keymap is available
   (org-roam-db-autosync-mode)
   (defvar org-roam-weeklies-map (make-sparse-keymap)
     "Keymap for weekly note commands.")
 
-  )
+  (defun my/find-todo-org-roam-file ()
+    "Find the todo.org roam file by title."
+    (let ((node (org-roam-node-from-title-or-alias "todo")))
+      (if node
+          (org-roam-node-file node)
+        (error "Could not find 'todo' org-roam node"))))
 
+  (setq org-capture-templates
+        '(("t" "Todo" entry (file+headline my/find-todo-org-roam-file "REFILE")
+           "* TODO %?\n")
+          ;; Add more templates here if needed
+          ))
+
+  ;; --- Capture templates ------------------------------------
+  (setq org-roam-capture-templates
+        `(
+          ("d" "default" plain
+           "%?"
+           :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+           :unnarrowed t)
+          ("b" "Bug" plain
+           "%?"
+           :if-new
+           (file+head "%<%Y%m%d%H%M>-bug.org"
+                      ,(concat
+                        "#+title: ${title}\n"
+                        "#+filetags: :bug:\n"
+                        "#+created: %U\n\n"
+                        "* Context\n"
+                        "* Observed Error\n"
+                        "* Hypotheses\n"
+                        "* Fix / Mitigation\n"
+                        "* Outcome\n"
+                        "* Follow-ups\n"))
+           :unnarrowed t)
+
+          ("e" "Error" plain
+           "%?"
+           :if-new
+           (file+head "%<%Y%m%d%H%M>-error.org"
+                      ,(concat
+                        "#+title: ${title}\n"
+                        "#+filetags: :error:\n"
+                        "#+roam_aliases:\n"
+                        "#+created: %U\n\n"
+                        "* Symptoms\n"
+                        "* Typical Causes\n"
+                        "* Diagnostics\n"
+                        "* Known Fixes / Workarounds\n"
+                        "* Related Bugs\n"))
+           :unnarrowed t)
+
+          ("f" "Fix" plain
+           "%?"
+           :if-new
+           (file+head "%<%Y%m%d%H%M>-fix.org"
+                      ,(concat
+                        "#+title: ${title}\n"
+                        "#+filetags: :fix:\n"
+                        "#+created: %U\n\n"
+                        "* Problem\n"
+                        "* Solution\n"
+                        "* Trade-offs\n"
+                        "* Applies To\n"))
+           :unnarrowed t)))
+  (setq org-capture-default-template "d")
+  )
 (use-package! vulpea
   :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable))
 
