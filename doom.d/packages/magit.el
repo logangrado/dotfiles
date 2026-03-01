@@ -43,29 +43,22 @@
 
   (defun lg/magit--worktree-ref-labels (result)
     "Post-process `magit-format-ref-labels' output.
-Changes the font-lock-face of local branch names that are checked out
-in another worktree from `magit-branch-local' to `magit-branch-worktree'."
+Scan for face runs of `magit-branch-local'; if the run text matches a
+branch checked out in another worktree, reface it as `magit-branch-worktree'."
     (or (when-let* ((top (magit-toplevel))
                     (wt-branches (gethash (expand-file-name top)
                                           lg/worktree--branch-cache)))
-          (let ((result (copy-sequence result)))
-            (dolist (bname wt-branches)
-              (let ((pos 0))
-                (while (string-match (regexp-quote bname) result pos)
-                  (let ((start (match-beginning 0))
-                        (end   (match-end 0)))
-                    ;; Guard: only reface if currently magit-branch-local and
-                    ;; surrounded by spaces/boundaries (prevents substring matches)
-                    (when (and (eq (get-text-property start 'font-lock-face result)
-                                   'magit-branch-local)
-                               (or (= start 0)
-                                   (eq (aref result (1- start)) ?\s))
-                               (or (= end (length result))
-                                   (eq (aref result end) ?\s)))
-                      (put-text-property start end
-                                         'font-lock-face 'magit-branch-worktree
-                                         result))
-                    (setq pos end)))))
+          (let ((result (copy-sequence result))
+                (pos 0)
+                (len (length result)))
+            (while (< pos len)
+              (let ((end (next-single-property-change pos 'font-lock-face result len)))
+                (when (and (eq (get-text-property pos 'font-lock-face result)
+                               'magit-branch-local)
+                           (member (substring-no-properties result pos end)
+                                   wt-branches))
+                  (put-text-property pos end 'font-lock-face 'magit-branch-worktree result))
+                (setq pos end)))
             result))
         result))
 
