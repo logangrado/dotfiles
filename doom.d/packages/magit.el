@@ -9,11 +9,68 @@
   (setq magit-diff-refine-hunk t)
 
   (custom-set-faces!
-    `(magit-branch-local :foreground ,(nth 2 (doom-themes--colors-p 'blue)) :bold t)
-    `(magit-branch-current :inherit magit-branch-local :underline t)
-    `(magit-branch-remote :foreground ,(nth 2 (doom-themes--colors-p 'green)) :bold t)
+    `(magit-branch-local       :foreground ,(nth 2 (doom-themes--colors-p 'blue))   :bold t)
+    `(magit-branch-current     :inherit magit-branch-local :underline t)
+    `(magit-branch-remote      :foreground ,(nth 2 (doom-themes--colors-p 'green))  :bold t)
     `(magit-branch-remote-head :inherit magit-branch-remote :box nil :underline t)
-    )
+    `(magit-branch-worktree    :foreground ,(nth 2 (doom-themes--colors-p 'yellow)) :bold t :underline t))
+
+  ;; -----------------------------------------------------------
+  ;; Log decoration: highlight branches checked out in other worktrees
+  ;; -----------------------------------------------------------
+
+  ;; Cache worktree data per-repo to avoid shelling out on every log line.
+  ;; Keyed by repo toplevel path; invalidated on each magit buffer refresh.
+  (defvar lg/worktree--branch-cache (make-hash-table :test #'equal)
+    "Cache: repo-toplevel -> list of short branch names in non-current worktrees.")
+
+  (defun lg/worktree--refresh-cache ()
+    "Rebuild the worktree branch cache for the current repo."
+    (when-let ((top (magit-toplevel)))
+      (let* ((current-top (expand-file-name top))
+             (all (magit-list-worktrees))
+             (other-branches
+              (delq nil
+                    (mapcar (lambda (wt)
+                              (when (and (not (string= (expand-file-name (car wt))
+                                                       current-top))
+                                         (nth 2 wt))   ; BRANCH element
+                                (nth 2 wt)))
+                            all))))
+        (puthash current-top other-branches lg/worktree--branch-cache))))
+
+  (add-hook 'magit-refresh-buffer-hook #'lg/worktree--refresh-cache)
+
+  (defun lg/magit--worktree-ref-labels (result)
+    "Post-process `magit-format-ref-labels' output.
+Changes the font-lock-face of local branch names that are checked out
+in another worktree from `magit-branch-local' to `magit-branch-worktree'."
+    (when-let* ((top (magit-toplevel))
+                (wt-branches (gethash (expand-file-name top)
+                                      lg/worktree--branch-cache)))
+      (let ((result (copy-sequence result)))
+        (dolist (bname wt-branches)
+          (let ((pos 0))
+            (while (string-match (regexp-quote bname) result pos)
+              (let ((start (match-beginning 0))
+                    (end   (match-end 0)))
+                ;; Guard: only reface if currently magit-branch-local and
+                ;; surrounded by spaces/boundaries (prevents substring matches)
+                (when (and (eq (get-text-property start 'font-lock-face result)
+                               'magit-branch-local)
+                           (or (= start 0)
+                               (eq (aref result (1- start)) ?\s))
+                           (or (= end (length result))
+                               (eq (aref result end) ?\s)))
+                  (put-text-property start end
+                                     'font-lock-face 'magit-branch-worktree
+                                     result))
+                (setq pos end)))))
+        result))
+    result)   ; return original if no worktree data yet
+
+  (advice-add 'magit-format-ref-labels :filter-return
+              #'lg/magit--worktree-ref-labels)
 
   (map! :map magit-mode-map
         "K" #'(lambda () (interactive) (previous-line 10) (evil-scroll-line-up 10))
@@ -24,6 +81,12 @@
                           'magit-insert-modules
                           'magit-insert-unpulled-from-upstream)
   (setq magit-module-sections-nested nil)
+
+  ;; Show worktrees section in status (built-in, only appears with 2+ worktrees)
+  (magit-add-section-hook 'magit-status-sections-hook
+                          #'magit-insert-worktrees
+                          'magit-insert-status-headers
+                          t)   ; t = insert AFTER magit-insert-status-headers
 
   ;; Make magit transient buffers on bottom of frame
   ;; This isn't as "nice", but it prevents magit from resizing windows!
