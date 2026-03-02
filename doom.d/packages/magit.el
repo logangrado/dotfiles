@@ -17,10 +17,17 @@
 
   (custom-set-faces!
     `(magit-branch-local       :foreground ,(nth 2 (doom-themes--colors-p 'blue))   :bold t)
-    `(magit-branch-current     :inherit magit-branch-local :underline t)
     `(magit-branch-remote      :foreground ,(nth 2 (doom-themes--colors-p 'green))  :bold t)
     `(magit-branch-remote-head :inherit magit-branch-remote :box nil :underline t)
-    `(magit-branch-worktree    :foreground ,(nth 2 (doom-themes--colors-p 'magenta)) :bold t :underline t))
+    `(magit-branch-worktree    :inherit magit-branch-local :box t)
+    `(magit-branch-current     :foreground ,(nth 2 (doom-themes--colors-p 'magenta)) :bold t :underline nil :box t)
+    ;; `(magit-branch-current :foreground ,(nth 2 (doom-themes--colors-p 'magenta))
+    ;;   :bold t
+    ;;   :underline nil
+    ;;   :box (:color "gray75" :line-width (1 . 1)));; `(:line-width (4 . 1) :color "gray75" :style raised-box))
+    ;; `(magit-branch-worktree    :foreground ,(nth 2 (doom-themes--colors-p 'blue))   :bold t :underline nil :box t)
+    ;;`(magit-branch-current     :inherit magit-branch-local :underline t)
+    )
 
   ;; -----------------------------------------------------------
   ;; Log decoration: highlight branches checked out in other worktrees
