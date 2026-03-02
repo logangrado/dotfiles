@@ -45,22 +45,31 @@
     "Post-process `magit-format-ref-labels' output.
 Scan for face runs of `magit-branch-local'; if the run text matches a
 branch checked out in another worktree, reface it as `magit-branch-worktree'."
-    (or (when-let* ((top (magit-toplevel))
-                    (wt-branches (gethash (expand-file-name top)
-                                          lg/worktree--branch-cache)))
-          (let ((result (copy-sequence result))
-                (pos 0)
-                (len (length result)))
-            (while (< pos len)
-              (let ((end (next-single-property-change pos 'font-lock-face result len)))
-                (when (and (eq (get-text-property pos 'font-lock-face result)
-                               'magit-branch-local)
-                           (member (substring-no-properties result pos end)
-                                   wt-branches))
-                  (put-text-property pos end 'font-lock-face 'magit-branch-worktree result))
-                (setq pos end)))
-            result))
-        result))
+    (let ((top (magit-toplevel)))
+      (if (not top)
+          result
+        (let ((top-abs (expand-file-name top)))
+          ;; Lazy init: magit-refresh-buffer-hook fires AFTER the first render,
+          ;; so populate the cache here on first miss rather than waiting for the hook.
+          (when (eq (gethash top-abs lg/worktree--branch-cache 'lg/miss) 'lg/miss)
+            (lg/worktree--refresh-cache))
+          (let ((wt-branches (gethash top-abs lg/worktree--branch-cache)))
+            (if (not wt-branches)
+                result
+              (let ((result (copy-sequence result))
+                    (pos 0)
+                    (len (length result)))
+                (while (< pos len)
+                  (let ((end (next-single-property-change pos 'font-lock-face result len)))
+                    (when (and (eq (get-text-property pos 'font-lock-face result)
+                                   'magit-branch-local)
+                               (member (substring-no-properties result pos end)
+                                       wt-branches))
+                      (put-text-property pos end
+                                         'font-lock-face 'magit-branch-worktree
+                                         result))
+                    (setq pos end)))
+                result))))))
 
   (advice-add 'magit-format-ref-labels :filter-return
               #'lg/magit--worktree-ref-labels)
