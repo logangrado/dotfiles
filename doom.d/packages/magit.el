@@ -8,6 +8,13 @@
   :config
   (setq magit-diff-refine-hunk t)
 
+  ;; magit-branch-worktree is not a built-in Magit face; define it so
+  ;; custom-set-faces! has something to customize and describe-face can find it.
+  (defface magit-branch-worktree
+    '((t :inherit magit-branch-local))
+    "Face for a branch checked out in another worktree."
+    :group 'magit-faces)
+
   (custom-set-faces!
     `(magit-branch-local       :foreground ,(nth 2 (doom-themes--colors-p 'blue))   :bold t)
     `(magit-branch-current     :inherit magit-branch-local :underline t)
@@ -65,9 +72,13 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
                                    'magit-branch-local)
                                (member (substring-no-properties result pos end)
                                        wt-branches))
-                      (put-text-property pos end
-                                         'font-lock-face 'magit-branch-worktree
-                                         result))
+                      ;; Magit sets both face and font-lock-face via
+                      ;; magit--propertize-face; update both so rendering works
+                      ;; regardless of which property the display engine reads.
+                      (put-text-property pos end 'font-lock-face
+                                         'magit-branch-worktree result)
+                      (put-text-property pos end 'face
+                                         'magit-branch-worktree result))
                     (setq pos end)))
                 result)))))))
 
