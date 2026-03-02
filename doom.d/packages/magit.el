@@ -20,7 +20,7 @@
     `(magit-branch-current     :inherit magit-branch-local :underline t)
     `(magit-branch-remote      :foreground ,(nth 2 (doom-themes--colors-p 'green))  :bold t)
     `(magit-branch-remote-head :inherit magit-branch-remote :box nil :underline t)
-    `(magit-branch-worktree    :foreground ,(nth 2 (doom-themes--colors-p 'yellow)) :bold t :underline t))
+    `(magit-branch-worktree    :foreground ,(nth 2 (doom-themes--colors-p 'magenta)) :bold t :underline t))
 
   ;; -----------------------------------------------------------
   ;; Log decoration: highlight branches checked out in other worktrees
