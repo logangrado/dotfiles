@@ -69,7 +69,7 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
                                          'font-lock-face 'magit-branch-worktree
                                          result))
                     (setq pos end)))
-                result))))))
+                result)))))))
 
   (advice-add 'magit-format-ref-labels :filter-return
               #'lg/magit--worktree-ref-labels)
