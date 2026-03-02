@@ -122,4 +122,8 @@
 
   (add-hook 'persp-switch-hook #'centaur-tabs-headline-match)
   ;; Update tabs on switching perspectives (workspaces)
+
+  ;; centaur-tabs-mode is only enabled once at package load time; re-enable
+  ;; it after doom/reload (SPC h r r) which can turn global minor modes off.
+  (add-hook 'doom-after-reload-hook #'centaur-tabs-mode)
   )
