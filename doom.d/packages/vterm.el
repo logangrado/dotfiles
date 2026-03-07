@@ -41,19 +41,21 @@
     )
 
   (defun lg/vterm-here-workspace (arg)
-    "Open a terminal buffer in the current window at project root.
-     If prefix ARG is non-nil, cd into `default-directory' instead of project root.
-     Returns the vterm buffer."
+    "Switch to the workspace vterm buffer, or create one if none exists.
+     If already in a vterm buffer, always create a new one.
+     If prefix ARG is non-nil, cd into `default-directory' instead of project root."
     (interactive "P")
-    (lg/vterm-configure-project-root-and-display-custom
-     arg
-     (lambda()
-       (require 'vterm)
-       ;; HACK forces vterm to redraw, fixing strange artefacting in the tty.
-       (save-window-excursion
-         (pop-to-buffer "*scratch*"))
-       (let (display-buffer-alist)
-         (vterm (lg/vterm-get-workspace-buffer-name))))))
+    (let ((existing (get-buffer (lg/vterm-get-workspace-buffer-name))))
+      (if (and existing (not (derived-mode-p 'vterm-mode)))
+          (switch-to-buffer existing)
+        (lg/vterm-configure-project-root-and-display-custom
+         arg
+         (lambda ()
+           (require 'vterm)
+           (save-window-excursion
+             (pop-to-buffer "*scratch*"))
+           (let (display-buffer-alist)
+             (vterm (lg/vterm-get-workspace-buffer-name))))))))
 
   (defun lg/vterm-get-or-create-for-workspace ()
     "Switch to an existing vterm buffer for the current workspace, or create one if none exists."
@@ -86,8 +88,35 @@
 
   :config
   (setq vterm-shell "zsh")
-  ;; Define keys in vterm-mode-map, active in normal-state
 
+  ;; --- Helper functions ---
+
+  (defun lg/vterm-redraw ()
+    "Send Ctrl-L to the terminal to redraw the screen without clearing scrollback."
+    (interactive)
+    (vterm-send-key "l" nil nil t))
+
+  (defun lg/vterm-clear-scrollback ()
+    "Clear the vterm scrollback buffer, preserving the visible screen."
+    (interactive)
+    (vterm-clear-scrollback))
+
+  (defun lg/vterm-adjust-cursor ()
+    "Set cursor shape based on evil state: bar for insert, box for normal.
+Only takes effect in vterm buffers."
+    (when (derived-mode-p 'vterm-mode)
+      (setq-local cursor-type
+                  (if (evil-insert-state-p) 'bar 'box))))
+
+  ;; --- Hooks for cursor synchronization ---
+
+  (add-hook 'evil-insert-state-entry-hook #'lg/vterm-adjust-cursor)
+  (add-hook 'evil-normal-state-entry-hook #'lg/vterm-adjust-cursor)
+  (add-hook 'vterm-mode-hook #'lg/vterm-adjust-cursor)
+
+  ;; --- Keybindings ---
+
+  ;; Define keys in vterm-mode-map, active in normal-state
   (map! :map vterm-mode-map
         "<normal-state> '" #'(lambda()(interactive) (vterm-send-key "<up>"))
         "<normal-state> \"" #'(lambda()(interactive) (vterm-send-key "<down>"))
@@ -99,15 +128,12 @@
         "<insert-state> C-c C-e" #'(lambda () (interactive) (vterm-send-key "g" nil nil t)) ;; Send Ctrl-g
         "<normal-state> C-c C-e" #'(lambda () (interactive) (vterm-send-key "g" nil nil t)) ;; Send Ctrl-g
         "<insert-state> S-<return>" #'(lambda () (interactive) (vterm-send-string "\e[13;2u"))
-        ;; These are already bound
-        ;;"<normal-state> C-c C-c" #'(lambda()(interactive) (vterm-send-key "c" nil nil 0))
-        ;;"<normal-state> C-c C-d" #'(lambda()(interactive) (vterm-send-key "d" nil nil 0))
-        ;;
-        ;; Example keybindings using vterm-send-X (deprecated)
-        ;; "<normal-state> '" #'vterm-send-up
-        ;; "<normal-state> \"" #'vterm-send-down
-        ;; "<normal-state> c c" #'vterm-send-C-c
-        ;; "<normal-state> c d" #'vterm-send-C-d
+        ;; Raw key passthrough — C-q then any key sends it directly to the terminal
+        "<insert-state> C-q" #'vterm-send-next-key
+        "<normal-state> C-q" #'vterm-send-next-key
+        ;; Redraw terminal (Ctrl-L) — preserves scrollback
+        "<insert-state> C-c C-l" #'lg/vterm-redraw
+        "<normal-state> C-c C-l" #'lg/vterm-redraw
         )
 
   (map! :leader
@@ -115,6 +141,8 @@
         "o t" #'lg/vterm-toggle-window
         "o T" #'lg/vterm-toggle
         "o r" #'lg/vterm-reindex-buffers
-        ;; "" #'lg/vterm-sort-tabs
+        ;; Terminal management
+        "o c" #'vterm-clear
+        "o l" #'lg/vterm-clear-scrollback
         )
   )

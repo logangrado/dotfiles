@@ -136,11 +136,9 @@
         org-msg-edit-mode) ; doesn't need a formatter
       )
 
-;; (setq evil-motion-state-cursor 'box)  ; █
-;; (setq evil-visual-state-cursor 'box)  ; █
-;; (setq evil-normal-state-cursor 'box)  ; █
-;; (setq evil-insert-state-cursor '(bar ,(doom-color 'red)))  ; |
-;; (setq evil-emacs-state-cursor  'hbar) ; _
+(setq evil-normal-state-cursor 'box)    ; █
+(setq evil-insert-state-cursor 'bar)    ; |
+(setq evil-emacs-state-cursor  'hbar)   ; _
 
 ;; Auto-open magit status when switching to new workspacesk
 ;; (setq +workspaces-switch-project-function #'projectile-vc)
