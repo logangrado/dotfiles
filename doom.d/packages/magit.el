@@ -6,7 +6,22 @@
     (setq magit-git-executable "/opt/homebrew/bin/git"))
 
   :config
-  (setq magit-diff-refine-hunk t)
+
+  ;; -----------------------------------------------------------
+  ;; Settings
+  ;; -----------------------------------------------------------
+
+  (setq magit-diff-refine-hunk t
+        magit-module-sections-nested nil
+        ;; Show transient popups at the bottom of the frame instead of
+        ;; splitting the magit window (prevents unwanted window resizing).
+        transient-display-buffer-action '(display-buffer-at-bottom)
+        magit-display-buffer-function #'+magit-display-buffer-fn
+        magit-bury-buffer-function #'magit-mode-quit-window)
+
+  ;; -----------------------------------------------------------
+  ;; Faces
+  ;; -----------------------------------------------------------
 
   ;; magit-branch-worktree is not a built-in Magit face; define it so
   ;; custom-set-faces! has something to customize and describe-face can find it.
@@ -20,21 +35,17 @@
     `(magit-branch-remote      :foreground ,(nth 2 (doom-themes--colors-p 'green))  :bold t)
     `(magit-branch-remote-head :inherit magit-branch-remote :box nil :underline t)
     `(magit-branch-worktree    :inherit magit-branch-local :box t)
-    `(magit-branch-current     :foreground ,(nth 2 (doom-themes--colors-p 'magenta)) :bold t :underline nil :box t)
-    ;; `(magit-branch-current :foreground ,(nth 2 (doom-themes--colors-p 'magenta))
-    ;;   :bold t
-    ;;   :underline nil
-    ;;   :box (:color "gray75" :line-width (1 . 1)));; `(:line-width (4 . 1) :color "gray75" :style raised-box))
-    ;; `(magit-branch-worktree    :foreground ,(nth 2 (doom-themes--colors-p 'blue))   :bold t :underline nil :box t)
-    ;;`(magit-branch-current     :inherit magit-branch-local :underline t)
-    )
+    `(magit-branch-current     :foreground ,(nth 2 (doom-themes--colors-p 'magenta)) :bold t :underline nil :box t))
 
   ;; -----------------------------------------------------------
-  ;; Log decoration: highlight branches checked out in other worktrees
+  ;; Worktree decoration: highlight branches in other worktrees
   ;; -----------------------------------------------------------
+  ;; In the log view, branches checked out in other worktrees are refaced
+  ;; from magit-branch-local → magit-branch-worktree (box style) so you
+  ;; can visually distinguish them. Uses a per-repo cache to avoid shelling
+  ;; out on every log line; the cache is rebuilt on each magit buffer refresh.
 
-  ;; Cache worktree data per-repo to avoid shelling out on every log line.
-  ;; Keyed by repo toplevel path; invalidated on each magit buffer refresh.
+  ;; Cache: keyed by repo toplevel path; invalidated via magit-refresh-buffer-hook.
   (defvar lg/worktree--branch-cache (make-hash-table :test #'equal)
     "Cache: repo-toplevel -> list of short branch names in non-current worktrees.")
 
@@ -52,8 +63,6 @@
                                 (nth 2 wt)))
                             all))))
         (puthash current-top other-branches lg/worktree--branch-cache))))
-
-  (add-hook 'magit-refresh-buffer-hook #'lg/worktree--refresh-cache)
 
   (defun lg/magit--worktree-ref-labels (result)
     "Post-process `magit-format-ref-labels' output.
@@ -89,53 +98,115 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
                     (setq pos end)))
                 result)))))))
 
-  (advice-add 'magit-format-ref-labels :filter-return
-              #'lg/magit--worktree-ref-labels)
+  ;; -----------------------------------------------------------
+  ;; Buffer management: one status per workspace, clean quit
+  ;; -----------------------------------------------------------
+  ;; Problem: magit creates duplicate status buffers across perspectives,
+  ;; and quitting sub-buffers (log, diff) doesn't return to status.
+  ;;
+  ;; Solution:
+  ;; - lg/magit-status-for-workspace (SPC g g): reuse one status buffer per
+  ;;   persp-mode perspective, kill stale duplicates, refresh on reuse.
+  ;; - lg/magit-back-to-status (q): from sub-buffers, quit and show refreshed
+  ;;   status in the same window. Uses set-window-buffer to bypass Doom's
+  ;;   display-buffer popup rules.
+  ;; - lg/magit-kill-stale-log-buffers (:before advice on magit-log-setup-buffer):
+  ;;   kill old log buffers when opening a new log view, so q from log always
+  ;;   returns to status (not a stale previous log).
 
-  (map! :map magit-mode-map
-        "K" #'(lambda () (interactive) (previous-line 10) (evil-scroll-line-up 10))
-        "J" #'(lambda () (interactive) (next-line 10) (evil-scroll-line-down 10))
-        )
+  (defun lg/magit-status-for-workspace ()
+    "Open magit-status, reusing the existing buffer for this perspective.
+Kills stale duplicates. Refreshes if reusing."
+    (interactive)
+    (let* ((bufs (if (bound-and-true-p persp-mode)
+                     (persp-buffer-list)
+                   (buffer-list)))
+           (topdir (or (magit-toplevel) default-directory))
+           (status-bufs
+            (cl-remove-if-not
+             (lambda (buf)
+               (and (buffer-live-p buf)
+                    (with-current-buffer buf
+                      (and (eq major-mode 'magit-status-mode)
+                           ;; expand-file-name normalizes trailing slashes
+                           (equal (expand-file-name default-directory)
+                                  (expand-file-name topdir))))))
+             bufs))
+           (target (car status-bufs))
+           (stale  (cdr status-bufs)))
+      (dolist (buf stale) (kill-buffer buf))
+      (if target
+          (progn
+            (pop-to-buffer target '((display-buffer-same-window)))
+            (magit-refresh))
+        (magit-status))))
 
-  (magit-add-section-hook 'magit-status-sections-hook
-                          'magit-insert-modules
-                          'magit-insert-unpulled-from-upstream)
-  (setq magit-module-sections-nested nil)
+  (defun lg/magit-back-to-status ()
+    "From non-status magit buffer: quit and show refreshed magit-status in same window.
+From magit-status: normal quit behavior."
+    (interactive)
+    (if (eq major-mode 'magit-status-mode)
+        (magit-mode-bury-buffer)
+      (let ((win (selected-window))
+            (topdir (or (magit-toplevel) default-directory))
+            (bufs (if (bound-and-true-p persp-mode)
+                      (persp-buffer-list)
+                    (buffer-list))))
+        ;; quit-window buries the log/diff buffer but keeps the window alive
+        (quit-window nil win)
+        (let ((status-buf
+               (cl-find-if
+                (lambda (buf)
+                  (and (buffer-live-p buf)
+                       (with-current-buffer buf
+                         (and (eq major-mode 'magit-status-mode)
+                              (equal (expand-file-name default-directory)
+                                     (expand-file-name topdir))))))
+                bufs)))
+          (if status-buf
+              (progn
+                ;; set-window-buffer guarantees same-window display,
+                ;; bypassing Doom's display-buffer popup rules.
+                (set-window-buffer win status-buf)
+                (select-window win)
+                (with-current-buffer status-buf (magit-refresh)))
+            (select-window win)
+            (magit-status-setup-buffer topdir))))))
 
-  ;; Show worktrees section in status (built-in, only appears with 2+ worktrees)
-  (magit-add-section-hook 'magit-status-sections-hook
-                          #'magit-insert-worktrees
-                          'magit-insert-status-headers
-                          t)   ; t = insert AFTER magit-insert-status-headers
+  (defun lg/magit-kill-stale-log-buffers (&rest _)
+    "Kill existing magit-log buffers for the current repo/perspective.
+Intended as :before advice on `magit-log-setup-buffer' so switching
+between log views (e.g. log-all → log-local) doesn't leave stale
+buffers that q would cycle back through."
+    (let* ((bufs (if (bound-and-true-p persp-mode)
+                     (persp-buffer-list)
+                   (buffer-list)))
+           (topdir (or (magit-toplevel) default-directory)))
+      (dolist (buf bufs)
+        (when (and (buffer-live-p buf)
+                   (with-current-buffer buf
+                     (and (eq major-mode 'magit-log-mode)
+                          (equal (expand-file-name default-directory)
+                                 (expand-file-name topdir)))))
+          (kill-buffer buf)))))
 
-  ;; Make magit transient buffers on bottom of frame
-  ;; This isn't as "nice", but it prevents magit from resizing windows!
-  (setq transient-display-buffer-action '(display-buffer-at-bottom)
-        magit-display-buffer-function #'+magit-display-buffer-fn
-        magit-bury-buffer-function #'magit-mode-quit-window)
-
-  (transient-append-suffix 'magit-log "-A"
-    '("=p" "First parent" "--first-parent" :level 1))
-
-  ;; Wrap lines in diff view
-  (defun my-wrap-lines ()
-    "Disable `truncate-lines' in the current buffer."
-    (setq truncate-lines nil))
-
-  (add-hook 'magit-diff-mode-hook #'my-wrap-lines)
-
+  ;; -----------------------------------------------------------
+  ;; Log commands
+  ;; -----------------------------------------------------------
 
   (defun lg/magit-log-branches ()
     "Show logs for local branches and their remotes, plus main branches."
     (interactive)
     (let* ((local-branches (magit-list-local-branch-names))
            (remote-branches (magit-list-remote-branch-names "origin"))
+           ;; For each local branch, include origin/<branch> if it exists
            (remote-pairs (seq-filter
                           (lambda (remote-ref)
                             (member remote-ref remote-branches))
                           (mapcar (lambda (branch)
                                     (concat "origin/" branch))
                                   local-branches)))
+           ;; Always include main-like remote branches if they exist
            (main-branches (seq-filter
                            (lambda (ref)
                              (member ref remote-branches))
@@ -143,26 +214,26 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
            (all-refs (append local-branches
                              remote-pairs
                              main-branches
-                             (magit-list-stashes)
-                             )))
+                             (magit-list-stashes))))
       (magit-log-setup-buffer
        (delete-dups all-refs)
        (list "--graph" "--decorate" "--ignore-missing")
        nil
        "test message"
        'magit-log-mode)))
+
   (defun lg/magit-log-current-and-main ()
     "Show logs for current branch (and its remote) plus main branches."
     (interactive)
     (let* ((current (magit-get-current-branch))
            (remote-branches (magit-list-remote-branch-names "origin"))
            (local-branches (magit-list-local-branch-names))
-           ;; Current branch + its remote if it exists
+           ;; Current branch + its remote tracking branch if it exists
            (current-refs (when current
                            (if (member (concat "origin/" current) remote-branches)
                                (list current (concat "origin/" current))
                              (list current))))
-           ;; Main branches - local and remote
+           ;; Main branches - include both local and remote if they exist
            (main-names '("dev" "main" "master"))
            (main-local (seq-filter (lambda (b) (member b local-branches)) main-names))
            (main-remote (seq-filter (lambda (r) (member r remote-branches))
@@ -175,14 +246,13 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
        nil
        'magit-log-mode)))
 
-  (transient-append-suffix 'magit-log "b"
-    '("l" "locals and refs" lg/magit-log-branches))
-  (transient-append-suffix 'magit-log "b"
-    '("c" "current and main" lg/magit-log-current-and-main))
-  (transient-append-suffix 'magit-log "b"
-    '("C" "current" magit-log-current))
+  ;; -----------------------------------------------------------
+  ;; Discard / smerge transient
+  ;; -----------------------------------------------------------
+  ;; Replaces the default `x` (magit-discard) with a transient that also
+  ;; offers smerge conflict resolution commands in one menu.
 
-  (transient-define-prefix my/magit-x-transient ()
+  (transient-define-prefix lg/magit-x-transient ()
     "Extra actions (discard / resolve conflicts)."
     ["Discard"
      ("x" "Discard (same as old `x`)" magit-discard)]
@@ -191,15 +261,72 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
      ("l" "Keep lower/theirs (hunk)" magit-smerge-keep-lower)
      ("a" "Keep all (hunk)" magit-smerge-keep-all)])
 
+  ;; -----------------------------------------------------------
+  ;; Detached checkout
+  ;; -----------------------------------------------------------
+  ;; Git won't let you checkout a branch that's checked out in another
+  ;; worktree. This command uses `git checkout --detach` to safely visit
+  ;; the commit without attaching HEAD to the branch. In magit-log, it
+  ;; picks up the commit at point via magit-read-other-branch-or-commit.
+
+  (defun lg/magit-checkout-detached (rev)
+    "Checkout REV in detached HEAD state.
+Useful for visiting commits/branches checked out in other worktrees."
+    (interactive (list (magit-read-other-branch-or-commit "Detached checkout")))
+    (magit-run-git "checkout" "--detach" rev))
+
+  ;; -----------------------------------------------------------
+  ;; Diff
+  ;; -----------------------------------------------------------
+
+  (defun lg/magit-wrap-lines ()
+    "Disable `truncate-lines' in the current buffer."
+    (setq truncate-lines nil))
+
+  ;; -----------------------------------------------------------
+  ;; Keybindings, hooks, advice & transient suffixes
+  ;; -----------------------------------------------------------
+
+  ;; Keybindings
+  (map! :map magit-mode-map
+        "K" #'(lambda () (interactive) (previous-line 10) (evil-scroll-line-up 10))
+        "J" #'(lambda () (interactive) (next-line 10) (evil-scroll-line-down 10)))
+
+  (map! :leader
+        (:prefix "g"
+         :desc "Magit status" "g" #'lg/magit-status-for-workspace))
+
+  (map! :map magit-mode-map
+        :n "q" #'lg/magit-back-to-status)
+
+  ;; Hooks
+  (add-hook 'magit-refresh-buffer-hook #'lg/worktree--refresh-cache)
+  (add-hook 'magit-diff-mode-hook #'lg/magit-wrap-lines)
+
+  ;; Advice
+  (advice-add 'magit-format-ref-labels :filter-return #'lg/magit--worktree-ref-labels)
+  (advice-add 'magit-log-setup-buffer :before #'lg/magit-kill-stale-log-buffers)
+
+  ;; Status sections
+  (magit-add-section-hook 'magit-status-sections-hook
+                          'magit-insert-modules
+                          'magit-insert-unpulled-from-upstream)
+  (magit-add-section-hook 'magit-status-sections-hook
+                          #'magit-insert-worktrees
+                          'magit-insert-status-headers
+                          t)   ; t = insert AFTER magit-insert-status-headers
+
+  ;; Transient suffixes
+  (transient-append-suffix 'magit-log "-A"
+    '("=p" "First parent" "--first-parent" :level 1))
+  (transient-append-suffix 'magit-log "b"
+    '("l" "locals and refs" lg/magit-log-branches))
+  (transient-append-suffix 'magit-log "b"
+    '("c" "current and main" lg/magit-log-current-and-main))
+  (transient-append-suffix 'magit-log "b"
+    '("C" "current" magit-log-current))
+  (transient-append-suffix 'magit-branch "b"
+    '("D" "detached checkout" lg/magit-checkout-detached))
   (transient-replace-suffix 'magit-dispatch "x"
-    '("x" "discard…" my/magit-x-transient :transient transient--do-replace))
-
-  ;; Also rebind `x` in the actual magit-status keymap
-  (define-key magit-hunk-section-map (kbd "x") #'my/magit-x-transient)
-  )
-
-;; (use-package magit-todos
-;;   :after magit
-;;   :config (magit-todos-mode 1)
-;;   (add-to-list 'magit-todos-exclude-globs "*.html")
-;;   )
+    '("x" "discard…" lg/magit-x-transient :transient transient--do-replace))
+  (define-key magit-hunk-section-map (kbd "x") #'lg/magit-x-transient))
