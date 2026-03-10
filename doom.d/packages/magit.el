@@ -330,3 +330,26 @@ Useful for visiting commits/branches checked out in other worktrees."
   (transient-replace-suffix 'magit-dispatch "x"
     '("x" "discard…" lg/magit-x-transient :transient transient--do-replace))
   (define-key magit-hunk-section-map (kbd "x") #'lg/magit-x-transient))
+
+;; magit-delta rendering notes (for future reference):
+;;
+;; Delta completely replaces magit's diff text with its own ANSI-colored
+;; output. xterm-color then converts those ANSI codes into font-lock-face
+;; text properties on overlays (priority 0), setting BOTH :foreground and
+;; :background. This means:
+;;
+;;   - custom-set-faces! for magit-diff-added, magit-diff-added-highlight,
+;;     etc. has NO effect — those faces are never consulted for diff content.
+;;   - All color tuning must go through gitconfig [delta] section.
+;;
+;; To distinguish focused vs unfocused hunks, we attempted adding priority-5
+;; overlays via magit-section-highlight-hook that override only :background.
+;; This did not work in practice — unclear whether the hooks fired correctly
+;; or whether something else interfered. A future attempt should verify:
+;;   1. That magit-section-highlight-hook fires at all with magit-delta active
+;;      (add a (message ...) to confirm).
+;;   2. That (magit-section-match 'hunk section) matches correctly.
+;;   3. Whether delta itself has a --focused-hunk style option.
+(use-package! magit-delta
+  :after magit
+  :hook (magit-mode . magit-delta-mode))

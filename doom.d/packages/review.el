@@ -68,6 +68,10 @@ Set this to a non-empty string to embed guidance for the agent reading REVIEW.md
     "List of (:file FILE :line LINE :text TEXT :ov OVERLAY) plists.
 Buffer-local to the diff buffer.")
 
+  (defface lg/review-comment-face
+    '((t :foreground "#f8f8f2" :background "#44475a" :extend t))
+    "Face for inline review comment overlays in diff buffers.")
+
   ;; --- Path helpers ---
 
   (defun lg/review--base-ref ()
@@ -365,8 +369,15 @@ C-c C-c saves, C-c C-k cancels."
             ;; so the comment appears on its own line between diff lines
             (setq ov (make-overlay (1+ diff-pos) (1+ diff-pos)))
             (overlay-put ov 'before-string
-                         (propertize (format "  >> %s: %s\n" location text)
-                                     'face 'font-lock-comment-face))
+                         (concat
+                          (propertize (format "  >> %s\n" location)
+                                      'face '(lg/review-comment-face bold))
+                          (mapconcat
+                           (lambda (line)
+                             (propertize (format "     %s\n" line)
+                                         'face 'lg/review-comment-face))
+                           (split-string text "\n")
+                           "")))
             (overlay-put ov 'lg/review-comment t)
             ;; Track in buffer-local list
             (push (list :file file :line line :text text

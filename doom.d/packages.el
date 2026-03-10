@@ -34,6 +34,7 @@
 (package! exec-path-from-shell)
 ;; (package! kubernetes-evil)
 ;; (package! kubernetes)
+(package! magit-delta)
 (package! lsp-treemacs)
 ;; (package! magit-todos)
 (package! claude-code
