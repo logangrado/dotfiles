@@ -326,7 +326,7 @@ Useful for visiting commits/branches checked out in other worktrees."
   (transient-append-suffix 'magit-log "b"
     '("C" "current" magit-log-current))
   (transient-append-suffix 'magit-branch "b"
-    '("D" "detached checkout" lg/magit-checkout-detached))
+    '("B" "detached checkout" lg/magit-checkout-detached))
   (transient-replace-suffix 'magit-dispatch "x"
     '("x" "discard…" lg/magit-x-transient :transient transient--do-replace))
   (define-key magit-hunk-section-map (kbd "x") #'lg/magit-x-transient))
