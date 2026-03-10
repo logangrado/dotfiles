@@ -45,6 +45,25 @@
   (defvar lg/review--comment-context nil
     "Plist (:branch :file :line :diff-buf :diff-pos) for comment being edited.")
 
+  (defvar lg/review-instructions
+    "You are responding to a code review. Treat this like a PR review response.
+
+**Before writing any code:**
+1. Read all comments.
+2. For each comment, decide: implement directly, or raise for discussion.
+3. Present your plan and any questions or pushbacks to the user.
+4. Wait for agreement, then implement.
+
+**Rules:**
+- You MUST address every comment — none can be skipped.
+- For clear, small instructions: implement directly if you agree.
+- For questions or ambiguous suggestions (e.g. \"Should we do X?\"): surface them in step 3, do not assume intent.
+- Push back on suggestions you think are wrong — explain your reasoning before declining.
+- Do not make changes outside the scope of the review. Necessary side-effects are fine (e.g. updating imports after a rename).
+- Preserve existing tests unless they are no longer relevant due to a change you are making. Removing a test MUST be discussed first."
+    "Instructions for the review agent, prepended to every review file.
+Set this to a non-empty string to embed guidance for the agent reading REVIEW.md.")
+
   (defvar-local lg/review--comments nil
     "List of (:file FILE :line LINE :text TEXT :ov OVERLAY) plists.
 Buffer-local to the diff buffer.")
@@ -119,14 +138,21 @@ Buffer-local to the diff buffer.")
   (defun lg/review--read-branch ()
     "Prompt for a branch to review, defaulting to the last selection."
     (let* ((current (magit-get-current-branch))
-           (candidates (remove current (magit-list-local-branch-names)))
-           (default lg/review--last-branch)
+           (candidates (magit-list-local-branch-names))
+           (default (or lg/review--last-branch current))
            (prompt (if default
                        (format "Branch to review (default %s): " default)
                      "Branch to review: "))
            (choice (completing-read prompt candidates nil t nil nil default)))
       (setq lg/review--last-branch choice)
       choice))
+
+  (defun lg/review--read-base-ref ()
+    "Prompt for the base ref, defaulting to origin HEAD."
+    (let* ((default (lg/review--base-ref))
+           (prompt (format "Base branch (default %s): " default))
+           (input (read-string prompt nil nil default)))
+      (if (string-empty-p input) default input)))
 
   ;; --- Deriving branch from diff buffer ---
 
@@ -150,7 +176,10 @@ Buffer-local to the diff buffer.")
         (with-temp-file review-file
           (insert (format "# Review: %s\n\n" branch))
           (insert (format "**Date**: %s\n\n" (format-time-string "%Y-%m-%d")))
-          (insert "---\n\n## Comments\n\n")
+          (insert "---\n\n")
+          (unless (string-empty-p lg/review-instructions)
+            (insert "## Instructions\n\n" lg/review-instructions "\n\n"))
+          (insert "## Comments\n\n")
           (dolist (c (reverse comments))
             (let ((file (plist-get c :file))
                   (line (plist-get c :line))
@@ -169,7 +198,7 @@ Buffer-local to the diff buffer.")
     "Show diff between remote HEAD and a branch."
     (interactive)
     (let ((branch (lg/review--read-branch))
-          (base (lg/review--base-ref)))
+          (base (lg/review--read-base-ref)))
       (magit-diff-range (format "%s...%s" base branch))))
 
   (defun lg/review-start ()
@@ -177,7 +206,7 @@ Buffer-local to the diff buffer.")
 If a prior review exists, offers to review since last review or all changes."
     (interactive)
     (let* ((branch (lg/review--read-branch))
-           (base (lg/review--base-ref))
+           (base (lg/review--read-base-ref))
            (last-sha (lg/review--load-last-reviewed branch))
            (current-sha (magit-rev-parse branch))
            ;; Determine diff range
