@@ -352,4 +352,14 @@ Useful for visiting commits/branches checked out in other worktrees."
 ;;   3. Whether delta itself has a --focused-hunk style option.
 (use-package! magit-delta
   :after magit
-  :hook (magit-mode . magit-delta-mode))
+  :hook (magit-mode . magit-delta-mode)
+  :config
+  ;; Fully control the delta invocation so gitconfig changes never affect magit.
+  ;; --no-gitconfig ignores ~/.gitconfig [delta] entirely.
+  ;; --color-only is required: tells delta not to restructure the diff text,
+  ;;   only add ANSI color — magit parses the diff structure itself.
+  (setq magit-delta-delta-args
+        `("--no-gitconfig"
+          "--color-only"
+          "--true-color" ,(if xterm-color--support-truecolor "always" "never")
+          "--max-line-distance" "0.6")))
