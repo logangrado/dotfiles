@@ -24,11 +24,11 @@
 
 [user]
     name = Logan Grado
-    email = grado.logan@gmail.com
+    email = logangrado@gmail.com
 
 [commit]
     template = ~/.gitmessage
-        
+
 [pager]
     branch = false
     log = less -iXFR                # Leave on screen after exit
@@ -43,4 +43,10 @@
     date = format:"%y-%m-%d %H:%M"
 
 [format]
-   pretty = format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset"
+    pretty = format:"%C(auto)%h%Creset%C(auto)%d%Creset %s %C(#505050)(%cd, %an)%Creset"
+
+# Machine-local overrides (not tracked in dotfiles)
+# Create ~/.gitconfig.local to override settings per-machine
+# e.g., [user] email = work@example.com
+[include]
+    path = ~/.gitconfig.local
