@@ -173,6 +173,7 @@
 ;; Final loads
 (load (expand-file-name "custom_funcs.el" doom-user-dir) t)
 (load (expand-file-name "keybindings.el" doom-user-dir) t)
+(load (expand-file-name "computer-locals.el" doom-user-dir) t)
 
 (defun my/helm-template-font-lock ()
   "Extra highlighting for Helm (Go template) blocks inside YAML."
