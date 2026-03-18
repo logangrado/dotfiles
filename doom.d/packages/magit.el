@@ -181,9 +181,11 @@ buffers that q would cycle back through."
     (let* ((bufs (if (bound-and-true-p persp-mode)
                      (persp-buffer-list)
                    (buffer-list)))
-           (topdir (or (magit-toplevel) default-directory)))
+           (topdir (or (magit-toplevel) default-directory))
+           (cur (current-buffer)))
       (dolist (buf bufs)
         (when (and (buffer-live-p buf)
+                   (not (eq buf cur))
                    (with-current-buffer buf
                      (and (eq major-mode 'magit-log-mode)
                           (equal (expand-file-name default-directory)
@@ -218,9 +220,7 @@ buffers that q would cycle back through."
       (magit-log-setup-buffer
        (delete-dups all-refs)
        (list "--graph" "--decorate" "--ignore-missing")
-       nil
-       "test message"
-       'magit-log-mode)))
+       nil)))
 
   (defun lg/magit-log-current-and-main ()
     "Show logs for current branch (and its remote) plus main branches."
