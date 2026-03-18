@@ -22,3 +22,5 @@ emacs.vanilla/org-roam.db
 *.err
 *.out
 zsh/zshrc-work
+
+doom.d/computer-locals.el
