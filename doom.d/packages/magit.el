@@ -362,4 +362,11 @@ Useful for visiting commits/branches checked out in other worktrees."
         `("--no-gitconfig"
           "--color-only"
           "--true-color" ,(if xterm-color--support-truecolor "always" "never")
-          "--max-line-distance" "0.6")))
+          "--max-line-distance" "0.6"
+          ;; "--syntax-theme" "Dracula"
+          "--plus-style"      "syntax #1f4a28"       ; line bg: readable green
+          "--minus-style"     "syntax #4a1f1f"        ; line bg: readable red
+          "--plus-emph-style" "syntax #2e6e3e bold"  ; word bg: brighter green
+          "--minus-emph-style" "syntax #6e2e2e bold")) ; word bg: brighter red
+
+  )
