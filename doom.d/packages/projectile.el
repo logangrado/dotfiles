@@ -53,7 +53,28 @@ The prompt starts at the user's home directory with completion enabled."
       (projectile-switch-project-by-name dir)
       )
     )
+
+  ;; Command to clone a project
+  ;; ==========================
+  (defun lg/clone-project ()
+    "Prompt for a parent directory and remote URL, clone the repo into a subdirectory, add to projectile, and switch to it."
+    (interactive)
+    (let* ((parent (read-directory-name "Clone into (parent directory): " nil nil nil))
+           (url (read-string "Remote URL: "))
+           (repo-name (file-name-sans-extension (file-name-nondirectory (directory-file-name url))))
+           (dest (expand-file-name repo-name parent)))
+      (unless (file-directory-p parent)
+        (make-directory parent t))
+      (message "Cloning %s into %s..." url dest)
+      (let ((default-directory parent))
+        (shell-command (format "git clone %s" (shell-quote-argument url))))
+      (projectile-add-known-project dest)
+      (projectile-switch-project-by-name dest)))
+
+
   (map! :leader
-        :desc "Create new project"
-        "p n" #'lg/create-new-project)
+        (:prefix "p"
+         :desc "Create new project" "n" #'lg/create-new-project
+         :desc "Clone new project" "c" #'lg/clone-project
+         ))
   )
