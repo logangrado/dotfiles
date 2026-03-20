@@ -24,3 +24,4 @@ emacs.vanilla/org-roam.db
 zsh/zshrc-work
 
 doom.d/computer-locals.el
+.hatchery/worktrees/
