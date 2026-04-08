@@ -120,15 +120,19 @@
     (let ((filename (format-time-string "weekly/%Y-W%V.org" time)))
       (expand-file-name filename org-roam-directory)))
 
+  (defun lg/org-roam-weeklies--new-skeleton (time)
+    "Return the skeleton string for a new weekly note at TIME."
+    (format "#+title: Week %s, %s\n\n* Goals\n- [ ]\n* Log\n** Monday\n** Tuesday\n** Wednesday\n** Thursday\n** Friday\n* Carry-over\n"
+            (format-time-string "%V" time)
+            (format-time-string "%Y" time)))
+
   (defun lg/org-roam-weeklies-goto-today ()
     "Find or create the weekly note for the current week."
     (interactive)
     (let ((file-path (lg/org-roam-weeklies--file-path (current-time))))
       (find-file file-path)
       (unless (file-exists-p file-path)
-        (insert (format "#+title: Week %s, %s\n\n"
-                        (format-time-string "%V")
-                        (format-time-string "%Y")))
+        (insert (lg/org-roam-weeklies--new-skeleton (current-time)))
         (save-buffer))))
 
   (defun lg/org-roam-weeklies--get-week-from-file ()
@@ -162,9 +166,7 @@ If not in a weekly note, go to next week from current week."
            (file-path (lg/org-roam-weeklies--file-path next-time)))
       (find-file file-path)
       (unless (file-exists-p file-path)
-        (insert (format "#+title: Week %s, %s\n\n"
-                        (format-time-string "%V" next-time)
-                        (format-time-string "%Y" next-time)))
+        (insert (lg/org-roam-weeklies--new-skeleton next-time))
         (save-buffer))))
 
   (defun lg/org-roam-weeklies-goto-previous ()
@@ -179,9 +181,7 @@ If not in a weekly note, go to previous week from current week."
            (file-path (lg/org-roam-weeklies--file-path prev-time)))
       (find-file file-path)
       (unless (file-exists-p file-path)
-        (insert (format "#+title: Week %s, %s\n\n"
-                        (format-time-string "%V" prev-time)
-                        (format-time-string "%Y" prev-time)))
+        (insert (lg/org-roam-weeklies--new-skeleton prev-time))
         (save-buffer))))
   ;; END Org roam weeklies
   ;;==========================================================================================
@@ -193,28 +193,10 @@ If not in a weekly note, go to previous week from current week."
    '(("d" "default" entry "* %<%I:%M %p>: %?"
       :if-new (file+head "%<%Y-%m-%d>.org" "#+title: %<%Y-%m-%d>\n"))))
 
-  :bind-keymap
-  ("C-c n d" . org-roam-dailies-map)
-  ("C-c n w" . org-roam-weeklies-map)
-
   :bind
-  (("C-c n f" . org-roam-node-find)
-   ("C-c n r" . org-roam-db-sync)
-   ("C-c n s" . lg/org-roam-search)
-   :map org-mode-map
-   ("C-c n i" . org-roam-node-insert)
-   ("C-c n o" . org-id-get-create)
-   ("C-c n t" . org-roam-tag-add)
-   ("C-c n a" . org-roam-alias-add)
-   ("C-c n l" . org-roam-buffer-toggle)
-   :map org-roam-dailies-map
+  (:map org-roam-dailies-map
    ("Y" . org-roam-dailies-capture-yesterday)
-   ("T" . org-roam-dailies-capture-tomorrow)
-   :map org-roam-weeklies-map
-   ("w" . lg/org-roam-weeklies-goto-today)
-   ("n" . lg/org-roam-weeklies-goto-next)
-   ("p" . lg/org-roam-weeklies-goto-previous)
-   )
+   ("T" . org-roam-dailies-capture-tomorrow))
 
 
 
@@ -234,9 +216,7 @@ If not in a weekly note, go to previous week from current week."
 
   (setq org-capture-templates
         '(("t" "Todo" entry (file+headline my/find-todo-org-roam-file "REFILE")
-           "* TODO %?\n")
-          ;; Add more templates here if needed
-          ))
+           "* TODO %?\n:PROPERTIES:\n:ORDER: 0\n:END:")))
 
   ;; --- Capture templates ------------------------------------
   (setq org-roam-capture-templates
@@ -289,10 +269,37 @@ If not in a weekly note, go to previous week from current week."
                         "* Solution\n"
                         "* Trade-offs\n"
                         "* Applies To\n"))
+           :unnarrowed t)
+
+          ("m" "Meeting" plain
+           ,(concat "** " (format-time-string "%Y-%m-%d") " %?")
+           :if-new (file+head "meetings/${slug}.org"
+                              "#+title: ${title}\n#+filetags: :meeting:\n")
            :unnarrowed t)))
   (setq org-capture-default-template "d")
   )
 (use-package! vulpea
-  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable))
+  :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 
-  )
+;; SPC n — notes & org keybindings
+(map! :leader "nc" nil)  ; override Doom's +org/toggle-last-clock
+(map! :leader
+      (:prefix ("n" . "notes")
+       :desc "Find roam node"  "f" #'org-roam-node-find
+       :desc "Search roam"     "s" #'lg/org-roam-search
+       :desc "Ordered agenda"  "a" (cmd! (org-agenda nil "o"))
+       (:prefix ("c" . "capture")
+        :desc "Todo"    "t" (cmd! (org-capture nil "t"))
+        :desc "Meeting" "m" (cmd! (org-capture nil "m")))
+       (:prefix ("w" . "weekly")
+        :desc "This week" "w" #'lg/org-roam-weeklies-goto-today
+        :desc "Next week" "n" #'lg/org-roam-weeklies-goto-next
+        :desc "Prev week" "p" #'lg/org-roam-weeklies-goto-previous)))
+
+(map! :map org-mode-map
+      :leader
+      (:prefix ("n" . "notes")
+       :desc "Insert roam link" "i" #'org-roam-node-insert
+       :desc "Set todo state"   "t" #'org-todo
+       :desc "Set priority"     "p" #'org-priority
+       :desc "Add tag"          "g" #'org-roam-tag-add))

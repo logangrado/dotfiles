@@ -19,8 +19,9 @@
 (package! livedown)
 (package! markdown-mode)
 (package! yasnippet)
-;; Org moe
+;; Org mode
 (package! org-roam)
+(package! org-super-agenda)
 (package! org-bullets)
 (package! org-roam-ui)
 (package! org-appear)

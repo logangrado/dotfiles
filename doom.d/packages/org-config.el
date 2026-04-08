@@ -35,16 +35,7 @@
    '(org-property-value ((t (:inherit fixed-pitch))) t)
    '(org-document-info ((t (:inherit fixed-pitch)))))
 
-  ;; TODO:
-  ;; Look into better agenda formating
-  (setq org-agenda-view-columns-initially t)
-  (setq org-overriding-columns-format "%TODO %3PRIORITY %ALLTAGS %ITEM")
-
-  ;; Investigate setting org-agenda-prefix-format
-  ;; Look into org-super-agenda
-  ;; Promising example: https://github.com/alphapapa/org-super-agenda/blob/master/examples.org#sebastian-schulze
-
-  ;; ORG AGENDA PREFIX FORMAT
+  ;; ORG AGENDA
 
   ;; Declare new faces for todo states
   ;; (with-no-warnings
@@ -87,59 +78,24 @@
 
   (setq! org-todo-keywords
          '((sequence
-            "TODO(t)"  ; A task that needs doing & is ready to do
-            "PROG(p)"  ; A task that is in progress
-            "DELG(e)"  ; This task has been delegated, may require followup
-            "HOLD(h)"  ; This task is paused/on hold because of me
-            ;; "PROJ(p)"  ; A project, which usually contains other tasks
-            ;; "LOOP(r)"  ; A recurring task
-            ;; "STRT"     ; Legacy in progress, delete in future
-            "WAIT(w)"  ; Something external is holding up this task
-            "FLUP(f)"
-            "REVW(r)"  ; In review
-            ;; "IDEA(i)"  ; An unconfirmed and unapproved task or notjion
+            "TODO(t)"  ; Captured, not yet triaged
+            "NEXT(n)"  ; Triaged — do this next
+            "PROG(p)"  ; Actively in progress
+            "WAIT(w)"  ; Blocked/waiting on someone
             "|"
-            "DUPE"     ; Duplicate
-            "DONE(d)"  ; Task successfully completed
-            "KILL(k)") ; Task was cancelled, aborted or is no longer applicable
-           (sequence
-            "|"
-            "OKAY(o)"
-            "YES(y)"
-            "NO(n)"))
-         )
-
-  (setq! org-todo-keyword-faces
-         '(("FLUP"  . +org-todo-onhold)
-           ("PROG" . +org-todo-active)
-           ("DELG" . +org-todo-active)
-           ("[?]"  . +org-todo-onhold)
-           ("WAIT" . +org-todo-onhold)
-           ("REVW" . +org-todo-onhold)
-           ("HOLD" . +org-todo-onhold)
-           ("REVW" . +org-todo-onhold)
-           ;; Cancel
-           ("NO"   . +org-todo-cancel)
-           ("KILL" . +org-todo-cancel)
-
+            "DONE(d)"  ; Complete
+            "KILL(k)") ; Cancelled
            ))
 
-  ;; ;; Adjust the display of priorities if desired
-  ;; (setq! org-priority-faces '((?0 . error)
-  ;;                             (?1 . warning)
-  ;;                             (?2 . success)
-  ;;                             (?3 . default)
-  ;;                             (?4 . default)
-  ;;                             (?5 . default)
-  ;;                             (?6 . default)
-  ;;                             (?7 . default)
-  ;;                             (?8 . default)
-  ;;                             (?9 . default)))
+  (setq! org-todo-keyword-faces
+         '(("NEXT" . +org-todo-active)
+           ("PROG" . +org-todo-active)
+           ("WAIT" . +org-todo-onhold)
+           ("KILL" . +org-todo-cancel)))
 
-  (setq! org-priority-highest 0
-         org-priority-default 2 ;; This displays as "^E" in agenda view, but I can't figure out how to fix it
-         ;; We can set it to ?2, and it will display as "2", but it will be at the bottom of the list (not good!)
-         org-priority-lowest 4)
+  (setq! org-priority-highest ?A
+         org-priority-default  ?C
+         org-priority-lowest   ?D)
 
 
   ;; When updating a todo state in agenda, ensure we retain the complete original state of the todo
@@ -163,50 +119,169 @@
   (advice-add 'org-agenda-priority :around #'lg/org-agenda-todo-around)
   ;;=====================
 
-  (defun org-columns-priority (&optional _arg)
-    "Change the PRIORITY state during column view."
-    (interactive "P")
-    (org-columns-edit-value "PRIORITY"))
+  ;; Hide :project: tag from agenda lines — it's a vulpea implementation detail
+  (setq org-agenda-hide-tags-regexp "project")
 
-  (defun org-todo-list-priority ()
-    "Return the custom agenda command configuration for priority-based view."
-    (append
-     (cl-loop for priority in '(0 1 2 3 4)
-              collect
-              `(tags-todo ,(format "+PRIORITY=\"%d\"" priority)
-                ((org-agenda-overriding-header ,(format "Priority %d" priority))
-                 (org-agenda-sorting-strategy '(priority-down))
-                 (org-agenda-view-columns-initially t))))
-     ;; Add section for items with priority unset
-     '((tags-todo "-PRIORITY=\"0\"-PRIORITY=\"1\"-PRIORITY=\"2\"-PRIORITY=\"3\"-PRIORITY=\"4\""
-        ((org-agenda-overriding-header "Priority Unset")
-         (org-agenda-sorting-strategy '(priority-down))
-         (org-agenda-view-columns-initially t))))))
+  ;; Sort by :ORDER: property (lower number = higher in list)
+  (defun lg/org-cmp-order (a b)
+    "Compare agenda entries A and B by their :ORDER: property (lower = first)."
+    (let ((oa (or (org-entry-get (get-text-property 0 'org-marker a) "ORDER") "999"))
+          (ob (or (org-entry-get (get-text-property 0 'org-marker b) "ORDER") "999")))
+      (cond ((< (string-to-number oa) (string-to-number ob)) -1)
+            ((> (string-to-number oa) (string-to-number ob)) +1))))
+  (setq org-agenda-cmp-user-defined #'lg/org-cmp-order)
 
+  ;; Column prefix helpers — called in org buffer context during agenda formatting
+  (defun lg/agenda-order-str ()
+    "Return :ORDER: as a right-justified 3-char string."
+    (format "%3s" (or (org-entry-get (point) "ORDER") "-")))
+
+  (defun lg/agenda-file-str ()
+    "Return filename without roam timestamp prefix, truncated to 15 chars."
+    (let* ((base (file-name-base (or (buffer-file-name) "")))
+           (name (if (string-match "^[0-9]\\{14\\}-\\(.*\\)$" base)
+                     (match-string 1 base)
+                   base)))
+      (format "%-15s" (truncate-string-to-width name 15 nil nil t))))
+
+  ;; Ordered TODO agenda grouped by priority using org-super-agenda
   (setq org-agenda-custom-commands
-        `(("c" "Agenda by priority" ,(org-todo-list-priority))))
+        '(("o" "Ordered TODOs"
+           ((todo ""
+                  ((org-super-agenda-groups
+                    '((:name "High"    :priority "A")
+                      (:name "Medium"  :priority "B")
+                      (:name "Low"     :priority "C")
+                      (:name "Backlog" :priority "D")
+                      (:discard (:anything t))))
+                   (org-agenda-sorting-strategy '(user-defined-up priority-down))
+                   (org-agenda-prefix-format " %(lg/agenda-order-str)  %(lg/agenda-file-str)  ")))))))
   )
+
+;; ORDER normalization: runs on every agenda open, per priority group
+(defvar lg/org-agenda-normalize-pending nil
+  "Set to t after normalization; cleared on the subsequent finalize (post-redo).")
+
+(defun lg/org-agenda-normalize-orders ()
+  "Normalize :ORDER: values per priority group.
+ORDER=0 items (newly captured) sort to the top of their group.
+All items are then re-indexed 1, 2, 3... within each group."
+  (let ((groups (make-hash-table :test 'equal)))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (when-let ((m (org-get-at-bol 'org-marker)))
+          (let* ((priority (or (org-entry-get m "PRIORITY") "none"))
+                 (order (string-to-number (or (org-entry-get m "ORDER") "0"))))
+            (puthash priority
+                     (cons (cons m order) (gethash priority groups '()))
+                     groups)))
+        (forward-line 1)))
+    (maphash
+     (lambda (_priority items)
+       (setq items (sort items
+                         (lambda (a b)
+                           (let ((oa (cdr a)) (ob (cdr b)))
+                             (cond ((= oa 0) t)
+                                   ((= ob 0) nil)
+                                   (t (< oa ob)))))))
+       (let ((n 1))
+         (dolist (item items)
+           (org-entry-put (car item) "ORDER" (number-to-string n))
+           (setq n (1+ n)))))
+     groups))
+  (org-save-all-org-buffers))
+
+(defun lg/org-agenda-maybe-normalize ()
+  "Normalize ORDER on agenda finalize, then redo once to reflect new values.
+Uses a persistent flag so the redo's own finalize call does not re-trigger."
+  (if lg/org-agenda-normalize-pending
+      (setq lg/org-agenda-normalize-pending nil)
+    (lg/org-agenda-normalize-orders)
+    (setq lg/org-agenda-normalize-pending t)
+    (run-at-time 0 nil #'org-agenda-redo)))
+
+(add-hook 'org-agenda-finalize-hook #'lg/org-agenda-maybe-normalize)
+
+(defun lg/agenda-strip-priority-cookies ()
+  "Remove [#A]-[#D] priority cookies from the agenda display."
+  (let ((inhibit-read-only t))
+    (save-excursion
+      (goto-char (point-min))
+      (while (re-search-forward " *\\[#[A-D]\\] *" nil t)
+        (replace-match " ")))))
+
+(add-hook 'org-agenda-finalize-hook #'lg/agenda-strip-priority-cookies)
+
+;; J/K in agenda: swap :ORDER: property with adjacent visible item
+(defun lg/org-agenda-item-order (&optional marker)
+  (let ((m (or marker (org-get-at-bol 'org-marker))))
+    (when m
+      (string-to-number (or (org-entry-get m "ORDER") "0")))))
+
+(defun lg/org-agenda-swap-order (direction)
+  "Swap :ORDER: of current item with adjacent item in the same priority group.
+DIRECTION is 1 (down) or -1 (up). Does nothing if the adjacent item is in a
+different priority group."
+  (let* ((marker (or (org-get-at-bol 'org-marker) (user-error "No item here")))
+         (cur-priority (org-entry-get marker "PRIORITY"))
+         (cur-order (lg/org-agenda-item-order marker))
+         (swapped nil))
+    (save-excursion
+      (if (= direction 1)
+          (org-agenda-next-item 1)
+        (org-agenda-previous-item 1))
+      (let ((adj-marker (org-get-at-bol 'org-marker)))
+        (when (and adj-marker
+                   (equal cur-priority (org-entry-get adj-marker "PRIORITY")))
+          (let ((adj-order (lg/org-agenda-item-order adj-marker)))
+            (org-entry-put marker     "ORDER" (number-to-string adj-order))
+            (org-entry-put adj-marker "ORDER" (number-to-string cur-order)))
+          (setq swapped t))))
+    (when swapped
+      (setq lg/org-agenda-normalize-pending t)
+      (org-agenda-redo)
+      (cond ((= direction  1) (org-agenda-next-item 1))
+            ((= direction -1) (org-agenda-previous-item 1))))))
+
+
+(defun lg/org-agenda-move-down () (interactive) (lg/org-agenda-swap-order  1))
+(defun lg/org-agenda-move-up   () (interactive) (lg/org-agenda-swap-order -1))
+
+(defun lg/org-agenda-ensure-evil-normal ()
+  "Keep evil in normal state in org-agenda; super-agenda headers reset it."
+  (when (and (derived-mode-p 'org-agenda-mode)
+             (not (evil-normal-state-p)))
+    (evil-normal-state)))
+
+(after! org-agenda
+  (evil-set-initial-state 'org-agenda-mode 'normal)
+  (add-hook 'post-command-hook #'lg/org-agenda-ensure-evil-normal)
+  (map! :map org-agenda-mode-map
+        :n "j" #'org-agenda-next-item
+        :n "k" #'org-agenda-previous-item
+        :n "J" #'lg/org-agenda-move-down
+        :n "K" #'lg/org-agenda-move-up))
 
 (use-package! org-fancy-priorities
   :hook (org-mode . org-fancy-priorities-mode)
   :config
-  (setq! org-priority-highest 0
-         org-priority-default 2 ;; This displays as "^E" in agenda view, but I can't figure out how to fix it
-         ;; We can set it to ?2, and it will display as "2", but it will be at the bottom of the list (not good!)
-         org-priority-lowest 4)
-  (setq! org-fancy-priorities-list '(
-                                     (?0 . "P0")
-                                     (?1 . "P1")
-                                     (?2 . "P2")
-                                     (?3 . "P3")
-                                     (?4 . "P4"))
+  (setq! org-priority-highest ?A
+         org-priority-default  ?C
+         org-priority-lowest   ?D)
+  (setq! org-fancy-priorities-list '((?A . "HIGH")
+                                     (?B . "MED")
+                                     (?C . "LOW")
+                                     (?D . "BKG"))
+         org-priority-faces '((?A :foreground "DarkRed"     :weight bold)
+                              (?B :foreground "DarkOrange4"  :weight bold)
+                              (?C :foreground "goldenrod"    :weight bold)
+                              (?D :foreground "gray50"       :weight bold))))
 
-         org-priority-faces '((?0 :foreground "DarkRed" :background "LightPink")
-                              (?1 :foreground "DarkOrange4" :background "LightGoldenrod")
-                              (?2 :foreground "gray20" :background "gray")
-                              (?3 :foreground "gray20" :background "gray")
-                              (?4 :foreground "gray20" :background "gray")))
-  )
+(use-package! org-super-agenda
+  :after org-agenda
+  :config
+  (org-super-agenda-mode))
 
 ;; When editing sections with emphasis, show the hideen emphasis!
 (use-package! org-appear
