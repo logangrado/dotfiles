@@ -149,11 +149,11 @@
         '(("o" "Ordered TODOs"
            ((todo ""
                   ((org-super-agenda-groups
-                    '((:name "High"    :priority "A")
-                      (:name "Medium"  :priority "B")
-                      (:name "Low"     :priority "C")
-                      (:name "Backlog" :priority "D")
-                      (:discard (:anything t))))
+                    '((:name "Unprioritized" :not (:priority ("A" "B" "C" "D")))
+                      (:name "High"          :priority "A")
+                      (:name "Medium"        :priority "B")
+                      (:name "Low"           :priority "C")
+                      (:name "Backlog"       :priority "D")))
                    (org-agenda-sorting-strategy '(user-defined-up priority-down))
                    (org-agenda-prefix-format " %(lg/agenda-order-str)  %(lg/agenda-file-str)  ")))))))
   )
