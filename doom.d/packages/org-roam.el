@@ -1,5 +1,82 @@
 ;;; ../.dotfiles/doom.d/packages/org-roam.el -*- lexical-binding: t; -*-
 
+;; Set org-roam-directory at load time so keybindings work before org-roam loads.
+;; org-directory is set in org-config.el :init (runs immediately) which is loaded first.
+(setq org-roam-directory (concat org-directory "roam/"))
+
+;; Org roam weeklies
+;;==========================================================================================
+(defun lg/org-roam-weeklies--file-path (time)
+  "Return the file path for the weekly note corresponding to TIME."
+  (let ((filename (format-time-string "weekly/%Y-W%V.org" time)))
+    (expand-file-name filename org-roam-directory)))
+
+(defun lg/org-roam-weeklies--new-skeleton (time)
+  "Return the skeleton string for a new weekly note at TIME."
+  (format "#+title: Week %s, %s\n\n* Goals\n- [ ]\n* Log\n** Monday\n** Tuesday\n** Wednesday\n** Thursday\n** Friday\n* Carry-over\n"
+          (format-time-string "%V" time)
+          (format-time-string "%Y" time)))
+
+(defun lg/org-roam-weeklies-goto-today ()
+  "Find or create the weekly note for the current week."
+  (interactive)
+  (let ((file-path (lg/org-roam-weeklies--file-path (current-time))))
+    (find-file file-path)
+    (unless (file-exists-p file-path)
+      (insert (lg/org-roam-weeklies--new-skeleton (current-time)))
+      (save-buffer))))
+
+(defun lg/org-roam-weeklies--get-week-from-file ()
+  "Extract the year and week number from current weekly note filename.
+Returns a cons cell (YEAR . WEEK) or nil if not in a weekly note."
+  (when buffer-file-name
+    (when (string-match "/weekly/\\([0-9]\\{4\\}\\)-W\\([0-9]\\{2\\}\\)\\.org$"
+                        buffer-file-name)
+      (cons (string-to-number (match-string 1 buffer-file-name))
+            (string-to-number (match-string 2 buffer-file-name))))))
+
+(defun lg/org-roam-weeklies--time-for-week (year week offset)
+  "Create a time value for YEAR and WEEK with OFFSET weeks added."
+  ;; Convert to time using first day of the week (Monday)
+  (let* ((time (encode-time 0 0 0 1 1 year))
+         ;; Add weeks to get to target week
+         (target-week (+ week offset))
+         (seconds-per-week (* 60 60 24 7))
+         (offset-seconds (* seconds-per-week (1- target-week))))
+    (time-add time offset-seconds)))
+
+(defun lg/org-roam-weeklies-goto-next ()
+  "Go to the next weekly note.
+If not in a weekly note, go to next week from current week."
+  (interactive)
+  (let* ((week-info (or (lg/org-roam-weeklies--get-week-from-file)
+                        (org-roam-weeklies--get-current-week)))
+         (year (car week-info))
+         (week (cdr week-info))
+         (next-time (lg/org-roam-weeklies--time-for-week year week 1))
+         (file-path (lg/org-roam-weeklies--file-path next-time)))
+    (find-file file-path)
+    (unless (file-exists-p file-path)
+      (insert (lg/org-roam-weeklies--new-skeleton next-time))
+      (save-buffer))))
+
+(defun lg/org-roam-weeklies-goto-previous ()
+  "Go to the previous weekly note.
+If not in a weekly note, go to previous week from current week."
+  (interactive)
+  (let* ((week-info (or (lg/org-roam-weeklies--get-week-from-file)
+                        (org-roam-weeklies--get-current-week)))
+         (year (car week-info))
+         (week (cdr week-info))
+         (prev-time (lg/org-roam-weeklies--time-for-week year week -1))
+         (file-path (lg/org-roam-weeklies--file-path prev-time)))
+    (find-file file-path)
+    (unless (file-exists-p file-path)
+      (insert (lg/org-roam-weeklies--new-skeleton prev-time))
+      (save-buffer))))
+;; END Org roam weeklies
+;;==========================================================================================
+
 (use-package! org-roam
   ;;:ensure t
   :after org
@@ -11,8 +88,6 @@
   (setq org-roam-node-display-template
         (concat "${title:40} "
                 (propertize "${tags:50}" 'face 'org-tag)))
-
-  (setq org-roam-directory (concat org-directory "roam/"))
 
   ;; BEGIN ORG ROAM AGENDA
   ;; =====================
@@ -112,79 +187,6 @@
     (interactive)
     (let ((consult-ripgrep-command "rg --multiline --null --ignore-case --type org --line-buffered --color=always --max-columns=500 --no-heading --line-number . -e ARG OPTS"))
       (consult-ripgrep org-roam-directory "")))
-
-  ;; Org roam weeklies
-  ;;==========================================================================================
-  (defun lg/org-roam-weeklies--file-path (time)
-    "Return the file path for the weekly note corresponding to TIME."
-    (let ((filename (format-time-string "weekly/%Y-W%V.org" time)))
-      (expand-file-name filename org-roam-directory)))
-
-  (defun lg/org-roam-weeklies--new-skeleton (time)
-    "Return the skeleton string for a new weekly note at TIME."
-    (format "#+title: Week %s, %s\n\n* Goals\n- [ ]\n* Log\n** Monday\n** Tuesday\n** Wednesday\n** Thursday\n** Friday\n* Carry-over\n"
-            (format-time-string "%V" time)
-            (format-time-string "%Y" time)))
-
-  (defun lg/org-roam-weeklies-goto-today ()
-    "Find or create the weekly note for the current week."
-    (interactive)
-    (let ((file-path (lg/org-roam-weeklies--file-path (current-time))))
-      (find-file file-path)
-      (unless (file-exists-p file-path)
-        (insert (lg/org-roam-weeklies--new-skeleton (current-time)))
-        (save-buffer))))
-
-  (defun lg/org-roam-weeklies--get-week-from-file ()
-    "Extract the year and week number from current weekly note filename.
-Returns a cons cell (YEAR . WEEK) or nil if not in a weekly note."
-    (when buffer-file-name
-      (when (string-match "/weekly/\\([0-9]\\{4\\}\\)-W\\([0-9]\\{2\\}\\)\\.org$"
-                          buffer-file-name)
-        (cons (string-to-number (match-string 1 buffer-file-name))
-              (string-to-number (match-string 2 buffer-file-name))))))
-
-  (defun lg/org-roam-weeklies--time-for-week (year week offset)
-    "Create a time value for YEAR and WEEK with OFFSET weeks added."
-    ;; Convert to time using first day of the week (Monday)
-    (let* ((time (encode-time 0 0 0 1 1 year))
-           ;; Add weeks to get to target week
-           (target-week (+ week offset))
-           (seconds-per-week (* 60 60 24 7))
-           (offset-seconds (* seconds-per-week (1- target-week))))
-      (time-add time offset-seconds)))
-
-  (defun lg/org-roam-weeklies-goto-next ()
-    "Go to the next weekly note.
-If not in a weekly note, go to next week from current week."
-    (interactive)
-    (let* ((week-info (or (lg/org-roam-weeklies--get-week-from-file)
-                          (org-roam-weeklies--get-current-week)))
-           (year (car week-info))
-           (week (cdr week-info))
-           (next-time (lg/org-roam-weeklies--time-for-week year week 1))
-           (file-path (lg/org-roam-weeklies--file-path next-time)))
-      (find-file file-path)
-      (unless (file-exists-p file-path)
-        (insert (lg/org-roam-weeklies--new-skeleton next-time))
-        (save-buffer))))
-
-  (defun lg/org-roam-weeklies-goto-previous ()
-    "Go to the previous weekly note.
-If not in a weekly note, go to previous week from current week."
-    (interactive)
-    (let* ((week-info (or (lg/org-roam-weeklies--get-week-from-file)
-                          (org-roam-weeklies--get-current-week)))
-           (year (car week-info))
-           (week (cdr week-info))
-           (prev-time (lg/org-roam-weeklies--time-for-week year week -1))
-           (file-path (lg/org-roam-weeklies--file-path prev-time)))
-      (find-file file-path)
-      (unless (file-exists-p file-path)
-        (insert (lg/org-roam-weeklies--new-skeleton prev-time))
-        (save-buffer))))
-  ;; END Org roam weeklies
-  ;;==========================================================================================
 
   :custom
   (org-roam-completion-everywhere t)
@@ -296,10 +298,3 @@ If not in a weekly note, go to previous week from current week."
         :desc "Next week" "n" #'lg/org-roam-weeklies-goto-next
         :desc "Prev week" "p" #'lg/org-roam-weeklies-goto-previous)))
 
-(map! :map org-mode-map
-      :leader
-      (:prefix ("n" . "notes")
-       :desc "Insert roam link" "i" #'org-roam-node-insert
-       :desc "Set todo state"   "t" #'org-todo
-       :desc "Set priority"     "p" #'org-priority
-       :desc "Add tag"          "g" #'org-roam-tag-add))

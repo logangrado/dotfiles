@@ -261,7 +261,8 @@ different priority group."
         :n "j" #'org-agenda-next-item
         :n "k" #'org-agenda-previous-item
         :n "J" #'lg/org-agenda-move-down
-        :n "K" #'lg/org-agenda-move-up))
+        :n "K" #'lg/org-agenda-move-up
+        ))
 
 (use-package! org-fancy-priorities
   :hook (org-mode . org-fancy-priorities-mode)
