@@ -40,6 +40,28 @@ Keys: :branch :base :old-sha :worktree-path :repo-top :comments :status-buf")
 Keys: :repo-key :branch :file :line :hunk-key :hunk-offset
       :diff-buf :diff-pos :diff-context")
 
+  (defvar lg/review-instructions
+    "You are responding to a code review. Treat this like a PR review response.
+
+**Before writing any code:**
+1. Read all comments.
+2. For each comment, decide: implement directly, or raise for discussion.
+3. Present your plan and any questions or pushbacks to the user.
+4. Wait for agreement, then implement.
+
+**Rules:**
+- You MUST address every comment — none can be skipped.
+- For clear, small instructions: implement directly if you agree.
+- For questions or ambiguous suggestions (e.g. \"Should we do X?\"): surface them in step 3, do not assume intent.
+- Push back on suggestions you think are wrong — explain your reasoning before declining.
+- Do not make changes outside the scope of the review. Necessary side-effects are fine (e.g. updating imports after a rename).
+- Preserve existing tests unless they are no longer relevant due to a change you are making. Removing a test MUST be discussed first."
+    "Instructions for the review agent, prepended to every review file.")
+
+  (defface lg/review-comment-face
+    '((t :foreground "#f8f8f2" :background "#44475a" :extend t))
+    "Face for inline review comment overlays in diff buffers.")
+
   ;; ==========================================================================
   ;; Helpers
   ;; ==========================================================================
@@ -107,6 +129,101 @@ Mirrors lg/review--repo-dir's <name>-<hash> convention."
                             block)
           (when (string-match "^worktree \\(.+\\)$" block)
             (setq result (match-string 1 block)))))))
+
+  (defvar lg/review--last-branch nil
+    "The most recently selected branch for review, used as default next time.")
+
+  (defun lg/review--base-ref ()
+    "Detect the remote HEAD ref (e.g. origin/main)."
+    (or (when-let ((ref (magit-git-string "symbolic-ref" "refs/remotes/origin/HEAD")))
+          (string-remove-prefix "refs/remotes/" ref))
+        (seq-find #'magit-rev-verify '("origin/main" "origin/master" "origin/dev"))
+        (user-error "Cannot detect base branch — run: git remote set-head origin --auto")))
+
+  (defun lg/review--read-branch ()
+    "Prompt for a branch to review, defaulting to the last selection."
+    (let* ((current (magit-get-current-branch))
+           (candidates (magit-list-local-branch-names))
+           (default (or lg/review--last-branch current))
+           (prompt (if default
+                       (format "Branch to review (default %s): " default)
+                     "Branch to review: "))
+           (choice (completing-read prompt candidates nil t nil nil default)))
+      (setq lg/review--last-branch choice)
+      choice))
+
+  (defun lg/review--read-base-ref ()
+    "Prompt for the base ref, defaulting to origin HEAD."
+    (let* ((default (lg/review--base-ref))
+           (prompt (format "Base branch (default %s): " default))
+           (candidates (magit-list-branch-names))
+           (choice (completing-read prompt candidates nil t nil nil default)))
+      (if (string-empty-p choice) default choice)))
+
+  ;; ==========================================================================
+  ;; Diff-context helpers (used by lg/review-comment)
+  ;; ==========================================================================
+
+  (defun lg/review--hunk-line-at-point (section)
+    "Return new-file line number at point within hunk SECTION, or nil."
+    (let ((target (line-beginning-position)))
+      (save-excursion
+        (goto-char (oref section start))
+        (when (looking-at "@@ .* \\+\\([0-9]+\\)\\(?:,[0-9]+\\)? @@")
+          (let ((start-line (string-to-number (match-string 1)))
+                (content (oref section content))
+                (offset 0))
+            (goto-char content)
+            (while (and (< (point) target) (< (point) (oref section end)))
+              (unless (eq (char-after) ?-) (cl-incf offset))
+              (forward-line))
+            (+ start-line offset))))))
+
+  (defun lg/review--grab-diff-context ()
+    "Grab diff context around point with the selected lines marked.
+If evil visual state is active, uses the selection.  Otherwise treats
+the current line as a single-line selection.  ~5 lines of padding are
+included before/after, capped at hunk boundaries.
+Reads directly from the magit buffer."
+    (let* ((section-start (if (magit-section-match 'hunk)
+                               (oref (magit-current-section) content)
+                             (point-min)))
+           (section-end (if (magit-section-match 'hunk)
+                             (oref (magit-current-section) end)
+                           (point-max)))
+           (sel-beg (save-excursion
+                      (goto-char (if (evil-visual-state-p)
+                                     (region-beginning)
+                                   (point)))
+                      (line-beginning-position)))
+           (sel-end (save-excursion
+                      (goto-char (if (evil-visual-state-p)
+                                     (region-end)
+                                   (point)))
+                      (line-end-position)))
+           (ctx-beg (save-excursion
+                      (goto-char sel-beg)
+                      (forward-line -5)
+                      (max (point) section-start)))
+           (ctx-end (save-excursion
+                      (goto-char sel-end)
+                      (forward-line 6)
+                      (min (point) section-end)))
+           (lines (split-string
+                   (buffer-substring-no-properties ctx-beg ctx-end)
+                   "\n"))
+           (pos ctx-beg)
+           result)
+      (dolist (line lines)
+        (let ((line-end (+ pos (length line) 1)))
+          (push (if (> (length line) 0)
+                    (if (and (>= pos sel-beg) (< pos (1+ sel-end)))
+                        (concat (substring line 0 1) ">" (substring line 1))
+                      (concat (substring line 0 1) " " (substring line 1)))
+                  line)
+                result)
+          (setq pos line-end)))
+      (string-trim-right (mapconcat #'identity (nreverse result) "\n"))))
 
   ;; ==========================================================================
   ;; Start
@@ -518,7 +635,8 @@ STAGED-STAT is output of `git diff --staged --stat' (may be empty)."
           ;; Clean up
           (lg/review--cleanup-session key repo-top worktree-path)
           ;; Refresh main repo magit-status if visible
-          (when-let ((buf (magit-get-mode-buffer 'magit-status-mode nil nil repo-top)))
+          (when-let ((buf (let ((default-directory repo-top))
+                            (magit-get-mode-buffer 'magit-status-mode))))
             (with-current-buffer buf (magit-refresh)))
           (message "Review published: REVIEW.md written to %s (untracked)" review-dir))))))
 
