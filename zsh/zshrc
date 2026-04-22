@@ -158,3 +158,6 @@ kex() {
 # Homebrew autocomplete
 autoload -Uz compinit
 compinit
+
+# hatchery shell completion
+eval "$(_HATCHERY_COMPLETE=zsh_source hatchery)"

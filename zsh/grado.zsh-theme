@@ -136,8 +136,6 @@ ZSH_THEME_GIT_PROMPT_UNMERGED="%{$fg[red]%}§"
 # #↑
 # #⇅
 
-local return_code="%(?..%{$fg[red]%}%? ↵%{$reset_color%})"
-
 function prompt-length() {
   emulate -L zsh
   local -i COLUMNS=${2:-COLUMNS}
@@ -172,28 +170,26 @@ function fill-line() {
 }
 
 function set-prompt() {
+  local last_exit=$?
   emulate -L zsh
   local git_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
   git_branch=${git_branch//\%/%%}  # escape '%'
 
-  # ~/foo/bar                     master
-  # % █                            10:51
-  #
-  # Top left:      Blue current directory.
-  # Top right:     Green Git branch.
-  # Bottom left:   '#' if root, '%' if not; green on success, red on error.
-  # Bottom right:  Yellow current time.
-
+  # Capture return code eagerly before any commands overwrite $?
+  local return_code=""
+  if [[ $last_exit -ne 0 ]]; then
+    return_code="%{$fg[red]%}${last_exit} ↵%{$reset_color%}"
+  fi
 
   local top_left="┌ %{$fg[green]%}%n%{$reset_color%}@%{$fg[green]%}%m%{$fg[cyan]%} $(get_virtualenv_name)$(k8s_info)"
-  local top_right="%{$fg[blue]%}%~%{$reset_color%}"
+  local top_right="%{$fg[blue]%}%~%{$reset_color%} ${return_code}"
   local bottom_left="└ %{$fg[blue]%}%c$(my_git_prompt) %{$fg[red]%}%(!.#.»)%{$reset_color%} "
-  local bottom_right="${return_code} [%*]"
+  # local bottom_right="${return_code} [%*]"
 
   local REPLY
   fill-line "$top_left" "$top_right"
   PROMPT=$REPLY$'\n'$bottom_left
-  RPROMPT=$bottom_right
+  # RPROMPT=$bottom_right
 }
 
 # MULTILINE PROMPT CODE ADAPTED FROM HERE: https://www.reddit.com/r/zsh/comments/cgbm24/multiline_prompt_the_missing_ingredient/
