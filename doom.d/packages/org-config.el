@@ -76,22 +76,7 @@
   ;; Fix face for org todo column view
   (custom-set-faces! '(org-column :background nil))
 
-  (setq! org-todo-keywords
-         '((sequence
-            "TODO(t)"  ; Captured, not yet triaged
-            "NEXT(n)"  ; Triaged — do this next
-            "PROG(p)"  ; Actively in progress
-            "WAIT(w)"  ; Blocked/waiting on someone
-            "|"
-            "DONE(d)"  ; Complete
-            "KILL(k)") ; Cancelled
-           ))
-
-  (setq! org-todo-keyword-faces
-         '(("NEXT" . +org-todo-active)
-           ("PROG" . +org-todo-active)
-           ("WAIT" . +org-todo-onhold)
-           ("KILL" . +org-todo-cancel)))
+  (setq! org-log-into-drawer t)  ; put state-change timestamps in :LOGBOOK: drawer
 
   (setq! org-priority-highest ?A
          org-priority-default  ?C
@@ -119,8 +104,10 @@
   (advice-add 'org-agenda-priority :around #'lg/org-agenda-todo-around)
   ;;=====================
 
-  ;; Hide :project: tag from agenda lines — it's a vulpea implementation detail
-  (setq org-agenda-hide-tags-regexp "project")
+  ;; Suppress normal todo-keyword column (we render state in prefix instead)
+  (setq org-agenda-todo-keyword-format "")
+  ;; Remove right-margin tags (we render tags in prefix instead)
+  (setq org-agenda-remove-tags t)
 
   ;; Sort by :ORDER: property (lower number = higher in list)
   (defun lg/org-cmp-order (a b)
@@ -144,6 +131,35 @@
                    base)))
       (format "%-15s" (truncate-string-to-width name 15 nil nil t))))
 
+  (defun lg/agenda-state-str ()
+    "Return TODO state padded to 4 chars (colors applied in finalize hook)."
+    (format "%-4s" (or (org-entry-get (point) "TODO") "")))
+
+  (defvar lg/agenda-tag-color-palette
+    '("#e06c75" "#98c379" "#e5c07b" "#61afef" "#c678dd" "#56b6c2" "#d19a66")
+    "Color palette for per-tag coloring in the agenda view.
+Seven colors (prime) ensures better distribution when taking mod.")
+
+  (defun lg/agenda-tag-color (tag)
+    "Return a deterministic color from the palette for TAG.
+Uses sum of character codes mod palette length — simple, session-stable,
+and verified collision-free for the current tag set with a 7-color palette."
+    (nth (mod (apply #'+ (string-to-list tag))
+              (length lg/agenda-tag-color-palette))
+         lg/agenda-tag-color-palette))
+
+  (defun lg/agenda-tags-str ()
+    "Return 20-char fixed-width tags string, excluding :project: (colors applied in finalize hook).
+Uses non-breaking spaces (U+00A0) for padding — org-agenda strips trailing
+ASCII spaces from %(function) results; NBSP survives.  The nobreak-space
+display highlight is suppressed in lg/agenda-colorize."
+    (let* ((tags (seq-filter
+                  (lambda (tag) (not (string= tag "project")))
+                  (org-get-tags nil t)))
+           (plain (if tags (concat ":" (string-join tags ":") ":") ""))
+           (padding (make-string (max 0 (- 20 (length plain))) ?\xA0)))
+      (concat plain padding)))
+
   ;; Ordered TODO agenda grouped by priority using org-super-agenda
   (setq org-agenda-custom-commands
         '(("o" "Ordered TODOs"
@@ -155,7 +171,7 @@
                       (:name "Low"           :priority "C")
                       (:name "Backlog"       :priority "D")))
                    (org-agenda-sorting-strategy '(user-defined-up priority-down))
-                   (org-agenda-prefix-format " %(lg/agenda-order-str)  %(lg/agenda-file-str)  ")))))))
+                   (org-agenda-prefix-format " %(lg/agenda-order-str)  %(lg/agenda-state-str)  %(lg/agenda-tags-str)  ")))))))
   )
 
 ;; ORDER normalization: runs on every agenda open, per priority group
@@ -213,6 +229,50 @@ Uses a persistent flag so the redo's own finalize call does not re-trigger."
 
 (add-hook 'org-agenda-finalize-hook #'lg/agenda-strip-priority-cookies)
 
+;; Prefix column offsets (0-indexed from line start):
+;;   " ORDER(3)  STATE(4)  TAGS(20)  "
+;;     ^6        ^6..9    ^12..31
+(defun lg/agenda-colorize ()
+  "Apply face colors to state and tags columns in agenda item lines."
+  ;; Suppress Emacs's built-in NBSP highlight (nobreak-space face / cyan underline).
+  ;; Our tags padding uses U+00A0 to survive org-agenda's trailing-space stripping;
+  ;; this prevents it from being rendered visibly.
+  (setq-local nobreak-char-display nil)
+  (let ((inhibit-read-only t))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (when (org-get-at-bol 'org-marker)
+          (let* ((bol (line-beginning-position))
+                 ;; State: columns 6-9 (4 chars)
+                 (state-beg (+ bol 6))
+                 (state-end (min (+ bol 10) (line-end-position)))
+                 (state (string-trim
+                         (buffer-substring-no-properties state-beg state-end)))
+                 (state-face (cond
+                              ((member state '("NEXT" "PROG")) '+org-todo-active)
+                              ((string= state "WAIT") '+org-todo-onhold)
+                              ((string= state "KILL") '+org-todo-cancel)
+                              ((string= state "DONE") 'org-done)
+                              (t 'org-todo))))
+            (put-text-property state-beg state-end 'face state-face)
+            ;; Tags: columns 12-31 (20 chars)
+            ;; Reset the whole field to default first, then color individual tag names.
+            (put-text-property (+ bol 12) (min (+ bol 32) (line-end-position))
+                               'face 'default)
+            (save-excursion
+              (goto-char (+ bol 12))
+              (while (re-search-forward ":\\([a-zA-Z0-9_@#%]+\\)"
+                                        (min (+ bol 32) (line-end-position))
+                                        t)
+                (put-text-property (match-beginning 1) (match-end 1)
+                                   'face `(:foreground
+                                           ,(lg/agenda-tag-color
+                                             (match-string-no-properties 1))))))))
+        (forward-line 1)))))
+
+(add-hook 'org-agenda-finalize-hook #'lg/agenda-colorize)
+
 ;; J/K in agenda: swap :ORDER: property with adjacent visible item
 (defun lg/org-agenda-item-order (&optional marker)
   (let ((m (or marker (org-get-at-bol 'org-marker))))
@@ -254,6 +314,26 @@ different priority group."
              (not (evil-normal-state-p)))
     (evil-normal-state)))
 
+;; Set todo keywords after all package init, so Doom's +org module can't overwrite us.
+;; setq! (customize-set-variable) on org-log-into-drawer triggers org re-init which
+;; resets org-todo-keywords to Doom defaults — placing these here guarantees they win.
+(after! org
+  (setq org-todo-keywords
+        '((sequence
+           "TODO(t!)"  ; Captured, not yet triaged
+           "NEXT(n!)"  ; Triaged — do this next
+           "PROG(p!)"  ; Actively in progress
+           "WAIT(w!)"  ; Blocked/waiting on someone
+           "|"
+           "DONE(d!)"  ; Complete
+           "KILL(k!)") ; Cancelled
+          ))
+  (setq org-todo-keyword-faces
+        '(("NEXT" . +org-todo-active)
+          ("PROG" . +org-todo-active)
+          ("WAIT" . +org-todo-onhold)
+          ("KILL" . +org-todo-cancel))))
+
 (after! org-agenda
   (evil-set-initial-state 'org-agenda-mode 'normal)
   (add-hook 'post-command-hook #'lg/org-agenda-ensure-evil-normal)
@@ -262,7 +342,7 @@ different priority group."
         :n "k" #'org-agenda-previous-item
         :n "J" #'lg/org-agenda-move-down
         :n "K" #'lg/org-agenda-move-up
-        ))
+        :n "+" (cmd! (org-capture nil "t"))))
 
 (use-package! org-fancy-priorities
   :hook (org-mode . org-fancy-priorities-mode)

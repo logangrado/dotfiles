@@ -12,19 +12,26 @@
     (expand-file-name filename org-roam-directory)))
 
 (defun lg/org-roam-weeklies--new-skeleton (time)
-  "Return the skeleton string for a new weekly note at TIME."
-  (format "#+title: Week %s, %s\n\n* Goals\n- [ ]\n* Log\n** Monday\n** Tuesday\n** Wednesday\n** Thursday\n** Friday\n* Carry-over\n"
+  "Return the skeleton string for a new weekly note at TIME.
+Includes #+id: so org-roam indexes the file and vulpea can tag it :project:."
+  (format "#+title: Week %s, %s\n#+id: %s\n\n* Goals\n- [ ]\n* TODOs\n* Log\n** Monday\n** Tuesday\n** Wednesday\n** Thursday\n** Friday\n* Carry-over\n"
           (format-time-string "%V" time)
-          (format-time-string "%Y" time)))
+          (format-time-string "%Y" time)
+          (org-id-new)))
+
+(defun lg/org-roam-weeklies--ensure-current-file ()
+  "Return path for current week's weekly note, creating it if it does not exist."
+  (let* ((time (current-time))
+         (file-path (lg/org-roam-weeklies--file-path time)))
+    (unless (file-exists-p file-path)
+      (with-temp-file file-path
+        (insert (lg/org-roam-weeklies--new-skeleton time))))
+    file-path))
 
 (defun lg/org-roam-weeklies-goto-today ()
   "Find or create the weekly note for the current week."
   (interactive)
-  (let ((file-path (lg/org-roam-weeklies--file-path (current-time))))
-    (find-file file-path)
-    (unless (file-exists-p file-path)
-      (insert (lg/org-roam-weeklies--new-skeleton (current-time)))
-      (save-buffer))))
+  (find-file (lg/org-roam-weeklies--ensure-current-file)))
 
 (defun lg/org-roam-weeklies--get-week-from-file ()
   "Extract the year and week number from current weekly note filename.
@@ -217,7 +224,7 @@ If not in a weekly note, go to previous week from current week."
         (error "Could not find 'todo' org-roam node"))))
 
   (setq org-capture-templates
-        '(("t" "Todo" entry (file+headline my/find-todo-org-roam-file "REFILE")
+        '(("t" "Todo" entry (file+headline lg/org-roam-weeklies--ensure-current-file "TODOs")
            "* TODO %?\n:PROPERTIES:\n:ORDER: 0\n:END:")))
 
   ;; --- Capture templates ------------------------------------
