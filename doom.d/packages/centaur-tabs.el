@@ -120,6 +120,30 @@
 
   (setq centaur-tabs-buffer-list-function #'lg/centaur-tabs-buffer-list)
 
+  (defun lg/centaur-tabs-sort-vterm-after-update (&rest _)
+    "After centaur-tabs rebuilds tabsets, sort any vterm group by index.
+`centaur-tabs-tabs' is a `defsubst' (inlined at compile time), so it
+cannot be advised.  Instead we sort the tabset symbol values directly
+after `centaur-tabs-buffer-update-groups' rebuilds them."
+    (when (boundp 'centaur-tabs-tabsets)
+      (mapatoms
+       (lambda (tabset)
+         (when (boundp tabset)
+           (let ((tabs (symbol-value tabset)))
+             (when (and tabs
+                        (cl-some (lambda (tab) (lg/vterm-index (car tab)))
+                                 tabs))
+               (set tabset
+                    (cl-stable-sort
+                     (copy-sequence tabs)
+                     (lambda (a b)
+                       (let ((ia (lg/vterm-index (car a)))
+                             (ib (lg/vterm-index (car b))))
+                         (and ia ib (< ia ib))))))))))
+       centaur-tabs-tabsets)))
+
+  (advice-add 'centaur-tabs-buffer-update-groups
+              :after #'lg/centaur-tabs-sort-vterm-after-update)
+
   (add-hook 'persp-switch-hook #'centaur-tabs-headline-match)
-  ;; Update tabs on switching perspectives (workspaces)
   )

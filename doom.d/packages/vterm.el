@@ -31,14 +31,22 @@
 
 
   (defun lg/vterm-get-workspace-buffer-name ()
-    "Retrieve vterm buffer name for this workspace"
-    (format "*v:%s"
-            (if
-                (bound-and-true-p persp-mode)
+    "Retrieve the first vterm buffer name for this workspace (*v:WS<1>)."
+    (format "*v:%s<1>"
+            (if (bound-and-true-p persp-mode)
                 (safe-persp-name (get-current-persp))
-              "main"))
+              "main")))
 
-    )
+  (defun lg/vterm-next-workspace-buffer-name ()
+    "Return the next available vterm buffer name *v:WS<N> for this workspace."
+    (let* ((ws (if (bound-and-true-p persp-mode)
+                   (safe-persp-name (get-current-persp))
+                 "main"))
+           (base (format "*v:%s" ws))
+           (idx 1))
+      (while (get-buffer (format "%s<%d>" base idx))
+        (setq idx (1+ idx)))
+      (format "%s<%d>" base idx)))
 
   (defun lg/vterm-here-workspace (arg)
     "Switch to the workspace vterm buffer, or create one if none exists.
@@ -55,7 +63,7 @@
            (save-window-excursion
              (pop-to-buffer "*scratch*"))
            (let (display-buffer-alist)
-             (vterm (lg/vterm-get-workspace-buffer-name))))))))
+             (vterm (lg/vterm-next-workspace-buffer-name))))))))
 
   (defun lg/vterm-get-or-create-for-workspace ()
     "Switch to an existing vterm buffer for the current workspace, or create one if none exists."

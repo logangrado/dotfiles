@@ -72,8 +72,8 @@ C-u for DRYRUN preview."
     (unless ordered
       (user-error "No vterm buffers for workspace '%s' are visible to reindex" ws))
     (let* ((targets (cl-loop for buf in ordered
-                             for i from 0
-                             collect (cons buf (if (= i 0) base (format "%s<%d>" base i)))))
+                             for i from 1
+                             collect (cons buf (format "%s<%d>" base i))))
            (changes (cl-remove-if (lambda (bp) (string= (buffer-name (car bp)) (cdr bp))) targets)))
       (if dryrun
           (if (null changes)
@@ -97,7 +97,7 @@ C-u for DRYRUN preview."
 ;;;###autoload
 (defun lg/vterm-resort-buffers-by-name (&optional dryrun)
   "Rename vterm buffers in this workspace so their names are in canonical order:
-  *v:WS*, *v:WS<1>*, *v:WS<2>*, ...
+  *v:WS<1>*, *v:WS<2>*, *v:WS<3>*, ...
 
 This is a one-shot command (no auto sorting). With C-u, do a DRYRUN preview."
   (interactive "P")
@@ -130,8 +130,8 @@ This is a one-shot command (no auto sorting). With C-u, do a DRYRUN preview."
       (setq bufs (sort (copy-sequence bufs) #'name<)))
 
     (let* ((targets (cl-loop for buf in bufs
-                             for i from 0
-                             collect (cons buf (if (= i 0) base (format "%s<%d>" base i)))))
+                             for i from 1
+                             collect (cons buf (format "%s<%d>" base i))))
            (changes (cl-remove-if (lambda (bp)
                                     (string= (buffer-name (car bp)) (cdr bp)))
                                   targets)))
