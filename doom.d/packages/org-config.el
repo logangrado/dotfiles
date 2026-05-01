@@ -175,6 +175,13 @@ display highlight is suppressed in lg/agenda-colorize."
   )
 
 ;; ORDER normalization: runs on every agenda open, per priority group
+
+(defun lg/org-entry-put-safe (marker property value)
+  "Like `org-entry-put', but a no-op when MARKER is before the first heading.
+Guards against accidentally writing to file-level property drawers."
+  (unless (org-with-point-at marker (org-before-first-heading-p))
+    (org-entry-put marker property value)))
+
 (defvar lg/org-agenda-normalize-pending nil
   "Set to t after normalization; cleared on the subsequent finalize (post-redo).")
 
@@ -203,10 +210,35 @@ All items are then re-indexed 1, 2, 3... within each group."
                                    (t (< oa ob)))))))
        (let ((n 1))
          (dolist (item items)
-           (org-entry-put (car item) "ORDER" (number-to-string n))
+           (lg/org-entry-put-safe (car item) "ORDER" (number-to-string n))
            (setq n (1+ n)))))
-     groups))
-  (org-save-all-org-buffers))
+     groups)))
+
+(defvar lg/org-agenda-redo-buffer nil
+  "Agenda buffer waiting for a post-minibuffer redo.")
+
+(defun lg/org-agenda-redo-after-minibuffer ()
+  "Run after minibuffer exits: redo the saved agenda buffer once."
+  (remove-hook 'minibuffer-exit-hook #'lg/org-agenda-redo-after-minibuffer)
+  (when (buffer-live-p lg/org-agenda-redo-buffer)
+    (with-current-buffer lg/org-agenda-redo-buffer
+      (when (derived-mode-p 'org-agenda-mode)
+        (org-agenda-redo))))
+  (setq lg/org-agenda-redo-buffer nil))
+
+(defun lg/org-agenda-deferred-redo (agenda-buf)
+  "Redo AGENDA-BUF, but if the minibuffer is active defer until it exits.
+Firing org-agenda-redo while a minibuffer is open (e.g. tag completion)
+repositions the agenda cursor mid-command, causing edits to land on the
+wrong item."
+  (if (active-minibuffer-window)
+      (progn
+        (setq lg/org-agenda-redo-buffer agenda-buf)
+        (add-hook 'minibuffer-exit-hook #'lg/org-agenda-redo-after-minibuffer))
+    (when (buffer-live-p agenda-buf)
+      (with-current-buffer agenda-buf
+        (when (derived-mode-p 'org-agenda-mode)
+          (org-agenda-redo))))))
 
 (defun lg/org-agenda-maybe-normalize ()
   "Normalize ORDER on agenda finalize, then redo once to reflect new values.
@@ -215,7 +247,8 @@ Uses a persistent flag so the redo's own finalize call does not re-trigger."
       (setq lg/org-agenda-normalize-pending nil)
     (lg/org-agenda-normalize-orders)
     (setq lg/org-agenda-normalize-pending t)
-    (run-at-time 0 nil #'org-agenda-redo)))
+    (let ((buf (current-buffer)))
+      (run-at-time 0 nil #'lg/org-agenda-deferred-redo buf))))
 
 (add-hook 'org-agenda-finalize-hook #'lg/org-agenda-maybe-normalize)
 
@@ -295,8 +328,8 @@ different priority group."
         (when (and adj-marker
                    (equal cur-priority (org-entry-get adj-marker "PRIORITY")))
           (let ((adj-order (lg/org-agenda-item-order adj-marker)))
-            (org-entry-put marker     "ORDER" (number-to-string adj-order))
-            (org-entry-put adj-marker "ORDER" (number-to-string cur-order)))
+            (lg/org-entry-put-safe marker     "ORDER" (number-to-string adj-order))
+            (lg/org-entry-put-safe adj-marker "ORDER" (number-to-string cur-order)))
           (setq swapped t))))
     (when swapped
       (setq lg/org-agenda-normalize-pending t)
