@@ -136,6 +136,30 @@ Only takes effect in vterm buffers."
   (add-hook 'evil-normal-state-entry-hook #'lg/vterm-adjust-cursor)
   (add-hook 'vterm-mode-hook #'lg/vterm-adjust-cursor)
 
+  ;; --- Fix auto-dim-other-buffers for vterm ---
+  ;; A vterm commit (e96c53f) changed `vterm--get-color' to return hardcoded
+  ;; hex strings instead of nil for default colors.  When it returned nil the
+  ;; C module fell back to the Emacs `default' face, which respects face
+  ;; remapping from auto-dim-other-buffers.  Restore the old behavior.
+  ;; See: https://github.com/mina86/auto-dim-other-buffers.el/issues/35
+
+  (defun lg/vterm--get-color (index &rest _args)
+    "Resolve a vterm color INDEX via face-foreground so that face
+remapping (e.g. auto-dim-other-buffers) is respected.
+Returns nil for default fg/bg so the C module uses the `default' face."
+    (cond
+     ((and (>= index 0) (< index 16))
+      (face-foreground
+       (elt vterm-color-palette index)
+       nil 'default))
+     ((= index -11)
+      (face-foreground 'vterm-color-underline nil 'default))
+     ((= index -12)
+      (face-background 'vterm-color-inverse-video nil 'default))
+     (t nil)))
+
+  (advice-add 'vterm--get-color :override #'lg/vterm--get-color)
+
   ;; --- Keybindings ---
 
   ;; Define keys in vterm-mode-map, active in normal-state
