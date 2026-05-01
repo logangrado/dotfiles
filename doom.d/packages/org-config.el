@@ -4,7 +4,7 @@
   :hook
   (org-mode . (lambda () (setq line-spacing 0.25)))
   (org-mode . auto-save-mode)
-  ;; (org-mode . mixed-pitch-mode)
+  (org-mode . mixed-pitch-mode)
   :init
   (setq org-directory "~/org/")
   (add-hook 'auto-save-hook 'org-save-all-org-buffers)`
@@ -405,6 +405,22 @@ different priority group."
         org-appear-autosubmarkers t
         org-appear-autokeywords t
         org-appear-inside-latex t))
+
+;; RET inside src blocks opens the dedicated edit buffer
+(map! :map org-mode-map
+      :ni "RET" #'lg/org-return-src-edit
+      :ni [return] #'lg/org-return-src-edit)
+
+;; Indented block styling for org-indent-mode
+;; Override Doom's org-src-preserve-indentation=t so org can re-indent
+;; blocks to respect local indentation within lists
+(after! org
+  (setq org-src-preserve-indentation nil))
+
+(use-package! org-modern-indent
+  :after org
+  :config
+  (add-hook 'org-mode-hook #'org-modern-indent-mode 90))
 
 ;; Use pretty org-bullets
 ;; (use-package! org-bullets

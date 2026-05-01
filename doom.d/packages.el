@@ -26,6 +26,8 @@
 (package! org-roam-ui)
 (package! org-appear)
 (package! org-modern)
+(package! org-modern-indent
+  :recipe (:host github :repo "jdtsmith/org-modern-indent"))
 (package! mixed-pitch)
 (package! vulpea)
 (package! org-fancy-priorities)

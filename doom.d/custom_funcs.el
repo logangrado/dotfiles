@@ -279,3 +279,10 @@ first non-empty line starting at the current line)."
   (let ((buf (current-buffer)))
     (set-buffer-modified-p nil)
     (kill-buffer buf)))
+
+(defun lg/org-return-src-edit ()
+  "If inside a src block, open the edit buffer. Otherwise, normal org return."
+  (interactive)
+  (if (org-in-src-block-p)
+      (org-edit-special)
+    (+org/return)))
