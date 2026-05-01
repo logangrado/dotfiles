@@ -361,7 +361,8 @@ different priority group."
         :n "k" #'org-agenda-previous-item
         :n "J" #'lg/org-agenda-move-down
         :n "K" #'lg/org-agenda-move-up
-        :n "+" (cmd! (org-capture nil "t"))))
+        :n "+" (cmd! (org-capture nil "t"))
+        :n "u" #'org-agenda-undo))
 
 (use-package! org-fancy-priorities
   :hook (org-mode . org-fancy-priorities-mode)
