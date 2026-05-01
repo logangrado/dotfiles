@@ -99,59 +99,69 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
                 result)))))))
 
   ;; -----------------------------------------------------------
-  ;; Buffer management: one status per workspace, clean quit
+  ;; Buffer management: one magit session per workspace
   ;; -----------------------------------------------------------
-  ;; Problem: magit creates duplicate status buffers across perspectives,
-  ;; and quitting sub-buffers (log, diff) doesn't return to status.
+  ;; Invariant: at most one magit-status buffer per persp-mode perspective.
+  ;; Sub-buffers (log, diff) are transient children — q returns to status.
   ;;
-  ;; Solution:
-  ;; - lg/magit-status-for-workspace (SPC g g): reuse one status buffer per
-  ;;   persp-mode perspective, kill stale duplicates, refresh on reuse.
-  ;; - lg/magit-back-to-status (q): from sub-buffers, quit and show refreshed
-  ;;   status in the same window. Uses set-window-buffer to bypass Doom's
-  ;;   display-buffer popup rules.
-  ;; - lg/magit-kill-stale-log-buffers (:before advice on magit-log-setup-buffer):
-  ;;   kill old log buffers when opening a new log view, so q from log always
-  ;;   returns to status (not a stale previous log).
+  ;; Enforcement:
+  ;; - lg/magit-status-for-workspace (SPC g g): if ANY magit-status buffer
+  ;;   exists in the perspective, go to it. Never opens a second one.
+  ;; - lg/magit-cleanup-workspace-buffers (:after advice on
+  ;;   magit-status-setup-buffer): when magit creates a new status buffer
+  ;;   (e.g. worktree switch via RET), kill all other magit buffers so
+  ;;   the old status buffer doesn't linger in the window history.
+  ;; - lg/magit-back-to-status (q): from sub-buffers, return to the status
+  ;;   buffer. From status, quit magit entirely.
+  ;; - lg/magit-kill-stale-log-buffers (:before advice on
+  ;;   magit-log-setup-buffer): kill old log buffers when switching log views.
+
+  (defun lg/magit--workspace-buffers ()
+    "Return the buffer list for the current perspective, or all buffers."
+    (if (bound-and-true-p persp-mode)
+        (persp-buffer-list)
+      (buffer-list)))
+
+  (defun lg/magit-kill-workspace-magit-buffers (&optional keep)
+    "Kill all magit-mode buffers in the current perspective except KEEP."
+    (dolist (buf (lg/magit--workspace-buffers))
+      (when (and (buffer-live-p buf)
+                 (not (eq buf keep))
+                 (with-current-buffer buf
+                   (derived-mode-p 'magit-mode)))
+        (kill-buffer buf))))
 
   (defun lg/magit-status-for-workspace ()
     "Open magit-status, reusing the existing buffer for this perspective.
-Kills stale duplicates. Refreshes if reusing."
+If any magit-status buffer exists in the workspace, go to it — never
+opens a second one, even if the user has cd'd to a different directory."
     (interactive)
-    (let* ((bufs (if (bound-and-true-p persp-mode)
-                     (persp-buffer-list)
-                   (buffer-list)))
-           (topdir (or (magit-toplevel) default-directory))
-           (status-bufs
-            (cl-remove-if-not
-             (lambda (buf)
-               (and (buffer-live-p buf)
-                    (with-current-buffer buf
-                      (and (eq major-mode 'magit-status-mode)
-                           ;; expand-file-name normalizes trailing slashes
-                           (equal (expand-file-name default-directory)
-                                  (expand-file-name topdir))))))
-             bufs))
-           (target (car status-bufs))
-           (stale  (cdr status-bufs)))
-      (dolist (buf stale) (kill-buffer buf))
-      (if target
+    (let ((existing (cl-find-if
+                     (lambda (buf)
+                       (and (buffer-live-p buf)
+                            (with-current-buffer buf
+                              (eq major-mode 'magit-status-mode))))
+                     (lg/magit--workspace-buffers))))
+      (if existing
           (progn
-            (pop-to-buffer target '((display-buffer-same-window)))
+            (pop-to-buffer existing '((display-buffer-same-window)))
             (magit-refresh))
         (magit-status))))
 
+  (defun lg/magit-cleanup-workspace-buffers (&rest _)
+    "After a new status buffer is created, kill all other magit buffers.
+Ensures the workspace never accumulates stale magit buffers (e.g. after
+switching to a different worktree of the same project)."
+    (lg/magit-kill-workspace-magit-buffers (current-buffer)))
+
   (defun lg/magit-back-to-status ()
     "From non-status magit buffer: quit and show refreshed magit-status in same window.
-From magit-status: normal quit behavior."
+From magit-status: quit magit entirely."
     (interactive)
     (if (eq major-mode 'magit-status-mode)
         (magit-mode-bury-buffer)
       (let ((win (selected-window))
-            (topdir (or (magit-toplevel) default-directory))
-            (bufs (if (bound-and-true-p persp-mode)
-                      (persp-buffer-list)
-                    (buffer-list))))
+            (topdir (or (magit-toplevel) default-directory)))
         ;; quit-window buries the log/diff buffer but keeps the window alive
         (quit-window nil win)
         (let ((status-buf
@@ -162,7 +172,7 @@ From magit-status: normal quit behavior."
                          (and (eq major-mode 'magit-status-mode)
                               (equal (expand-file-name default-directory)
                                      (expand-file-name topdir))))))
-                bufs)))
+                (lg/magit--workspace-buffers))))
           (if status-buf
               (progn
                 ;; set-window-buffer guarantees same-window display,
@@ -178,12 +188,11 @@ From magit-status: normal quit behavior."
 Intended as :before advice on `magit-log-setup-buffer' so switching
 between log views (e.g. log-all → log-local) doesn't leave stale
 buffers that q would cycle back through."
-    (let* ((bufs (if (bound-and-true-p persp-mode)
-                     (persp-buffer-list)
-                   (buffer-list)))
-           (topdir (or (magit-toplevel) default-directory)))
-      (dolist (buf bufs)
+    (let* ((topdir (or (magit-toplevel) default-directory))
+           (cur (current-buffer)))
+      (dolist (buf (lg/magit--workspace-buffers))
         (when (and (buffer-live-p buf)
+                   (not (eq buf cur))
                    (with-current-buffer buf
                      (and (eq major-mode 'magit-log-mode)
                           (equal (expand-file-name default-directory)
@@ -218,9 +227,7 @@ buffers that q would cycle back through."
       (magit-log-setup-buffer
        (delete-dups all-refs)
        (list "--graph" "--decorate" "--ignore-missing")
-       nil
-       "test message"
-       'magit-log-mode)))
+       nil)))
 
   (defun lg/magit-log-current-and-main ()
     "Show logs for current branch (and its remote) plus main branches."
@@ -305,6 +312,7 @@ Useful for visiting commits/branches checked out in other worktrees."
 
   ;; Advice
   (advice-add 'magit-format-ref-labels :filter-return #'lg/magit--worktree-ref-labels)
+  (advice-add 'magit-status-setup-buffer :after #'lg/magit-cleanup-workspace-buffers)
   (advice-add 'magit-log-setup-buffer :before #'lg/magit-kill-stale-log-buffers)
 
   ;; Status sections
