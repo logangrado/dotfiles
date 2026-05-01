@@ -89,6 +89,20 @@
   :config
   (setq vterm-shell "zsh")
 
+  ;; Show modeline in vterm buffers (Doom hides it by default).
+  ;; This lets doom-modeline display evil state (INSERT/NORMAL/VISUAL).
+  (remove-hook 'vterm-mode-hook #'hide-mode-line-mode)
+
+  ;; Show 📋 indicator next to evil state badge when vterm-copy-mode is active.
+  (after! doom-modeline
+    (defun lg/vterm-copy-mode-modeline-indicator (result)
+      "Append 📋 to the modals segment when vterm-copy-mode is active."
+      (if (bound-and-true-p vterm-copy-mode)
+          (concat result (propertize " 📋" 'face 'doom-modeline-warning))
+        result))
+    (advice-add 'doom-modeline-segment--modals
+                :filter-return #'lg/vterm-copy-mode-modeline-indicator))
+
   ;; --- Helper functions ---
 
   (defun lg/vterm-redraw ()

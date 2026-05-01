@@ -4,7 +4,7 @@
   :hook
   (org-mode . (lambda () (setq line-spacing 0.25)))
   (org-mode . auto-save-mode)
-  (org-mode . mixed-pitch-mode)
+  ;; (org-mode . mixed-pitch-mode)
   :init
   (setq org-directory "~/org/")
   (add-hook 'auto-save-hook 'org-save-all-org-buffers)`
@@ -37,14 +37,12 @@
 
   ;; ORG AGENDA
 
-  ;; Declare custom faces for todo states (custom-declare-face is idempotent —
-  ;; safe even if Doom's org module also declares them)
-  (with-no-warnings
-    (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
-    (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
-    (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
-    (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) "")
-    (custom-declare-face '+org-todo-delegated '((t (:inherit (bold font-lock-type-face org-todo)))) ""))
+  ;; Declare new faces for todo states
+  ;; (with-no-warnings
+  ;;   (custom-declare-face '+org-todo-active  '((t (:inherit (bold font-lock-constant-face org-todo)))) "")
+  ;;   (custom-declare-face '+org-todo-project '((t (:inherit (bold font-lock-doc-face org-todo)))) "")
+  ;;   (custom-declare-face '+org-todo-onhold  '((t (:inherit (bold warning org-todo)))) "")
+  ;;   (custom-declare-face '+org-todo-cancel  '((t (:inherit (bold error org-todo)))) ""))
 
 
 
@@ -73,7 +71,6 @@
     `(+org-todo-project :foreground ,(nth 2 (doom-themes--colors-p 'blue)) :weight bold)
     `(+org-todo-onhold :foreground ,(nth 2 (doom-themes--colors-p 'magenta)) :weight bold)
     `(+org-todo-cancel :foreground ,(nth 2 (doom-themes--colors-p 'red)) :weight bold)
-    `(+org-todo-delegated :foreground ,(nth 2 (doom-themes--colors-p 'orange)) :weight bold)
     )
 
   ;; Fix face for org todo column view
@@ -286,9 +283,8 @@ Uses a persistent flag so the redo's own finalize call does not re-trigger."
                  (state (string-trim
                          (buffer-substring-no-properties state-beg state-end)))
                  (state-face (cond
-                              ((string= state "PROG") '+org-todo-active)
-                              ((member state '("WAIT" "HOLD")) '+org-todo-onhold)
-                              ((string= state "DELG") '+org-todo-delegated)
+                              ((member state '("NEXT" "PROG")) '+org-todo-active)
+                              ((string= state "WAIT") '+org-todo-onhold)
                               ((string= state "KILL") '+org-todo-cancel)
                               ((string= state "DONE") 'org-done)
                               (t 'org-todo))))
@@ -354,7 +350,22 @@ different priority group."
 ;; Set todo keywords after all package init, so Doom's +org module can't overwrite us.
 ;; setq! (customize-set-variable) on org-log-into-drawer triggers org re-init which
 ;; resets org-todo-keywords to Doom defaults — placing these here guarantees they win.
-;; NOTE: duplicate (after! org) block at EOF removed — this is the single source of truth.
+(after! org
+  (setq org-todo-keywords
+        '((sequence
+           "TODO(t!)"  ; Captured, not yet triaged
+           "NEXT(n!)"  ; Triaged — do this next
+           "PROG(p!)"  ; Actively in progress
+           "WAIT(w!)"  ; Blocked/waiting on someone
+           "|"
+           "DONE(d!)"  ; Complete
+           "KILL(k!)") ; Cancelled
+          ))
+  (setq org-todo-keyword-faces
+        '(("NEXT" . +org-todo-active)
+          ("PROG" . +org-todo-active)
+          ("WAIT" . +org-todo-onhold)
+          ("KILL" . +org-todo-cancel))))
 
 (after! org-agenda
   (evil-set-initial-state 'org-agenda-mode 'normal)
@@ -400,12 +411,9 @@ different priority group."
 ;;   :config
 ;;   (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 
-;; Mixed pitch mode — variable-pitch for prose, fixed-pitch for code/tables.
-;; Pin tab-bar faces to fixed-pitch so they're unaffected when entering an org buffer.
+;; Mixed pitch mode!
 (use-package! mixed-pitch
-  :config
-  (dolist (face '(tab-bar tab-bar-tab tab-bar-tab-inactive))
-    (add-to-list 'mixed-pitch-fixed-pitch-faces face)))
+  )
 
 ;;OLD CODE
 ;;================================================================================================
@@ -582,21 +590,3 @@ different priority group."
 ;;   ;;  `(("^[ \t]*\\(?:[-+*]\\|[0-9]+[).]\\)[ \t]+\\(\\(?:\\[@\\(?:start:\\)?[0-9]+\\][ \t]*\\)?\\[\\(?:X\\|\\([0-9]+\\)/\\2\\)\\][^\n]*\n\\)" 1 'org-checkbox-done-text prepend))
 ;;   ;;  'append)
 ;;   )
-
-(after! org
-  (setq org-todo-keywords
-        '((sequence
-           "TODO(t!)"  ; Captured, not yet started
-           "PROG(p!)"  ; Actively in progress
-           "WAIT(w!)"  ; Waiting on someone (review, response, approval)
-           "HOLD(h!)"  ; On hold — paused by choice or blocked by circumstances
-           "DELG(g!)"  ; Delegated — someone else owns it
-           "|"
-           "DONE(d!)"  ; Complete
-           "KILL(k!)"))) ; Cancelled / won't do
-  (setq org-todo-keyword-faces
-        '(("PROG" . +org-todo-active)
-          ("WAIT" . +org-todo-onhold)
-          ("HOLD" . +org-todo-onhold)
-          ("DELG" . +org-todo-delegated)
-          ("KILL" . +org-todo-cancel))))
