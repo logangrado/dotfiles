@@ -13,11 +13,12 @@
 
 (defun lg/org-roam-weeklies--new-skeleton (time)
   "Return the skeleton string for a new weekly note at TIME.
-Includes #+id: so org-roam indexes the file and vulpea can tag it :project:."
-  (format "#+title: Week %s, %s\n#+id: %s\n\n* Goals\n- [ ]\n* TODOs\n* Log\n** Monday\n** Tuesday\n** Wednesday\n** Thursday\n** Friday\n* Carry-over\n"
+The :PROPERTIES: drawer with :ID: must come first so org-roam indexes the file
+and vulpea can tag it :project:."
+  (format ":PROPERTIES:\n:ID:       %s\n:END:\n#+title: Week %s, %s\n#+filetags: :project:\n\n* Goals\n- [ ]\n* TODOs\n* Log\n** Monday\n** Tuesday\n** Wednesday\n** Thursday\n** Friday\n* Carry-over\n"
+          (org-id-new)
           (format-time-string "%V" time)
-          (format-time-string "%Y" time)
-          (org-id-new)))
+          (format-time-string "%Y" time)))
 
 (defun lg/org-roam-weeklies--ensure-current-file ()
   "Return path for current week's weekly note, creating it if it does not exist."
