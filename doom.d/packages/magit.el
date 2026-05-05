@@ -203,9 +203,9 @@ buffers that q would cycle back through."
   ;; Log commands
   ;; -----------------------------------------------------------
 
-  (defun lg/magit-log-branches ()
+  (defun lg/magit-log-branches (&optional args files)
     "Show logs for local branches and their remotes, plus main branches."
-    (interactive)
+    (interactive (list (transient-args 'magit-log) nil))
     (let* ((local-branches (magit-list-local-branch-names))
            (remote-branches (magit-list-remote-branch-names "origin"))
            ;; For each local branch, include origin/<branch> if it exists
@@ -223,15 +223,18 @@ buffers that q would cycle back through."
            (all-refs (append local-branches
                              remote-pairs
                              main-branches
-                             (magit-list-stashes))))
+                             (magit-list-stashes)))
+           (merged-args (seq-uniq
+                         (append (list "--graph" "--decorate" "--ignore-missing")
+                                 args))))
       (magit-log-setup-buffer
        (delete-dups all-refs)
-       (list "--graph" "--decorate" "--ignore-missing")
-       nil)))
+       merged-args
+       files)))
 
-  (defun lg/magit-log-current-and-main ()
+  (defun lg/magit-log-current-and-main (&optional args files)
     "Show logs for current branch (and its remote) plus main branches."
-    (interactive)
+    (interactive (list (transient-args 'magit-log) nil))
     (let* ((current (magit-get-current-branch))
            (remote-branches (magit-list-remote-branch-names "origin"))
            (local-branches (magit-list-local-branch-names))
@@ -245,11 +248,14 @@ buffers that q would cycle back through."
            (main-local (seq-filter (lambda (b) (member b local-branches)) main-names))
            (main-remote (seq-filter (lambda (r) (member r remote-branches))
                                     (mapcar (lambda (b) (concat "origin/" b)) main-names)))
-           (all-refs (delete-dups (append current-refs main-local main-remote))))
+           (all-refs (delete-dups (append current-refs main-local main-remote)))
+           (merged-args (seq-uniq
+                         (append (list "--graph" "--decorate" "--ignore-missing")
+                                 args))))
       (magit-log-setup-buffer
        all-refs
-       (list "--graph" "--decorate" "--ignore-missing")
-       nil
+       merged-args
+       files
        nil
        'magit-log-mode)))
 
