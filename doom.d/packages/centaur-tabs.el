@@ -53,19 +53,15 @@
   (defun lg/centaur-tabs-buffer-groups ()
     "`centaur-tabs-buffer-groups' control buffers' group rules.
 
-        Group centaur-tabs with mode if buffer is derived from `eshell-mode'
-        `emacs-lisp-mode' `dired-mode' `org-mode' `magit-mode'.
-        All buffer name start with * will group to \"Emacs\".
-        Other buffer group by `centaur-tabs-get-group-name' with project name."
+        Vterm buffers grouped by project.  Starred / magit buffers go to
+        \"Emacs\".  Everything else groups by project (worktree-aware)."
     (list
      (cond
-      ;; GROUP VTERM BY PROJECT
+      ;; GROUP VTERM BY PROJECT (worktree-aware)
       ((eq major-mode 'vterm-mode)
-       (let ((project-name (projectile-project-name)))
-         (if (not (string= "-" project-name))
-             ;; Group by project name for vterm buffers
-             (concat "vterm: " project-name)
-           ;; Fallback group name for vterm buffers not in a project
+       (let ((display-name (lg/project-display-name)))
+         (if (and display-name (not (string= "-" display-name)))
+             (concat "vterm: " display-name)
            "vterm")))
       ((or (string-equal "*" (substring (buffer-name) 0 1))
            (memq major-mode '(magit-process-mode
@@ -77,16 +73,9 @@
                               magit-blame-mode
                               )))
        "Emacs")
-      ((derived-mode-p 'eshell-mode)
-       "EShell")
-      ((derived-mode-p 'emacs-lisp-mode)
-       "Elisp")
-      ((derived-mode-p 'dired-mode)
-       "Dired")
-      ((memq major-mode '(org-mode org-agenda-mode diary-mode))
-       "OrgMode")
       (t
-       (centaur-tabs-get-group-name (current-buffer))))))
+       (or (lg/project-display-name)
+           (centaur-tabs-get-group-name (current-buffer)))))))
 
   ;; Set the custom grouping function
   (setq centaur-tabs-buffer-groups-function 'lg/centaur-tabs-buffer-groups)

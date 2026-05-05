@@ -9,6 +9,12 @@
                 (ibuffer-projectile-set-filter-groups))))
   :config
   (setq ibuffer-default-sorting-mode 'alphabetic)
+
+  ;; Use worktree-aware group names: "repo" for main tree, "repo:worktree" for worktrees
+  (setq ibuffer-projectile-group-name-function
+        (lambda (_project-name root-dir)
+          (let ((default-directory root-dir))
+            (format "%s%s" ibuffer-projectile-prefix (lg/project-display-name)))))
   ;; define size-h column (human readable)
   (define-ibuffer-column size-h
     (:name "Size" :inline t)
