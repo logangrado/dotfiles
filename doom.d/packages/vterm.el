@@ -136,6 +136,67 @@ Only takes effect in vterm buffers."
   (add-hook 'evil-normal-state-entry-hook #'lg/vterm-adjust-cursor)
   (add-hook 'vterm-mode-hook #'lg/vterm-adjust-cursor)
 
+  ;; --- Auto-toggle vterm-copy-mode around navigation ---
+  ;; In vterm + evil-normal-state, plain h/j/k/l (and arrow keys) move point but
+  ;; vterm resets point to the live cursor on every render, so navigation feels
+  ;; broken. Auto-enter `vterm-copy-mode' on basic motion to freeze the buffer,
+  ;; and auto-exit on insert-state entry so typing works again.
+
+  (defvar lg/vterm-auto-copy-motion-commands
+    '(evil-next-line
+      evil-previous-line
+      evil-next-visual-line
+      evil-previous-visual-line
+      evil-forward-char
+      evil-backward-char)
+    "Motion commands that auto-enable `vterm-copy-mode' in vterm buffers.")
+
+  (defun lg/vterm-maybe-enter-copy-mode ()
+    "Enter `vterm-copy-mode' when about to run a basic motion in vterm normal state."
+    (when (and (derived-mode-p 'vterm-mode)
+               (evil-normal-state-p)
+               (not (bound-and-true-p vterm-copy-mode))
+               (memq this-command lg/vterm-auto-copy-motion-commands))
+      (vterm-copy-mode 1)))
+
+  (defun lg/vterm-exit-copy-mode-on-insert ()
+    "Disable `vterm-copy-mode' when entering insert state in a vterm buffer."
+    (when (and (derived-mode-p 'vterm-mode)
+               (bound-and-true-p vterm-copy-mode))
+      (vterm-copy-mode -1)))
+
+  (add-hook 'pre-command-hook #'lg/vterm-maybe-enter-copy-mode)
+  (add-hook 'evil-insert-state-entry-hook #'lg/vterm-exit-copy-mode-on-insert)
+
+  ;; --- Scroll to live cursor when re-entering a vterm buffer ---
+  ;; When the user switches focus to a vterm buffer (window selection change or
+  ;; buffer swap) and `vterm-copy-mode' is off, jump point to vterm's tracked
+  ;; cursor (the prompt) and recenter so the window scroll matches.
+
+  (defun lg/vterm-jump-to-bottom-if-live ()
+    "If current buffer is vterm and copy-mode is off, jump to vterm's live cursor."
+    (when (and (derived-mode-p 'vterm-mode)
+               (not (bound-and-true-p vterm-copy-mode)))
+      (when (fboundp 'vterm-reset-cursor-point)
+        (vterm-reset-cursor-point))
+      (recenter -1)))
+
+  (defun lg/vterm-on-window-selection-change (frame)
+    "Run `lg/vterm-jump-to-bottom-if-live' in FRAME's newly-selected window."
+    (with-selected-frame frame
+      (when (window-live-p (selected-window))
+        (with-selected-window (selected-window)
+          (lg/vterm-jump-to-bottom-if-live)))))
+
+  (defun lg/vterm-on-window-buffer-change (window)
+    "Run `lg/vterm-jump-to-bottom-if-live' when WINDOW's buffer changes."
+    (when (and (window-live-p window) (eq window (selected-window)))
+      (with-selected-window window
+        (lg/vterm-jump-to-bottom-if-live))))
+
+  (add-hook 'window-selection-change-functions #'lg/vterm-on-window-selection-change)
+  (add-hook 'window-buffer-change-functions #'lg/vterm-on-window-buffer-change)
+
   ;; --- Fix auto-dim-other-buffers for vterm ---
   ;; A vterm commit (e96c53f) changed `vterm--get-color' to return hardcoded
   ;; hex strings instead of nil for default colors.  When it returned nil the
