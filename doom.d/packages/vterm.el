@@ -148,13 +148,17 @@ Only takes effect in vterm buffers."
       evil-next-visual-line
       evil-previous-visual-line
       evil-forward-char
-      evil-backward-char)
+      evil-backward-char
+      lg/evil-up-10
+      lg/evil-down-10)
     "Motion commands that auto-enable `vterm-copy-mode' in vterm buffers.")
 
   (defun lg/vterm-maybe-enter-copy-mode ()
-    "Enter `vterm-copy-mode' when about to run a basic motion in vterm normal state."
+    "Enter `vterm-copy-mode' when about to run a basic motion in vterm.
+Fires in both normal and visual states so J/K and selection
+extension work without vterm fighting point."
     (when (and (derived-mode-p 'vterm-mode)
-               (evil-normal-state-p)
+               (or (evil-normal-state-p) (evil-visual-state-p))
                (not (bound-and-true-p vterm-copy-mode))
                (memq this-command lg/vterm-auto-copy-motion-commands))
       (vterm-copy-mode 1)))

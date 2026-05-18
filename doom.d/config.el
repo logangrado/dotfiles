@@ -82,10 +82,27 @@
 
 (setq scroll-margin 10) ;; Smoothly scroll with margin at top/bottom of file
 
-;; Map fast movement keys
+;; Map fast movement keys. Defined as `evil-define-motion' so they compose
+;; cleanly with visual state (region extension) and other evil primitives;
+;; plain `previous-line'/`next-line' lambdas glitch in visual-line state
+;; because evil can't treat them as motions.
+(evil-define-motion lg/evil-up-10 (count)
+  "Move up 10*COUNT lines, scrolling the view by the same amount."
+  :type line
+  (let ((n (* 10 (or count 1))))
+    (evil-previous-line n)
+    (evil-scroll-line-up n)))
+
+(evil-define-motion lg/evil-down-10 (count)
+  "Move down 10*COUNT lines, scrolling the view by the same amount."
+  :type line
+  (let ((n (* 10 (or count 1))))
+    (evil-next-line n)
+    (evil-scroll-line-down n)))
+
 (map! :map (evil-normal-state-map evil-visual-state-map)
-      "K" #'(lambda () (interactive) (previous-line 10) (evil-scroll-line-up 10))
-      "J" #'(lambda () (interactive) (next-line 10) (evil-scroll-line-down 10))
+      "K" #'lg/evil-up-10
+      "J" #'lg/evil-down-10
       "H" #'evil-beginning-of-line
       "L" #'evil-end-of-line
       )
