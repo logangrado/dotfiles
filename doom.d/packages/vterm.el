@@ -147,21 +147,52 @@ Only takes effect in vterm buffers."
       evil-previous-line
       evil-next-visual-line
       evil-previous-visual-line
+      evil-collection-vterm-next-line
       evil-forward-char
       evil-backward-char
       lg/evil-up-10
       lg/evil-down-10)
-    "Motion commands that auto-enable `vterm-copy-mode' in vterm buffers.")
+    "Motion commands that auto-enable `vterm-copy-mode' in vterm buffers.
+`evil-collection-vterm-next-line' is `j' in normal-state vterm buffers
+under evil-collection (it clamps motion to the prompt area in live
+mode), so it must be listed alongside the plain `evil-next-line'
+variants for the auto-entry to recognise it.")
+
+  (defvar lg/vterm-auto-copy-jk-window 0.1
+    "Seconds to wait for `k' after a `j' before entering copy mode.
+Matches `evil-escape''s default delay. Pressing `j' in vterm
+normal/visual state pauses for this long peeking for `k'; if it
+arrives, both keys are swallowed and copy mode is not entered.
+Only the `j' direction is peeked — `k' enters copy mode immediately
+because `kj' isn't an `evil-escape' habit.")
+
+  (defun lg/vterm--peek-for-k ()
+    "Peek the next input event for `k' within `lg/vterm-auto-copy-jk-window'.
+Returns t and consumes the event on match. Pushes any non-matching
+event back onto `unread-command-events'. Returns nil on timeout."
+    (let ((evt (read-event nil nil lg/vterm-auto-copy-jk-window)))
+      (cond
+       ((eq evt ?k) t)
+       ((null evt) nil)
+       (t (push evt unread-command-events) nil))))
 
   (defun lg/vterm-maybe-enter-copy-mode ()
     "Enter `vterm-copy-mode' when about to run a basic motion in vterm.
-Fires in both normal and visual states so J/K and selection
-extension work without vterm fighting point."
+Fires in both normal and visual states so J/K and selection extension
+work without vterm fighting point.
+
+If the triggering key is `j', first peek for `k' within
+`lg/vterm-auto-copy-jk-window' (analogous to `evil-escape''s `jk'
+detection). If `k' arrives, swallow both keys without entering copy
+mode or moving point — this handles the habit of double-tapping `jk'
+to confirm normal state after `evil-escape'."
     (when (and (derived-mode-p 'vterm-mode)
                (or (evil-normal-state-p) (evil-visual-state-p))
                (not (bound-and-true-p vterm-copy-mode))
                (memq this-command lg/vterm-auto-copy-motion-commands))
-      (vterm-copy-mode 1)))
+      (if (and (eq last-command-event ?j) (lg/vterm--peek-for-k))
+          (setq this-command 'ignore)
+        (vterm-copy-mode 1))))
 
   (defun lg/vterm-exit-copy-mode-on-insert ()
     "Disable `vterm-copy-mode' when entering insert state in a vterm buffer."
