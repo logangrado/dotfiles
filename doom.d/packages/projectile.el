@@ -9,6 +9,21 @@
   (setq projectile-indexing-method 'alien)
   (setq projectile-enable-caching t) ;; Enable caching. Options: `t`: cache for a session `persistent` cache across sessions
 
+  ;; Doom overrides projectile-get-ext-command to use `fd` for all projects,
+  ;; including git repos. fd is not available on remote hosts, so override it
+  ;; back to git ls-files for remote git projects.
+  (defun lg/projectile-remote-use-git-command (orig-fn &rest args)
+    "For remote git projects: use fd if available on the host, else git ls-files.
+Doom defaults to fd which may not be installed on remote hosts.
+executable-find checks the remote PATH; result is cached by TRAMP."
+    (if (and (file-remote-p default-directory)
+             (eq (projectile-project-vcs) 'git))
+        (if (executable-find "fd" t)
+            (apply orig-fn args)
+          "git ls-files -zco --exclude-standard")
+      (apply orig-fn args)))
+  (advice-add 'projectile-get-ext-command :around #'lg/projectile-remote-use-git-command)
+
   ;; Update the projectile name to include the hostname
   ;; ==================================================
   (defun my-projectile-project-name-advice (orig-fun &rest args)
