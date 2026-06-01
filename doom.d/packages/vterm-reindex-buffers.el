@@ -20,6 +20,10 @@
               (re (format "\\`\\*v:%s\\(?:<\\([0-9]+\\)>\\)?\\'" (regexp-quote ws-name))))
          (string-match re name))))
 
+(defun lg/vterm--current-is-workspace-vterm-p ()
+  "Non-nil if current buffer is a vterm in the current workspace."
+  (lg/vterm--is-vterm-in-workspace-p (current-buffer) (lg/vterm--workspace-name)))
+
 (defun lg/centaur-or-tabline--buffers-in-visual-order ()
   "Return buffers in the current tab group in visible left-to-right order.
 Tries centaur-tabs, then tab-line, then falls back to buffer list."
@@ -59,6 +63,56 @@ Tries centaur-tabs, then tab-line, then falls back to buffer list."
    (t
     (message "[vterm-reindex] Warning: could not read visual order from centaur-tabs/tab-line; using window buffer list.")
     (buffer-list))))
+
+(defun lg/vterm--refresh-centaur-tabs ()
+  "Force centaur-tabs to rebuild tabsets and redraw the tab bar.
+After buffer renames the tab objects still point at the same buffers, so
+the cached rendered template would show stale names until something else
+triggers a rebuild.  We have to (1) rebuild tabsets, (2) invalidate the
+template cache on tabsets that contain vterm tabs, and (3) force a
+display update.  See `centaur-tabs-buffer-update-groups` /
+`centaur-tabs-set-template` / `centaur-tabs-display-update`."
+  (when (fboundp 'centaur-tabs-buffer-update-groups)
+    (centaur-tabs-buffer-update-groups))
+  (when (and (boundp 'centaur-tabs-tabsets)
+             (fboundp 'centaur-tabs-set-template)
+             (fboundp 'lg/vterm-index))
+    (mapatoms
+     (lambda (tabset)
+       (when (boundp tabset)
+         (let ((tabs (symbol-value tabset)))
+           (when (and tabs
+                      (cl-some (lambda (tab) (lg/vterm-index (car tab))) tabs))
+             (centaur-tabs-set-template tabset nil)))))
+     centaur-tabs-tabsets))
+  (when (fboundp 'centaur-tabs-display-update)
+    (centaur-tabs-display-update)))
+
+(defun lg/vterm--rename-to-canonical (ordered-bufs ws)
+  "Two-phase rename ORDERED-BUFS to *v:WS<1>, *v:WS<2>, ... in order.
+Returns the list of (buffer . new-name) pairs that were actually renamed
+(i.e. excluding buffers already at their target name). Refreshes the tab UI
+when any rename occurred."
+  (let* ((base (lg/vterm--base-name ws))
+         (targets (cl-loop for buf in ordered-bufs
+                           for i from 1
+                           collect (cons buf (format "%s<%d>" base i))))
+         (changes (cl-remove-if (lambda (bp)
+                                  (string= (buffer-name (car bp)) (cdr bp)))
+                                targets)))
+    (when changes
+      ;; two-phase rename to avoid collisions
+      (dolist (bp changes)
+        (with-current-buffer (car bp)
+          (rename-buffer
+           (generate-new-buffer-name (concat (buffer-name) " @pending")) t)))
+      (dolist (bp targets)
+        (with-current-buffer (car bp)
+          (rename-buffer (cdr bp) t)))
+      (lg/vterm--refresh-centaur-tabs)
+      (when (boundp 'tab-line-mode)
+        (force-mode-line-update t)))
+    changes))
 
 ;;;###autoload
 (defun lg/vterm-reindex-buffers (&optional dryrun)
@@ -129,32 +183,84 @@ This is a one-shot command (no auto sorting). With C-u, do a DRYRUN preview."
 
       (setq bufs (sort (copy-sequence bufs) #'name<)))
 
-    (let* ((targets (cl-loop for buf in bufs
-                             for i from 1
-                             collect (cons buf (format "%s<%d>" base i))))
-           (changes (cl-remove-if (lambda (bp)
-                                    (string= (buffer-name (car bp)) (cdr bp)))
-                                  targets)))
-      (if dryrun
+    (if dryrun
+        (let* ((targets (cl-loop for buf in bufs
+                                 for i from 1
+                                 collect (cons buf (format "%s<%d>" base i))))
+               (changes (cl-remove-if
+                         (lambda (bp) (string= (buffer-name (car bp)) (cdr bp)))
+                         targets)))
           (if (null changes)
               (message "[vterm-sort] Already canonical for workspace '%s'." ws)
             (message "[vterm-sort] Would rename:\n%s"
                      (mapconcat (lambda (bp)
                                   (format "  %s -> %s" (buffer-name (car bp)) (cdr bp)))
-                                changes "\n")))
-        ;; two-phase rename to avoid collisions
-        (dolist (bp changes)
-          (with-current-buffer (car bp)
-            (rename-buffer (generate-new-buffer-name (concat (buffer-name) " @pending")) t)))
-        (dolist (bp targets)
-          (with-current-buffer (car bp)
-            (rename-buffer (cdr bp) t)))
-
-        ;; refresh tab UIs if present
-        (when (fboundp 'centaur-tabs-headline-match)
-          (centaur-tabs-headline-match))
-        (when (boundp 'tab-line-mode)
-          (force-mode-line-update t))
-
+                                changes "\n"))))
+      (let ((changes (lg/vterm--rename-to-canonical bufs ws)))
         (message "[vterm-sort] Canonicalized %d buffer%s for workspace '%s'."
                  (length changes) (if (= (length changes) 1) "" "s") ws)))))
+
+(defun lg/vterm--workspace-vterms-by-index (ws)
+  "Return all vterm buffers in workspace WS, sorted by current numeric index."
+  (sort (seq-filter (lambda (b) (lg/vterm--is-vterm-in-workspace-p b ws))
+                    (buffer-list))
+        (lambda (a b) (< (or (lg/vterm-index a) 0)
+                         (or (lg/vterm-index b) 0)))))
+
+(defun lg/vterm--swap-and-renumber (direction)
+  "Swap current vterm with its neighbor in DIRECTION (`left' or `right'),
+then renumber all workspace vterms to canonical *v:WS<1..N>* order.
+No-op at the corresponding edge."
+  (let* ((cur (current-buffer))
+         (ws (lg/vterm--workspace-name))
+         (bufs (lg/vterm--workspace-vterms-by-index ws))
+         (pos (cl-position cur bufs))
+         (new-pos (and pos (if (eq direction 'right) (1+ pos) (1- pos)))))
+    (when (and pos new-pos (>= new-pos 0) (< new-pos (length bufs)))
+      (let* ((vec (vconcat bufs))
+             (tmp (aref vec pos)))
+        (aset vec pos (aref vec new-pos))
+        (aset vec new-pos tmp)
+        (lg/vterm--rename-to-canonical (append vec nil) ws)))))
+
+;;;###autoload
+(defun lg/vterm-move-tab-right ()
+  "Move current tab right. For workspace vterm buffers, swap with the
+right-hand neighbor and rename so the new order is canonical. Falls
+through to `centaur-tabs-move-current-tab-to-right' for non-vterm."
+  (interactive)
+  (if (lg/vterm--current-is-workspace-vterm-p)
+      (lg/vterm--swap-and-renumber 'right)
+    (centaur-tabs-move-current-tab-to-right)))
+
+;;;###autoload
+(defun lg/vterm-move-tab-left ()
+  "Move current tab left. For workspace vterm buffers, swap with the
+left-hand neighbor and rename so the new order is canonical. Falls
+through to `centaur-tabs-move-current-tab-to-left' for non-vterm."
+  (interactive)
+  (if (lg/vterm--current-is-workspace-vterm-p)
+      (lg/vterm--swap-and-renumber 'left)
+    (centaur-tabs-move-current-tab-to-left)))
+
+(defun lg/vterm--reindex-on-kill ()
+  "When a workspace vterm is killed, renumber remaining workspace vterms
+to canonical 1..N order so deletes don't leave low-index gaps."
+  (when (lg/vterm--current-is-workspace-vterm-p)
+    (let ((ws (lg/vterm--workspace-name))
+          (dying (current-buffer)))
+      (run-at-time
+       0 nil
+       (lambda ()
+         (let ((bufs (sort (seq-filter
+                            (lambda (b)
+                              (and (not (eq b dying))
+                                   (lg/vterm--is-vterm-in-workspace-p b ws)))
+                            (buffer-list))
+                           (lambda (a b)
+                             (< (or (lg/vterm-index a) 0)
+                                (or (lg/vterm-index b) 0))))))
+           (when bufs
+             (lg/vterm--rename-to-canonical bufs ws))))))))
+
+(add-hook 'kill-buffer-hook #'lg/vterm--reindex-on-kill)

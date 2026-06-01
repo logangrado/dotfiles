@@ -11,8 +11,8 @@
   :bind (:map evil-normal-state-map
               ("M-[" . centaur-tabs-backward)
               ("M-]" . centaur-tabs-forward)
-              ("M-}" . centaur-tabs-move-current-tab-to-right)
-              ("M-{" . centaur-tabs-move-current-tab-to-left)
+              ("M-}" . lg/vterm-move-tab-right)
+              ("M-{" . lg/vterm-move-tab-left)
               )
 
   ;; :hook
