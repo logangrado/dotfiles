@@ -289,6 +289,67 @@ Useful for visiting commits/branches checked out in other worktrees."
     (magit-run-git "checkout" "--detach" rev))
 
   ;; -----------------------------------------------------------
+  ;; Push & create PR (one workflow). Browse-half in forge-config.el.
+  ;; -----------------------------------------------------------
+  (declare-function forge-create-pullreq "forge-commands")
+  (declare-function forge-get-repository "forge-core")
+  (defvar lg/forge--pending-pr-browse) ; defined in forge-config.el
+
+  (defun lg/magit--local-branch-at-point ()
+    "Return branch at point only if it's a local branch, else nil."
+    (let ((b (magit-branch-at-point)))
+      (and b (magit-local-branch-p b) b)))
+
+  (defun lg/magit--push-target-branch ()
+    "Branch to push: local branch at point (in log/refs), else current."
+    (or (and (derived-mode-p 'magit-log-mode 'magit-refs-mode)
+             (lg/magit--local-branch-at-point))
+        (magit-get-current-branch)
+        (user-error "No branch to push (detached HEAD?)")))
+
+  (defun lg/magit--read-push-remote ()
+    "Return sole remote, or prompt when there are multiple."
+    (let ((remotes (magit-list-remotes)))
+      (cond ((null remotes) (user-error "No remotes configured"))
+            ((null (cdr remotes)) (car remotes))
+            (t (magit-read-remote "Push to remote")))))
+
+  (defun lg/magit--default-pr-target-branch (remote)
+    "Determine PR target, qualified as REMOTE/<branch>."
+    (let ((repo (ignore-errors (forge-get-repository :tracked))))
+      (or (and repo
+               (ignore-errors (oref repo default-branch))
+               (format "%s/%s" remote (oref repo default-branch)))
+          (let ((remote-branches (magit-list-remote-branch-names remote)))
+            (cl-find-if (lambda (b) (member b remote-branches))
+                        (list (concat remote "/main")
+                              (concat remote "/master")
+                              (concat remote "/dev"))))
+          (magit-read-remote-branch "Target branch" remote))))
+
+  (defun lg/magit-push-and-create-pr ()
+    "Push branch (at point or current), then create & visit a PR.
+After `C-c C-c' in the post buffer, opens the new PR in your browser
+via the hook in forge-config.el."
+    (interactive)
+    (require 'forge)
+    (let* ((branch (lg/magit--push-target-branch))
+           (remote (lg/magit--read-push-remote))
+           (target (lg/magit--default-pr-target-branch remote))
+           ;; forge-create-pullreq expects source qualified as
+           ;; <remote>/<branch> — unqualified would split to (\".\" . branch)
+           ;; in magit-split-branch-name and break repo resolution at submit.
+           (source (format "%s/%s" remote branch))
+           (refspec (concat branch ":" branch)))
+      (message "Pushing %s to %s..." branch remote)
+      ;; magit-run-git only displays the error from a failed git invocation;
+      ;; it doesn't signal. Raise so we abort before opening the PR buffer.
+      (let ((magit-process-raise-error t))
+        (magit-run-git "push" "-u" remote refspec))
+      (setq lg/forge--pending-pr-browse t)
+      (forge-create-pullreq source target)))
+
+  ;; -----------------------------------------------------------
   ;; Diff
   ;; -----------------------------------------------------------
 
@@ -341,6 +402,8 @@ Useful for visiting commits/branches checked out in other worktrees."
     '("C" "current" magit-log-current))
   (transient-append-suffix 'magit-branch "b"
     '("B" "detached checkout" lg/magit-checkout-detached))
+  (transient-append-suffix 'magit-push "p"
+    '("R" "Push & open PR" lg/magit-push-and-create-pr))
   (transient-replace-suffix 'magit-dispatch "x"
     '("x" "discard…" lg/magit-x-transient :transient transient--do-replace))
   (define-key magit-hunk-section-map (kbd "x") #'lg/magit-x-transient))
