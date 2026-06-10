@@ -5,7 +5,7 @@
   :after treesit
   :custom
   ;; auto-install grammars the first time you open a file
-  (treesit-auto-install 'prompt)
+  (treesit-auto-install t)
   :config
   ;; populate auto-mode-alist with ts modes where available
   (treesit-auto-add-to-auto-mode-alist)
