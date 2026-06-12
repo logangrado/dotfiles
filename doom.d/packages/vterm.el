@@ -130,6 +130,60 @@ Only takes effect in vterm buffers."
       (setq-local cursor-type
                   (if (evil-insert-state-p) 'bar 'box))))
 
+  (defun lg/vterm--read-zsh-history ()
+    "Return commands from zsh's HISTFILE as a list, newest-first, deduped.
+Strips the `: <epoch>:<elapsed>;' prefix that `extended_history' writes.
+Multi-line entries (backslash-continuation in extended_history) are
+returned as separate lines — good enough for v1."
+    (let ((file (or (getenv "HISTFILE")
+                    (expand-file-name "~/.zsh_history"))))
+      (when (file-readable-p file)
+        (with-temp-buffer
+          ;; zsh writes history in its locale; force utf-8 read so unusual
+          ;; bytes don't choke the parser.
+          (let ((coding-system-for-read 'utf-8-auto))
+            (insert-file-contents file))
+          (let (cmds)
+            (goto-char (point-min))
+            (while (not (eobp))
+              (let ((line (buffer-substring-no-properties
+                           (line-beginning-position) (line-end-position))))
+                (when (string-match
+                       "\\`\\(?:: [0-9]+:[0-9]+;\\)?\\(.+\\)\\'" line)
+                  (push (match-string 1 line) cmds)))
+              (forward-line 1))
+            (delete-dups cmds))))))
+
+  (defun lg/vterm-consult-history ()
+    "Fuzzy-search ~/.zsh_history via vertico; send the chosen entry to the
+live vterm prompt via `vterm-send-string' so it can be edited before
+Enter. Replaces `consult-history', which doesn't know about vterm-mode
+and uses `insert' (wrong) instead of `vterm-send-string'."
+    (interactive)
+    (unless (derived-mode-p 'vterm-mode)
+      (user-error "Not in a vterm buffer"))
+    (let ((entries (lg/vterm--read-zsh-history)))
+      (unless entries
+        (user-error "No zsh history found at %s"
+                    (or (getenv "HISTFILE") "~/.zsh_history")))
+      (let ((cmd (consult--read entries
+                                :prompt "zsh history: "
+                                :sort nil
+                                :require-match t
+                                :category 'consult-history)))
+        (when (and cmd (not (string-empty-p cmd)))
+          (vterm-send-string cmd)))))
+
+  (defun lg/consult-history-dwim ()
+    "Search history for the current buffer's shell.
+In `vterm-mode' use `lg/vterm-consult-history' (sends the chosen entry
+to the live zsh prompt). Elsewhere fall back to `consult-history',
+which handles eshell/comint/term/minibuffer via `consult-mode-histories'."
+    (interactive)
+    (if (derived-mode-p 'vterm-mode)
+        (lg/vterm-consult-history)
+      (call-interactively #'consult-history)))
+
   ;; --- Hooks for cursor synchronization ---
 
   (add-hook 'evil-insert-state-entry-hook #'lg/vterm-adjust-cursor)
@@ -286,5 +340,10 @@ Returns nil for default fg/bg so the C module uses the `default' face."
         ;; Terminal management
         "o c" #'vterm-clear
         "o l" #'lg/vterm-clear-scrollback
+        ;; Search shell history. In vterm sends to live prompt via
+        ;; vterm-send-string; elsewhere falls back to consult-history's
+        ;; built-in handling (eshell/comint/term/minibuffer). C-r stays
+        ;; with zsh's native reverse-i-search (vterm passthrough).
+        "s h" #'lg/consult-history-dwim
         )
   )

@@ -93,13 +93,36 @@ alias ktlgp='kubectl get pods --sort-by=.metadata.creationTimestamp'
 alias uvr="uv run"
 alias ur="uv run"
 
-setopt nosharehistory                 # Prevent command history from being shared within windows
-# These lines prevent command-matching when moving through command history
-bindkey "\eOA" up-line-or-history    
-bindkey "\eOB" down-line-or-history
+# History
+# --------------------------------------------------------------------------
+# oh-my-zsh sets HISTFILE/HISTSIZE/SAVEHIST and a baseline of options
+# (hist_ignore_dups, hist_expire_dups_first, share_history, ...). Override
+# a few here:
+setopt nosharehistory          # each window keeps its own session history
+setopt inc_append_history      # write each command to HISTFILE as it runs
+setopt hist_ignore_all_dups    # drop older duplicate when a new copy lands
+setopt hist_find_no_dups       # don't surface duplicates during search
+setopt hist_reduce_blanks      # normalise whitespace before saving
+setopt hist_verify             # show !! expansion before executing
 
-bindkey "^[i" up-line-or-history
-bindkey "^[k" down-line-or-history
+# Arrow keys: prefix-aware history search
+# --------------------------------------------------------------------------
+# `up-line-or-beginning-search` is a zsh builtin. With an empty prompt it
+# behaves like plain up/down history; with text typed it filters history
+# to entries starting with that prefix.
+autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
+zle -N up-line-or-beginning-search
+zle -N down-line-or-beginning-search
+
+# Bind both application-keypad (\eO_) and cursor-key (\e[_) encodings so
+# this works regardless of whether DECCKM is set.
+bindkey "\eOA" up-line-or-beginning-search
+bindkey "\eOB" down-line-or-beginning-search
+bindkey "\e[A" up-line-or-beginning-search
+bindkey "\e[B" down-line-or-beginning-search
+
+bindkey "^[i" up-line-or-beginning-search
+bindkey "^[k" down-line-or-beginning-search
 bindkey "^[l" forward-char
 bindkey "^[j" backward-char
 bindkey "^[o" forward-word
