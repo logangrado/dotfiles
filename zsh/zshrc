@@ -105,34 +105,19 @@ setopt hist_find_no_dups       # don't surface duplicates during search
 setopt hist_reduce_blanks      # normalise whitespace before saving
 setopt hist_verify             # show !! expansion before executing
 
-# Arrow keys: prefix-aware history search
+# Arrow keys: prefix-aware history search widgets
 # --------------------------------------------------------------------------
 # `up-line-or-beginning-search` is a zsh builtin. With an empty prompt it
 # behaves like plain up/down history; with text typed it filters history
 # to entries starting with that prefix.
+#
+# NOTE: the bindkey calls themselves are at the bottom of this file.
+# Something later in startup (most likely OMZ's lib/key-bindings.zsh being
+# re-triggered indirectly by compinit or the hatchery completion eval) was
+# resetting `^[OA`/`^[OB` back to `up-line-or-history` if bindkey ran here.
 autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
 zle -N up-line-or-beginning-search
 zle -N down-line-or-beginning-search
-
-# Bind both application-keypad (\eO_) and cursor-key (\e[_) encodings so
-# this works regardless of whether DECCKM is set.
-bindkey "\eOA" up-line-or-beginning-search
-bindkey "\eOB" down-line-or-beginning-search
-bindkey "\e[A" up-line-or-beginning-search
-bindkey "\e[B" down-line-or-beginning-search
-
-bindkey "^[i" up-line-or-beginning-search
-bindkey "^[k" down-line-or-beginning-search
-bindkey "^[l" forward-char
-bindkey "^[j" backward-char
-bindkey "^[o" forward-word
-bindkey "^[u" backward-word
-
-
-# This fixes the issue where the return key doesn't work on some OS's
-# Somehow return stops sending the ^M code, and sends this instead
-# So we just set zsh to accept that as return
-bindkey '^[OM' accept-line
 
 # SOURCING
 #======================================================
@@ -184,3 +169,29 @@ compinit
 
 # hatchery shell completion
 eval "$(_HATCHERY_COMPLETE=zsh_source hatchery)"
+
+# Key bindings (kept LAST so nothing later overrides them)
+# --------------------------------------------------------------------------
+# OMZ's lib/key-bindings.zsh sets `^[OA`/`^[OB` to plain up-/down-line-or-
+# history. Something during startup (probably compinit or hatchery's eval
+# above) was re-triggering that and clobbering these bindings when they
+# lived in the middle of the file. Putting them at the very end is the
+# robust fix.
+#
+# Bind both application-keypad (\eO_) and cursor-key (\e[_) encodings so
+# this works regardless of whether DECCKM is set when zle starts a line.
+bindkey "\eOA" up-line-or-beginning-search
+bindkey "\eOB" down-line-or-beginning-search
+bindkey "\e[A" up-line-or-beginning-search
+bindkey "\e[B" down-line-or-beginning-search
+
+bindkey "^[i" up-line-or-beginning-search
+bindkey "^[k" down-line-or-beginning-search
+bindkey "^[l" forward-char
+bindkey "^[j" backward-char
+bindkey "^[o" forward-word
+bindkey "^[u" backward-word
+
+# Fixes the issue where the return key doesn't work on some OS's. Return
+# sometimes stops sending ^M and sends this instead, so we accept it too.
+bindkey '^[OM' accept-line
