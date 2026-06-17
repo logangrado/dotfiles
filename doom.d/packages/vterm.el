@@ -327,6 +327,10 @@ Returns nil for default fg/bg so the C module uses the `default' face."
         ;; Raw key passthrough — C-q then any key sends it directly to the terminal
         "<insert-state> C-q" #'vterm-send-next-key
         "<normal-state> C-q" #'vterm-send-next-key
+        ;; M-<escape> sends a literal ESC to the terminal (so Claude/Codex see it).
+        ;; Plain <escape> still exits insert state — keeps an evil-escape hatch
+        ;; even when `jk' (evil-escape) isn't working.
+        "<insert-state> M-<escape>" #'vterm-send-escape
         ;; Redraw terminal (Ctrl-L) — preserves scrollback
         "<insert-state> C-c C-l" #'lg/vterm-redraw
         "<normal-state> C-c C-l" #'lg/vterm-redraw
