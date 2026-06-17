@@ -109,6 +109,27 @@ Mirrors lg/review--repo-dir's <name>-<hash> convention."
     (expand-file-name (lg/review--slug branch)
                       (lg/review--repo-dir repo-top)))
 
+  (defun lg/review--last-reviewed-file (repo-top branch)
+    "Return the .last-reviewed marker path for BRANCH under REPO-TOP.
+Stored as a sibling of the worktree dir so it survives worktree removal."
+    (expand-file-name (concat (lg/review--slug branch) ".last-reviewed")
+                      (lg/review--repo-dir repo-top)))
+
+  (defun lg/review--load-last-reviewed (repo-top branch)
+    "Read the last-reviewed SHA for BRANCH, or nil."
+    (let ((file (lg/review--last-reviewed-file repo-top branch)))
+      (when (file-exists-p file)
+        (string-trim
+         (with-temp-buffer
+           (insert-file-contents file)
+           (buffer-string))))))
+
+  (defun lg/review--save-last-reviewed (repo-top branch sha)
+    "Record SHA as the last-reviewed SHA for BRANCH under REPO-TOP."
+    (let ((file (lg/review--last-reviewed-file repo-top branch)))
+      (make-directory (file-name-directory file) t)
+      (with-temp-file file (insert sha "\n"))))
+
   (defun lg/review--run-git (dir &rest args)
     "Run git in DIR with ARGS.  Return exit code."
     (apply #'call-process "git" nil nil nil "-C" dir args))
@@ -244,13 +265,25 @@ tree is completely undisturbed throughout."
              ;; Use the merge-base so the diff is purely branch-vs-fork-point,
              ;; not branch-vs-current-tip-of-base (which would include commits
              ;; on the base branch made after B forked off).
-             (base          (string-trim
+             (merge-base    (string-trim
                              (shell-command-to-string
                               (format "git -C %s merge-base %s %s"
                                       (shell-quote-argument repo-top)
                                       (shell-quote-argument branch)
                                       (shell-quote-argument base-ref)))))
              (old-sha       (magit-rev-parse branch))
+             ;; If the branch was previously reviewed, offer to diff only
+             ;; against that prior-review SHA. Stale (unreachable) markers and
+             ;; SHAs equal to old-sha (nothing new) fall through to merge-base.
+             (last-sha      (lg/review--load-last-reviewed repo-top branch))
+             (base          (if (and last-sha
+                                     (not (string= last-sha old-sha))
+                                     (magit-rev-verify last-sha)
+                                     (y-or-n-p
+                                      (format "Prior review found at %.8s. Review since then? "
+                                              last-sha)))
+                                last-sha
+                              merge-base))
              (worktree-path (lg/review--worktree-path repo-top branch)))
         (when (string-empty-p base)
           (error "Could not compute merge-base of %s and %s" branch base-ref))
@@ -278,8 +311,13 @@ tree is completely undisturbed throughout."
           (error "Failed to unstage changes in worktree"))
         ;; For new files (added by branch), register them as intent-to-add so
         ;; they appear in the diff as additions rather than as untracked files.
+        ;; --no-renames is critical: with diff.renames=true (modern default),
+        ;; a rename is reported as R and the new path is excluded from
+        ;; --diff-filter=A, leaving the renamed-to file untracked in the
+        ;; review worktree.
         (let* ((new-files-raw (lg/review--run-git-output
-                               repo-top "diff" "--name-only" "--diff-filter=A"
+                               repo-top "diff" "--no-renames"
+                               "--name-only" "--diff-filter=A"
                                base old-sha))
                (new-files (split-string (string-trim new-files-raw) "\n" t)))
           (dolist (f new-files)
@@ -632,6 +670,12 @@ STAGED-STAT is output of `git diff --staged --stat' (may be empty)."
                                               (format "refs/heads/%s" branch)
                                               "HEAD"))
             (error "Failed to advance branch ref for %s" branch))
+          ;; Record this review's HEAD so the next review of the branch can
+          ;; offer "review since then?" instead of re-diffing from merge-base.
+          (lg/review--save-last-reviewed
+           repo-top branch
+           (string-trim
+            (lg/review--run-git-output repo-top "rev-parse" branch)))
           ;; Clean up
           (lg/review--cleanup-session key repo-top worktree-path)
           ;; Refresh main repo magit-status if visible
