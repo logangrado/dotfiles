@@ -427,6 +427,201 @@ via the hook in forge-config.el."
 ;;      (add a (message ...) to confirm).
 ;;   2. That (magit-section-match 'hunk section) matches correctly.
 ;;   3. Whether delta itself has a --focused-hunk style option.
+;; -----------------------------------------------------------
+;; magit-delta context wrapper
+;; -----------------------------------------------------------
+;; Delta highlights each hunk in isolation via syntect, which is stateless
+;; across hunks.  When a hunk starts mid-multi-line construct (e.g. inside a
+;; Python docstring) syntect lands in the wrong state and the whole hunk is
+;; rendered as a string.  We work around this by prepending N synthetic
+;; context lines (read from HEAD or the working tree) to every hunk before
+;; delta sees the diff, then stripping those lines after delta colorizes —
+;; all in the same buffer call that magit-delta already uses.
+(defvar lg/magit-delta-extra-context-lines 30
+  "Synthetic preceding lines fed to delta per hunk for syntect state.
+Read from HEAD (fallback: working tree).  Stripped before xterm-color runs.")
+
+(defvar lg/magit-delta-plus-bg  "#1f4a28"
+  "Background colour for added (`+') lines.  Shared by the delta
+`--plus-style' arg and the `:extend t' overlay applied post-render so
+the colour fills past end-of-line.")
+
+(defvar lg/magit-delta-minus-bg "#4a1f1f"
+  "Background colour for removed (`-') lines.  See `lg/magit-delta-plus-bg'.")
+
+(defvar lg/magit-delta--prefix-cache nil
+  "Per-invocation cache: path -> list of file lines (or nil sentinel).
+Bound to a fresh hash table by `lg/magit-delta-call-delta-with-context'
+so multiple hunks of the same file share a single git subprocess call.")
+
+(defun lg/magit-delta--ansi-strip (s)
+  "Strip ANSI CSI sequences from S."
+  (replace-regexp-in-string "\e\\[[^m]*m" "" s))
+
+(defun lg/magit-delta--file-lines (path)
+  "Return all lines of PATH from HEAD, falling back to the working tree.
+Caches the result in `lg/magit-delta--prefix-cache' when that var is bound
+to a hash table; subsequent calls for the same PATH avoid the git subprocess."
+  (let ((cached (and lg/magit-delta--prefix-cache
+                     (gethash path lg/magit-delta--prefix-cache 'absent))))
+    (if (not (eq cached 'absent))
+        cached
+      (let ((fresh (or (ignore-errors
+                         (magit-git-lines "show" (concat "HEAD:" path)))
+                       (let ((abs (expand-file-name path (magit-toplevel))))
+                         (and (file-readable-p abs)
+                              (with-temp-buffer
+                                (insert-file-contents abs)
+                                (split-string (buffer-string) "\n")))))))
+        (when lg/magit-delta--prefix-cache
+          (puthash path fresh lg/magit-delta--prefix-cache))
+        fresh))))
+
+(defun lg/magit-delta--read-prefix-lines (path end-line max-lines)
+  "Up to MAX-LINES lines of PATH, immediately preceding line END-LINE (1-indexed).
+PATH is relative to the magit toplevel.  Returns a list of strings (no
+newlines) or nil if nothing readable."
+  (when (and path (> end-line 1) (> max-lines 0))
+    (let ((lines (lg/magit-delta--file-lines path)))
+      (when lines
+        (let* ((want (min max-lines (1- end-line)))
+               (start (- end-line want))
+               (len (length lines))
+               (s (max 0 (1- start)))
+               (e (min len (1- end-line))))
+          (and (< s e) (cl-subseq lines s e)))))))
+
+(defun lg/magit-delta--augment-buffer ()
+  "Prepend syntect-stabilizing context to each hunk in the current buffer.
+Returns an alist of (HUNK-INDEX EXTRA-COUNT ORIG-HEADER) for use by
+`lg/magit-delta--strip-augmentations'."
+  (let ((current-path nil)
+        (saw-minus nil)            ; previous line was a `--- ...` header
+        (idx -1)
+        (augs '()))
+    (save-excursion
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((advance 1)
+              (next-saw-minus nil))
+          (cond
+           ((looking-at "^---\\(?: a/\\| \\)")
+            ;; New file boundary; clear the previous path so a malformed
+            ;; or skipped `+++` line cannot leak the wrong path into later hunks.
+            (setq current-path nil
+                  next-saw-minus t))
+           ;; Real file header always follows a `---` line.  Without that
+           ;; guard, source lines like "+++ foo" inside a hunk would match.
+           ((and saw-minus
+                 (looking-at "^\\+\\+\\+ \\(?:b/\\)?\\(.+?\\)\\s-*$"))
+            (let ((p (match-string-no-properties 1)))
+              (setq current-path (and p (not (string= p "/dev/null")) p))))
+           ((looking-at "^@@ -\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? \\+\\([0-9]+\\)\\(?:,\\([0-9]+\\)\\)? @@\\(.*\\)$")
+            (setq idx (1+ idx))
+            (let* ((orig-header (match-string-no-properties 0))
+                   (old-start (string-to-number (match-string 1)))
+                   (old-len   (if (match-string 2) (string-to-number (match-string 2)) 1))
+                   (new-start (string-to-number (match-string 3)))
+                   (new-len   (if (match-string 4) (string-to-number (match-string 4)) 1))
+                   (rest      (match-string-no-properties 5))
+                   ;; Skip pure-insertion hunks (old-len = 0): their old-start
+                   ;; is "the line AFTER which we insert", which doesn't compose
+                   ;; cleanly with our context-prepending formula.  Rare.
+                   (extra (and current-path
+                               (> old-len 0)
+                               (min lg/magit-delta-extra-context-lines (1- new-start))))
+                   (prefix (and extra (> extra 0)
+                                (lg/magit-delta--read-prefix-lines
+                                 current-path new-start extra))))
+              (when (and prefix (= (length prefix) extra))
+                (let ((new-header
+                       (format "@@ -%d,%d +%d,%d @@%s"
+                               (- old-start extra) (+ old-len extra)
+                               (- new-start extra) (+ new-len extra)
+                               rest)))
+                  (delete-region (line-beginning-position) (line-end-position))
+                  (insert new-header)
+                  (forward-line 1)
+                  (dolist (ln prefix)
+                    (insert " " ln "\n"))
+                  (push (list idx extra orig-header) augs)
+                  ;; point already past the inserted block
+                  (setq advance 0))))))
+          (setq saw-minus next-saw-minus)
+          (forward-line advance))))
+    (nreverse augs)))
+
+(defun lg/magit-delta--strip-augmentations (augs)
+  "Undo the augmentations recorded by `lg/magit-delta--augment-buffer'.
+AUGS is a list of (HUNK-INDEX EXTRA-COUNT ORIG-HEADER).  Tolerates ANSI
+escape sequences inserted by delta around the @@ header."
+  (when augs
+    (let ((lookup (make-hash-table)))
+      (dolist (a augs) (puthash (nth 0 a) (cdr a) lookup))
+      (save-excursion
+        (goto-char (point-min))
+        (let ((idx -1))
+          (while (not (eobp))
+            (let* ((line (buffer-substring-no-properties
+                          (line-beginning-position) (line-end-position)))
+                   (stripped (lg/magit-delta--ansi-strip line))
+                   (is-header (string-prefix-p "@@ " stripped))
+                   (advance 1))
+              (when is-header
+                (setq idx (1+ idx))
+                (when-let* ((entry (gethash idx lookup))
+                            (extra (nth 0 entry))
+                            (orig-header (nth 1 entry)))
+                  (delete-region (line-beginning-position) (line-end-position))
+                  (insert orig-header)
+                  (forward-line 1)
+                  (let ((start (point)))
+                    (forward-line extra)
+                    (delete-region start (point)))
+                  (setq advance 0)))
+              (forward-line advance))))))))
+
+;; Delta colours each `+'/`-' line by attaching ANSI background to the text
+;; only; nothing covers BOL..text-start or text-end..window-edge, so the
+;; coloured stripe ends mid-line.  Magit's own diff faces (which carry
+;; `:extend t') aren't consulted once delta replaces the diff text.  We
+;; emulate `:extend t' by adding one low-priority full-line overlay per
+;; `+'/`-' content line.  Priority -1 keeps delta's per-char overlays
+;; (including the brighter emph-style) visible on top within the text.
+(defun lg/magit-delta--extend-line-backgrounds ()
+  "Add :extend t overlays so +/- diff lines fill to window edge."
+  (save-excursion
+    (goto-char (point-min))
+    (let ((in-hunk nil))
+      (while (not (eobp))
+        (cond
+         ((looking-at "^diff ") (setq in-hunk nil))
+         ((looking-at "^@@ ")   (setq in-hunk t))
+         ((and in-hunk
+               (looking-at "^[+-]")
+               (not (looking-at "^\\(\\+\\+\\+\\|---\\) ")))
+          (let* ((plus (eq (char-after) ?+))
+                 (bg   (if plus lg/magit-delta-plus-bg lg/magit-delta-minus-bg))
+                 (beg  (line-beginning-position))
+                 (end  (min (point-max) (1+ (line-end-position))))
+                 (ov   (make-overlay beg end)))
+            (overlay-put ov 'face `(:background ,bg :extend t))
+            (overlay-put ov 'priority -1)
+            (overlay-put ov 'lg-magit-delta-line-bg t))))
+        (forward-line 1)))))
+
+(defun lg/magit-delta-call-delta-with-context (orig-fn &rest args)
+  "Around-advice for `magit-delta-call-delta-and-convert-ansi-escape-sequences'.
+Augments hunks with extra preceding context so delta's syntect sees the
+right syntactic state, then strips that context from delta's output.
+A per-invocation cache shares HEAD reads across hunks of the same file."
+  (let ((lg/magit-delta--prefix-cache (make-hash-table :test 'equal)))
+    (let ((augs (lg/magit-delta--augment-buffer)))
+      (unwind-protect
+          (apply orig-fn args)
+        (lg/magit-delta--strip-augmentations augs)
+        (lg/magit-delta--extend-line-backgrounds)))))
+
 (use-package! magit-delta
   :after magit
   :hook (magit-mode . magit-delta-mode)
@@ -441,9 +636,10 @@ via the hook in forge-config.el."
           "--true-color" ,(if xterm-color--support-truecolor "always" "never")
           "--max-line-distance" "0.6"
           ;; "--syntax-theme" "Dracula"
-          "--plus-style"      "syntax #1f4a28"       ; line bg: readable green
-          "--minus-style"     "syntax #4a1f1f"        ; line bg: readable red
-          "--plus-emph-style" "syntax #2e6e3e bold"  ; word bg: brighter green
+          "--plus-style"      ,(concat "syntax " lg/magit-delta-plus-bg)   ; line bg: readable green
+          "--minus-style"     ,(concat "syntax " lg/magit-delta-minus-bg)  ; line bg: readable red
+          "--plus-emph-style" "syntax #2e6e3e bold"   ; word bg: brighter green
           "--minus-emph-style" "syntax #6e2e2e bold")) ; word bg: brighter red
 
-  )
+  (advice-add 'magit-delta-call-delta-and-convert-ansi-escape-sequences
+              :around #'lg/magit-delta-call-delta-with-context))
