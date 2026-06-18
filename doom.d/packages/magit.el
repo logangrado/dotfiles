@@ -205,7 +205,7 @@ buffers that q would cycle back through."
 
   (defun lg/magit-log-branches (&optional args files)
     "Show logs for local branches and their remotes, plus main branches."
-    (interactive (list (transient-args 'magit-log) nil))
+    (interactive (magit-log-arguments))
     (let* ((local-branches (magit-list-local-branch-names))
            (remote-branches (magit-list-remote-branch-names "origin"))
            ;; For each local branch, include origin/<branch> if it exists
@@ -234,7 +234,7 @@ buffers that q would cycle back through."
 
   (defun lg/magit-log-current-and-main (&optional args files)
     "Show logs for current branch (and its remote) plus main branches."
-    (interactive (list (transient-args 'magit-log) nil))
+    (interactive (magit-log-arguments))
     (let* ((current (magit-get-current-branch))
            (remote-branches (magit-list-remote-branch-names "origin"))
            (local-branches (magit-list-local-branch-names))
