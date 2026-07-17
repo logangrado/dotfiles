@@ -3,13 +3,16 @@
 ALL=("zsh/zshrc $HOME/.zshrc"
      "zsh/zshrc-work $HOME/.zshrc-work"
      "zsh/grado.zsh-theme $HOME/.oh-my-zsh/themes/grado.zsh-theme"
-     "tmux/tmux.conf $HOME/.tmux.conf"                
+     "tmux/tmux.conf $HOME/.tmux.conf"
      "doom.d $HOME/.doom.d"
      "git/gitconfig $HOME/.gitconfig"
      "git/gitignore_global $HOME/.gitignore_global"
      "git/gitmessage $HOME/.gitmessage"
      "pyenv/plugins $HOME/.pyenv/plugins"
      "ruff/ruff.toml $HOME/.config/ruff/ruff.toml"
+     "agents/AGENTS.md $HOME/.claude/CLAUDE.md"
+     "agents/AGENTS.md $HOME/.codex/AGENTS.md"
+     "agents/statusline-command.sh $HOME/.claude/statusline-command.sh"
     )
 
 OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
@@ -18,6 +21,8 @@ OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
     )
 
 LINUX=("matplotlib $HOME/.config/matplotlib")
+
+DOT_DIR=$PWD
 
 # Determine OS
 unameOut="$(uname -s)"
@@ -28,7 +33,14 @@ case "${unameOut}" in
     MINGW*)  ;;
 esac
 
-DOT_DIR=$PWD
+# Auto-link every skill under agents/skills/ into ~/.claude/skills/ and ~/.codex/skills/
+for skill_dir in "$DOT_DIR"/agents/skills/*/; do
+    [[ -d $skill_dir ]] || continue
+    skill_name=$(basename "$skill_dir")
+    ALL+=("agents/skills/$skill_name $HOME/.claude/skills/$skill_name")
+    ALL+=("agents/skills/$skill_name $HOME/.codex/skills/$skill_name")
+done
+
 DATE_TIME=$(date '+%Y-%m-%d')
 BACKUP_DIR="$DOT_DIR/backups/$DATE_TIME"
 
