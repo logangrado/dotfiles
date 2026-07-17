@@ -169,6 +169,7 @@ compinit
 
 # hatchery shell completion
 eval "$(_HATCHERY_COMPLETE=zsh_source hatchery)"
+alias h=hatchery
 
 # Key bindings (kept LAST so nothing later overrides them)
 # --------------------------------------------------------------------------
