@@ -15,10 +15,32 @@ Cleared when projectile switches projects.")
 
 (add-hook 'projectile-after-switch-project-hook #'lg/worktree--invalidate-cache)
 
+(defvar lg/worktree--project-root-cache (make-hash-table :test 'equal)
+  "default-directory -> (TIMESTAMP . ROOT) cache for `projectile-project-root'.
+`lg/worktree--lookup' is called on every doom-modeline redisplay (via the
+`worktree' segment), and needs a root before it can even check its own
+result cache below — without this, that's a fresh `projectile-project-root'
+call (which walks up the filesystem looking for project markers) on every
+redisplay.")
+
+(defconst lg/worktree--project-root-ttl 2.0
+  "Seconds a `lg/worktree--project-root-cache' entry stays valid.")
+
+(defun lg/worktree--cached-project-root ()
+  "Like `projectile-project-root', cached per `default-directory' for
+`lg/worktree--project-root-ttl' seconds."
+  (let* ((key default-directory)
+         (cached (gethash key lg/worktree--project-root-cache)))
+    (if (and cached (< (- (float-time) (car cached)) lg/worktree--project-root-ttl))
+        (cdr cached)
+      (let ((root (projectile-project-root)))
+        (puthash key (cons (float-time) root) lg/worktree--project-root-cache)
+        root))))
+
 (defun lg/worktree--lookup ()
   "Return (WORKTREE-NAME . MAIN-REPO-NAME) for the current project root.
 WORKTREE-NAME is nil when in the main tree."
-  (when-let* ((root (projectile-project-root)))
+  (when-let* ((root (lg/worktree--cached-project-root)))
     (let ((cached (gethash root lg/worktree--cache 'miss)))
       (if (not (eq cached 'miss))
           cached
