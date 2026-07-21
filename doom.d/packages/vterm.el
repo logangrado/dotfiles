@@ -31,18 +31,14 @@
 
 
   (defun lg/vterm-get-workspace-buffer-name ()
-    "Retrieve the first vterm buffer name for this workspace (*v:WS<1>)."
-    (format "*v:%s<1>"
-            (if (bound-and-true-p persp-mode)
-                (safe-persp-name (get-current-persp))
-              "main")))
+    "Retrieve the first vterm buffer name for this workspace (*v:WS<1>).
+WS is worktree-aware (see `lg/vterm--workspace-name'), so different
+worktrees of the same persp/project get distinct terminal buffers."
+    (format "*v:%s<1>" (lg/vterm--workspace-name)))
 
   (defun lg/vterm-next-workspace-buffer-name ()
     "Return the next available vterm buffer name *v:WS<N> for this workspace."
-    (let* ((ws (if (bound-and-true-p persp-mode)
-                   (safe-persp-name (get-current-persp))
-                 "main"))
-           (base (format "*v:%s" ws))
+    (let* ((base (format "*v:%s" (lg/vterm--workspace-name)))
            (idx 1))
       (while (get-buffer (format "%s<%d>" base idx))
         (setq idx (1+ idx)))

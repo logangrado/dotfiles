@@ -2,19 +2,27 @@
 
 (use-package!  ibuffer-projectile
   :init
-  ;; Order buffers alphabetically within groups
+  ;; Group by open persp/worktree (see persp-worktree.el) instead of
+  ;; ibuffer-projectile's own per-buffer projectile-root detection: each
+  ;; persp is now scoped to one repo+worktree, so grouping by persp
+  ;; membership already gives worktree-aware groups for free.
+  (defun lg/ibuffer-set-persp-filter-groups ()
+    "Set `ibuffer-filter-groups' to one group per open persp/worktree.
+Buffers not owned by any real persp fall into a catch-all \"Other\" group."
+    (setq ibuffer-filter-groups
+          (append
+           (cl-loop for name in (+workspace-list-names)
+                    unless (string= name persp-nil-name)
+                    collect (let ((bufs (persp-buffers (persp-get-by-name name))))
+                              (cons name `((predicate . (memq buf ',bufs))))))
+           (list (cons "Other" '((predicate . t)))))))
   (add-hook 'ibuffer-hook
             (lambda ()
               (unless ibuffer-filter-groups
-                (ibuffer-projectile-set-filter-groups))))
+                (lg/ibuffer-set-persp-filter-groups))))
   :config
   (setq ibuffer-default-sorting-mode 'alphabetic)
 
-  ;; Use worktree-aware group names: "repo" for main tree, "repo:worktree" for worktrees
-  (setq ibuffer-projectile-group-name-function
-        (lambda (_project-name root-dir)
-          (let ((default-directory root-dir))
-            (format "%s%s" ibuffer-projectile-prefix (lg/project-display-name)))))
   ;; define size-h column (human readable)
   (define-ibuffer-column size-h
     (:name "Size" :inline t)

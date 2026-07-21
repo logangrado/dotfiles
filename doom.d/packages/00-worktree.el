@@ -1,6 +1,6 @@
 ;;; ../.dotfiles/doom.d/packages/00-worktree.el -*- lexical-binding: t; -*-
 
-;; Worktree-aware utilities for centaur-tabs, ibuffer, and doom-modeline.
+;; Git worktree detection for doom-modeline's worktree indicator segment.
 ;; In a git worktree the `.git` entry is a *file* containing
 ;; "gitdir: <main-repo>/.git/worktrees/<name>", whereas in the main
 ;; tree it is a directory.
@@ -37,10 +37,11 @@ redisplay.")
         (puthash key (cons (float-time) root) lg/worktree--project-root-cache)
         root))))
 
-(defun lg/worktree--lookup ()
-  "Return (WORKTREE-NAME . MAIN-REPO-NAME) for the current project root.
+(defun lg/worktree--lookup (&optional root)
+  "Return (WORKTREE-NAME . MAIN-REPO-NAME) for ROOT.
+ROOT defaults to the current project root via `lg/worktree--cached-project-root'.
 WORKTREE-NAME is nil when in the main tree."
-  (when-let* ((root (lg/worktree--cached-project-root)))
+  (when-let* ((root (or root (lg/worktree--cached-project-root))))
     (let ((cached (gethash root lg/worktree--cache 'miss)))
       (if (not (eq cached 'miss))
           cached
@@ -76,30 +77,9 @@ WORKTREE-NAME is nil when in the main tree."
           result)))))
 
 ;;;###autoload
-(defun lg/git-worktree-p ()
-  "Return non-nil if the current project root is a git worktree."
-  (car (lg/worktree--lookup)))
-
-;;;###autoload
 (defun lg/git-worktree-name ()
   "Return the worktree name, or nil when in the main tree."
   (car (lg/worktree--lookup)))
-
-;;;###autoload
-(defun lg/git-main-repo-name ()
-  "Return the main repository name, even from inside a worktree."
-  (cdr (lg/worktree--lookup)))
-
-;;;###autoload
-(defun lg/project-display-name ()
-  "Return a display name for the current project.
-Main tree  -> \"<repo>\"
-Worktree   -> \"<repo>:<worktree>\""
-  (let ((info (lg/worktree--lookup)))
-    (if (car info)
-        (concat (cdr info) ":" (car info))
-      (cdr info))))
-
 
 ;; ---------------------------------------------------------------------------
 ;; Doom-modeline: worktree indicator segment

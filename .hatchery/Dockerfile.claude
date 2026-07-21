@@ -14,6 +14,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     zip \
     && rm -rf /var/lib/apt/lists/*
 
+# ── Headless Emacs (batch-mode testing of Doom config logic, no display) ──────
+# Lets the agent exercise doom.d/packages/*.el against a real git repo/worktrees
+# with real projectile+magit, e.g. `emacs --batch -l foo.el --eval '(...)'`.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    emacs-nox \
+    elpa-magit \
+    elpa-projectile \
+    elpa-dash \
+    elpa-transient \
+    elpa-with-editor \
+    elpa-git-commit \
+    && rm -rf /var/lib/apt/lists/*
+
 # ── Non-root user ─────────────────────────────────────────────────────────────
 RUN useradd -m -s /bin/bash hatchery
 USER hatchery

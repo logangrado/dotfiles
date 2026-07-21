@@ -141,6 +141,17 @@
                "c" #'cd
                "{" #'+workspace/swap-left
                "}" #'+workspace/swap-right
+               "[" #'lg/repo-switch-left
+               "]" #'lg/repo-switch-right
+               "1" #'lg/repo-switch-to-1
+               "2" #'lg/repo-switch-to-2
+               "3" #'lg/repo-switch-to-3
+               "4" #'lg/repo-switch-to-4
+               "5" #'lg/repo-switch-to-5
+               "6" #'lg/repo-switch-to-6
+               "7" #'lg/repo-switch-to-7
+               "8" #'lg/repo-switch-to-8
+               "9" #'lg/repo-switch-to-9
                )
       (:prefix "b"
                (:desc "Kill current buffer" "d" #'lg/kill-current-buffer)
@@ -164,6 +175,32 @@
                "2" #'resize-window-to-1/2
                "3" #'resize-window-to-1/3
                "#" #'resize-window-to-2/3
+               )
+      (:prefix "o"
+               :desc "Move vterm to worktree" "w" #'lg/vterm-move-to-worktree
+               )
+      (:prefix "p"
+               :desc "Open file in worktree" "w" #'lg/worktree-switch
+               :desc "Switch to worktree" "j" #'lg/worktree-quick-switch
+               ;; "k" is Doom's default "kill project buffers" — bump that to "K"
+               ;; (kills buffers across every worktree of the project) and take "k"
+               ;; for the narrower, worktree-scoped kill. With a single worktree
+               ;; open, the two are equivalent.
+               :desc "Kill worktree buffers" "k" #'lg/worktree-kill
+               :desc "Kill project buffers" "K" #'projectile-kill-buffers
+               "[" #'lg/worktree-switch-left
+               "]" #'lg/worktree-switch-right
+               "{" #'lg/worktree-move-left
+               "}" #'lg/worktree-move-right
+               "1" #'lg/worktree-switch-to-1
+               "2" #'lg/worktree-switch-to-2
+               "3" #'lg/worktree-switch-to-3
+               "4" #'lg/worktree-switch-to-4
+               "5" #'lg/worktree-switch-to-5
+               "6" #'lg/worktree-switch-to-6
+               "7" #'lg/worktree-switch-to-7
+               "8" #'lg/worktree-switch-to-8
+               "9" #'lg/worktree-switch-to-9
                )
       )
 

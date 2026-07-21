@@ -19,6 +19,14 @@
   ;; ;; Disalbe tabs in vterm
   ;; ((vterm-mode vterm-toggle--mode) . centaur-tabs-local-mode)
   :init
+  ;; centaur-tabs auto-detects `tab-line-format' (Emacs 27+) and uses that
+  ;; instead of `header-line-format' by default (see its `centaur-tabs-display-line'
+  ;; defvar). Force it back onto header-line, which is what it's always used
+  ;; here — this must run before centaur-tabs loads, since `defvar' only
+  ;; takes effect on an unbound variable.
+  (setq centaur-tabs-display-line 'header-line
+        centaur-tabs-display-line-format 'header-line-format)
+
   ;; Parse *v:NAME and *v:NAME<N>; base (no <N>) is index 0
   (defun lg/vterm-index (buf)
     "Return numeric index for vterm buffers:
@@ -53,16 +61,16 @@
   (defun lg/centaur-tabs-buffer-groups ()
     "`centaur-tabs-buffer-groups' control buffers' group rules.
 
-        Vterm buffers grouped by project.  Starred / magit buffers go to
-        \"Emacs\".  Everything else groups by project (worktree-aware)."
+        Vterm buffers grouped by persp.  Starred / magit buffers go to
+        \"Emacs\".  Everything else groups by persp — each persp is scoped
+        to a single repo/worktree (see persp-worktree.el), so the persp
+        name already gives worktree-aware grouping without a filesystem
+        lookup."
     (list
      (cond
-      ;; GROUP VTERM BY PROJECT (worktree-aware)
+      ;; GROUP VTERM BY PERSP (worktree-aware)
       ((eq major-mode 'vterm-mode)
-       (let ((display-name (lg/project-display-name)))
-         (if (and display-name (not (string= "-" display-name)))
-             (concat "vterm: " display-name)
-           "vterm")))
+       (concat "vterm: " (safe-persp-name (get-current-persp))))
       ((or (string-equal "*" (substring (buffer-name) 0 1))
            (memq major-mode '(magit-process-mode
                               magit-status-mode
@@ -74,8 +82,10 @@
                               )))
        "Emacs")
       (t
-       (or (lg/project-display-name)
-           (centaur-tabs-get-group-name (current-buffer)))))))
+       (let ((name (safe-persp-name (get-current-persp))))
+         (if (string= name persp-nil-name)
+             (centaur-tabs-get-group-name (current-buffer))
+           name))))))
 
   ;; Set the custom grouping function
   (setq centaur-tabs-buffer-groups-function 'lg/centaur-tabs-buffer-groups)

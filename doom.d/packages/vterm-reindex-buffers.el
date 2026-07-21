@@ -6,6 +6,11 @@
 (require 'tab-line nil t)       ;; built-in since Emacs 27; safe if not present
 
 (defun lg/vterm--workspace-name ()
+  "Return the current persp's name for vterm buffer naming.
+Each worktree is its own persp (see `persp-worktree.el'), so the persp
+name alone already distinguishes vterm buffers per worktree — no
+filesystem lookup needed. Falls back to \"main\" if persp-mode isn't
+active."
   (if (bound-and-true-p persp-mode)
       (safe-persp-name (get-current-persp))
     "main"))
@@ -242,6 +247,40 @@ through to `centaur-tabs-move-current-tab-to-left' for non-vterm."
   (if (lg/vterm--current-is-workspace-vterm-p)
       (lg/vterm--swap-and-renumber 'left)
     (centaur-tabs-move-current-tab-to-left)))
+
+;;;###autoload
+(defun lg/vterm-move-to-worktree ()
+  "Move the current vterm buffer to a different worktree of this repo:
+reassigns it to the target worktree's perspective (see
+`lg/worktree-move-buffer-to-path', creating that perspective if it
+isn't already open), renames it to match the target's *v:name<N> naming
+convention, and renumbers both the source and target workspace's vterms
+afterward so neither is left with gaps. Stays put in the source
+perspective rather than following the buffer — `replace-buffer-in-windows'
+falls the source window back to whatever it showed before, so an
+existing split there isn't disrupted."
+  (interactive)
+  (unless (eq major-mode 'vterm-mode)
+    (user-error "Not a vterm buffer"))
+  (let* ((buf (current-buffer))
+         (old-ws (lg/vterm--workspace-name))
+         (current-path (lg/worktree-current-path))
+         (worktrees (cl-remove-if
+                     (lambda (wt) (and current-path
+                                       (string= (expand-file-name (cdr wt))
+                                                (expand-file-name current-path))))
+                     (lg/worktree-list)))
+         (choice (completing-read "Move vterm to worktree: " (mapcar #'car worktrees))))
+    (if-let* ((path (cdr (assoc choice worktrees))))
+        (let ((new-ws (lg/worktree-move-buffer-to-path buf path)))
+          (lg/vterm--rename-to-canonical
+           (append (lg/vterm--workspace-vterms-by-index new-ws) (list buf))
+           new-ws)
+          (lg/vterm--rename-to-canonical
+           (lg/vterm--workspace-vterms-by-index old-ws) old-ws)
+          (replace-buffer-in-windows buf)
+          (message "Moved %s to worktree '%s'." (buffer-name buf) new-ws))
+      (user-error "No such worktree"))))
 
 (defun lg/vterm--reindex-on-kill ()
   "When a workspace vterm is killed, renumber remaining workspace vterms
