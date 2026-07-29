@@ -231,6 +231,24 @@ perspective) if it doesn't exist yet. Records PATH in
   (puthash name path lg/worktree--persp-path-table)
   (+workspace-switch name t))
 
+(defun lg/worktree--maybe-record-current-path (&rest _)
+  "Backfill `lg/worktree--persp-path-table' for the current persp if it has
+no entry yet. Covers persps that became current without ever going
+through `lg/worktree--persp-switch' — chiefly the persp Emacs starts you
+in (e.g. root), which persp-mode activates on its own. Hooked onto the
+same buffer/selection-change events as `lg/refresh-workspace-tab-bar-light'
+in persp.el (cheap: a hash lookup, plus `lg/worktree-current-path' only
+once that lookup misses), so it catches the path as soon as the current
+buffer lands inside a project, without needing git."
+  (let ((name (safe-persp-name (get-current-persp))))
+    (unless (or (string= name persp-nil-name)
+                (gethash name lg/worktree--persp-path-table))
+      (when-let* ((path (lg/worktree-current-path)))
+        (puthash name path lg/worktree--persp-path-table)))))
+
+(add-hook 'window-buffer-change-functions #'lg/worktree--maybe-record-current-path)
+(add-hook 'window-selection-change-functions #'lg/worktree--maybe-record-current-path)
+
 ;; ---------------------------------------------------------------------------
 ;; Repo axis: dedupe the tab bar on repo, and remember which worktree of a
 ;; repo you were last looking at, so switching back to a repo (SPC TAB) lands
