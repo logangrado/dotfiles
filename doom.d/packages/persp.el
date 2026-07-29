@@ -63,21 +63,20 @@ name as well to trigger updates"
 
   ;; Ensure swap-left/right updates tabbar
   (defun lg/refresh-workspace-tab-bar (&rest _)
-    "Force tab-bar to refresh after workspace reordering.
-Heavy-handed on purpose: `redraw-display' is a full frame repaint that
-bypasses redisplay's normal incremental-diff optimization, and
-`force-mode-line-update t' touches every frame -- both fine for the rare,
-explicit reordering actions this is advised onto, but NOT for
-`window-buffer-change-functions'/`window-selection-change-functions' (see
-`lg/refresh-workspace-tab-bar-light' below), which fire constantly."
+    "Refresh the tab-bar after workspace reordering.
+`persp-names-cache' genuinely needs recomputing here (reordering changes
+the order it's supposed to reflect), unlike
+`lg/refresh-workspace-tab-bar-light' below. No `redraw-display' call --
+confirmed unnecessary: Emacs already redisplays after the command returns
+to the command loop, and `force-mode-line-update t' is enough to mark the
+tab-bar dirty for that redisplay to pick up."
     ;; Update Doom's cache if you're using it in rendering
     (when (boundp 'persp-names-cache)
       (setq persp-names-cache (persp-names-current-frame-fast-ordered)))
-    ;; Force tab-bar recompute + redraw
+    ;; Force tab-bar recompute
     (when (fboundp 'tab-bar--invalidate-cache)
       (tab-bar--invalidate-cache))
-    (force-mode-line-update t)
-    (redraw-display))
+    (force-mode-line-update t))
   (advice-add #'+workspace/swap-left  :after #'lg/refresh-workspace-tab-bar)
   (advice-add #'+workspace/swap-right :after #'lg/refresh-workspace-tab-bar)
   ;; --------------------------------------------------
