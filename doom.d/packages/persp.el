@@ -63,7 +63,13 @@ name as well to trigger updates"
 
   ;; Ensure swap-left/right updates tabbar
   (defun lg/refresh-workspace-tab-bar (&rest _)
-    "Force tab-bar to refresh after workspace reordering."
+    "Force tab-bar to refresh after workspace reordering.
+Heavy-handed on purpose: `redraw-display' is a full frame repaint that
+bypasses redisplay's normal incremental-diff optimization, and
+`force-mode-line-update t' touches every frame -- both fine for the rare,
+explicit reordering actions this is advised onto, but NOT for
+`window-buffer-change-functions'/`window-selection-change-functions' (see
+`lg/refresh-workspace-tab-bar-light' below), which fire constantly."
     ;; Update Doom's cache if you're using it in rendering
     (when (boundp 'persp-names-cache)
       (setq persp-names-cache (persp-names-current-frame-fast-ordered)))
@@ -80,8 +86,28 @@ name as well to trigger updates"
   ;; worktree segment's highlighted entry (and whether it shows at all)
   ;; depends on the current buffer, which changes far more often than the
   ;; persp does.
-  (add-hook 'window-buffer-change-functions #'lg/refresh-workspace-tab-bar)
-  (add-hook 'window-selection-change-functions #'lg/refresh-workspace-tab-bar)
+  ;;
+  ;; Deliberately NOT `lg/refresh-workspace-tab-bar': these two hooks are run
+  ;; by `redisplay_internal' itself, as part of a redisplay cycle that's
+  ;; already under way and about to repaint the frame -- Vertico forces one
+  ;; of these on every minibuffer keystroke (`vertico--exhibit'), and each
+  ;; one was re-triggering a *second*, redundant full-frame `redraw-display'
+  ;; (18.9% of self-time in a profiler-profile dump captured while switching
+  ;; perspectives via `M-x'/`completing-read'). Invalidating the tab-bar
+  ;; cache is the only part that's actually needed here -- it's what makes
+  ;; the already-in-flight redisplay pick up the new current buffer/window
+  ;; for the worktree highlight; `persp-names-cache' doesn't need
+  ;; recomputing (a buffer/selection change never adds or removes a
+  ;; perspective) and an extra forced repaint on top of the one already
+  ;; happening is pure waste.
+  (defun lg/refresh-workspace-tab-bar-light (&rest _)
+    "Invalidate the tab-bar cache so the worktree/repo highlight picks up
+the new current buffer or window selection on the redisplay already under
+way, without forcing a second, redundant full-frame redraw."
+    (when (fboundp 'tab-bar--invalidate-cache)
+      (tab-bar--invalidate-cache)))
+  (add-hook 'window-buffer-change-functions #'lg/refresh-workspace-tab-bar-light)
+  (add-hook 'window-selection-change-functions #'lg/refresh-workspace-tab-bar-light)
   )
 
 (after! tab-bar
