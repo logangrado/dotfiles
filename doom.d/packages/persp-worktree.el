@@ -57,6 +57,52 @@ Cached per PATH for `lg/worktree--root-p-ttl' seconds."
 names), otherwise its directory name."
   (if (lg/worktree-root-p path) "root" (file-name-nondirectory path)))
 
+(defun lg/worktree--head-file (path)
+  "Return the path to the `HEAD' file that tracks worktree PATH's checked-out
+branch. For the main worktree, PATH's own `.git' is a directory and
+\"PATH/.git/HEAD\" is it directly. For a linked worktree, PATH's `.git' is a
+plain text file containing a `gitdir: X' line pointing at
+\"ROOT/.git/worktrees/NAME\", whose own `HEAD' file is the one that matters.
+No subprocess either way, just small local file reads."
+  (let ((dot-git (expand-file-name ".git" path)))
+    (if (file-directory-p dot-git)
+        (expand-file-name "HEAD" dot-git)
+      (with-temp-buffer
+        (insert-file-contents dot-git)
+        (goto-char (point-min))
+        (when (looking-at "gitdir: \\(.+\\)$")
+          (expand-file-name "HEAD" (string-trim (match-string 1))))))))
+
+(defun lg/worktree--branch-of (path)
+  "Return worktree PATH's checked-out branch name, or nil if detached.
+Reads `HEAD' directly (see `lg/worktree--head-file'); no subprocess, no
+caching needed since it's a single small local file read."
+  (when-let* ((head-file (lg/worktree--head-file path))
+              ((file-readable-p head-file)))
+    (with-temp-buffer
+      (insert-file-contents head-file)
+      (goto-char (point-min))
+      (when (looking-at "ref: refs/heads/\\(.+\\)$")
+        (match-string 1)))))
+
+(defun lg/worktree--repo-root-of (path)
+  "Return the main worktree's path for the repo that worktree PATH belongs
+to. For the main worktree, that's PATH itself. For a linked worktree, it's
+the `ROOT' in `.git's `gitdir: ROOT/.git/worktrees/NAME' line. Used as a
+stable per-repo key for `lg/worktree--order-table', in place of the
+git-list-derived `lg/worktree--repo-key' -- this version works even when
+the repo's root worktree has no persp open at all."
+  (let ((dot-git (expand-file-name ".git" path)))
+    (if (file-directory-p dot-git)
+        path
+      (with-temp-buffer
+        (insert-file-contents dot-git)
+        (goto-char (point-min))
+        (when (looking-at "gitdir: \\(.+\\)$")
+          (let ((gitdir (string-trim (match-string 1))))
+            (directory-file-name
+             (replace-regexp-in-string "/\\.git/worktrees/[^/]+/?\\'" "" gitdir))))))))
+
 (defun lg/worktree--porcelain-list ()
   "Return an ordered list of (PATH . BRANCH) for the current repo's
 worktrees, PATH with no trailing slash, BRANCH nil if detached.
@@ -168,9 +214,21 @@ directory search."
       (lg/worktree--repo-name)
     (format "%s:%s" (lg/worktree--repo-name) (lg/worktree-display-name path))))
 
-(defun lg/worktree--persp-switch (name)
-  "Switch to persp NAME, auto-creating it (as an empty perspective) if it
-doesn't exist yet."
+(defvar lg/worktree--persp-path-table (make-hash-table :test 'equal)
+  "Persp name -> worktree path, recorded once by `lg/worktree--persp-switch'
+at the moment a worktree's persp is switched to. Lets `lg/worktree-open-list'
+recover each open worktree's path without ever asking git for it: the path
+is already known for certain at every callsite that switches to a
+worktree persp, so there's nothing to look up later. Stale entries for
+closed persps are harmless -- persp names are a deterministic function of
+path (`lg/worktree-persp-name'), so a reopened persp just gets the same
+entry again.")
+
+(defun lg/worktree--persp-switch (name path)
+  "Switch to persp NAME (for worktree PATH), auto-creating it (as an empty
+perspective) if it doesn't exist yet. Records PATH in
+`lg/worktree--persp-path-table' so it can be recovered later without git."
+  (puthash name path lg/worktree--persp-path-table)
   (+workspace-switch name t))
 
 ;; ---------------------------------------------------------------------------
@@ -267,7 +325,7 @@ perspective already existed."
   (let* ((worktrees (lg/worktree-list))
          (choice (completing-read "Open file in worktree: " (mapcar #'car worktrees))))
     (when-let* ((path (cdr (assoc choice worktrees))))
-      (lg/worktree--persp-switch (lg/worktree-persp-name path))
+      (lg/worktree--persp-switch (lg/worktree-persp-name path) path)
       (lg/worktree-jump-to-path path))))
 
 (defun lg/worktree-switch-to-path (path)
@@ -277,7 +335,7 @@ file/dired buffer via `lg/worktree-jump-to-path'; an existing one is left
 showing whatever it last had open."
   (let* ((name (lg/worktree-persp-name path))
          (existed (+workspace-exists-p name)))
-    (lg/worktree--persp-switch name)
+    (lg/worktree--persp-switch name path)
     (unless existed
       (lg/worktree-jump-to-path path))))
 
@@ -289,13 +347,42 @@ number/left-right commands all work off this \"what's open\" list, while
 `lg/worktree-switch' (open a file) still offers every worktree, since its
 whole point is to open one you haven't visited yet.
 
-Checked via `+workspace-exists-p' on the worktree's persp name, not by
-scanning `buffer-list' for a buffer rooted there: a worktree's persp can be
-open with no buffer whose `default-directory' happens to point at it yet
-\(e.g. right after `lg/worktree-move-buffer-to-path' moves an existing
-buffer in), and it should still count as open."
-  (cl-remove-if-not (lambda (wt) (+workspace-exists-p (lg/worktree-persp-name (cdr wt))))
-                     (lg/worktree-list)))
+Unlike `lg/worktree-list', never touches git: this is on the redisplay-hot
+path (via `lg/worktree-bar-formatted', part of `tab-bar-format'), so it's
+built entirely from already-open persps and cheap local file reads. Open
+persps for the current repo come from `+workspace-list-names' (already
+git-free, same as `lg/worktree-repo-list'); each one's path comes from
+`lg/worktree--persp-path-table' (recorded by `lg/worktree--persp-switch'
+whenever we switched there); each path's branch comes from
+`lg/worktree--branch-of' (a `HEAD' file read, no subprocess). A persp
+with no recorded path (never switched-to via this code, e.g. left over
+from before it existed) is dropped rather than falling back to git --
+switching to it once repopulates the table."
+  (let* ((repo (lg/worktree-persp-repo (safe-persp-name (get-current-persp))))
+         (names (cl-remove-if-not
+                 (lambda (name)
+                   (and (not (string= name persp-nil-name))
+                        (string= (lg/worktree-persp-repo name) repo)))
+                 (+workspace-list-names)))
+         (worktrees
+          (delq nil
+                (mapcar
+                 (lambda (name)
+                   (when-let* ((path (gethash name lg/worktree--persp-path-table)))
+                     (let* ((branch (lg/worktree--branch-of path))
+                            (label (format "%s%s"
+                                           (lg/worktree-display-name path)
+                                           (if branch (format " (%s)" branch) ""))))
+                       (cons label path))))
+                 names)))
+         (key (and worktrees (lg/worktree--repo-root-of (cdr (car worktrees)))))
+         (order (and key (gethash key lg/worktree--order-table))))
+    (if (not order)
+        worktrees
+      (append
+       (delq nil (mapcar (lambda (path) (cl-find-if (lambda (wt) (string= (cdr wt) path)) worktrees))
+                          order))
+       (cl-remove-if (lambda (wt) (member (cdr wt) order)) worktrees)))))
 
 (defun lg/worktree-current-path ()
   "Return the worktree path the current buffer is rooted in, or nil."
@@ -374,7 +461,7 @@ the stored order without moving anything the bar shows."
       (let* ((target (mod (+ current delta) n))
              (current-path (cdr (nth current open)))
              (target-path (cdr (nth target open)))
-             (key (lg/worktree--repo-key (lg/worktree--raw-list)))
+             (key (lg/worktree--repo-root-of current-path))
              (paths (mapcar #'cdr (lg/worktree-list)))
              (i (cl-position current-path paths :test #'string=))
              (j (cl-position target-path paths :test #'string=)))
@@ -444,12 +531,13 @@ bar's highlight and `lg/worktree-switch-left'/`-right' would still treat
 BUFFER as belonging to the source. Returns the target perspective's name."
   (let* ((name (lg/worktree-persp-name path))
          (source (get-current-persp))
-         (source-name (safe-persp-name source)))
+         (source-name (safe-persp-name source))
+         (source-path (lg/worktree-current-path)))
     (if (+workspace-exists-p name)
         (persp-add-buffer buffer (+workspace-get name) nil)
       (lg/worktree-switch-to-path path)
       (persp-add-buffer buffer (get-current-persp) nil)
-      (lg/worktree--persp-switch source-name))
+      (lg/worktree--persp-switch source-name source-path))
     (persp-remove-buffer buffer source)
     (with-current-buffer buffer
       (setq default-directory (file-name-as-directory path)))
