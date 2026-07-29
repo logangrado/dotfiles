@@ -57,12 +57,35 @@ Cached per PATH for `lg/worktree--root-p-ttl' seconds."
 names), otherwise its directory name."
   (if (lg/worktree-root-p path) "root" (file-name-nondirectory path)))
 
+(defun lg/worktree--porcelain-list ()
+  "Return an ordered list of (PATH . BRANCH) for the current repo's
+worktrees, PATH with no trailing slash, BRANCH nil if detached.
+
+Parses `git worktree list --porcelain' directly in a single subprocess
+call, rather than going through `magit-list-worktrees' — which calls
+`magit-toplevel' (a separate `git rev-parse --show-toplevel' subprocess)
+once per worktree to canonicalize each path to the exact form magit uses
+as an internal cache key elsewhere. This callsite only needs path and
+branch, both already present in the porcelain output, so it can skip
+that canonicalization and its N extra subprocesses entirely."
+  (require 'magit)
+  (let (worktrees path branch)
+    (dolist (line (magit-git-lines "worktree" "list" "--porcelain"))
+      (cond
+       ((string-prefix-p "worktree " line)
+        (when path (push (cons path branch) worktrees))
+        (setq path (directory-file-name (substring line 9))
+              branch nil))
+       ((string-prefix-p "branch refs/heads/" line)
+        (setq branch (substring line 18)))))
+    (when path (push (cons path branch) worktrees))
+    (nreverse worktrees)))
+
 (defvar lg/worktree--raw-list-cache (make-hash-table :test 'equal)
   "default-directory -> (TIMESTAMP . RESULT) cache for `lg/worktree--raw-list'.
-`magit-list-worktrees' shells out to git, and `lg/worktree--raw-list' sits
-underneath `lg/worktree-bar-formatted', which is part of `tab-bar-format'
-and so gets called on every redisplay — without caching, that's a git
-subprocess on every keystroke.")
+`lg/worktree--raw-list' sits underneath `lg/worktree-bar-formatted', which
+is part of `tab-bar-format' and so gets called on every redisplay —
+without caching, that's a git subprocess on every keystroke.")
 
 (defconst lg/worktree--raw-list-ttl 1.0
   "Seconds a `lg/worktree--raw-list-cache' entry stays valid.
@@ -71,7 +94,7 @@ almost immediately, long enough to absorb redisplay-frequency calls.")
 
 (defun lg/worktree--raw-list ()
   "Return an alist of (LABEL . PATH) for worktrees of the current repo,
-in `magit-list-worktrees' order (before any user reordering is applied).
+in `git worktree list' order (before any user reordering is applied).
 Cached per `default-directory' for `lg/worktree--raw-list-ttl' seconds."
   (require 'magit)
   (let* ((key default-directory)
@@ -79,13 +102,13 @@ Cached per `default-directory' for `lg/worktree--raw-list-ttl' seconds."
     (if (and cached (< (- (float-time) (car cached)) lg/worktree--raw-list-ttl))
         (cdr cached)
       (let ((result (mapcar (lambda (wt)
-                               (let* ((path (directory-file-name (car wt)))
-                                      (branch (nth 2 wt))
+                               (let* ((path (car wt))
+                                      (branch (cdr wt))
                                       (label (format "%s%s"
                                                       (lg/worktree-display-name path)
                                                       (if branch (format " (%s)" branch) ""))))
                                  (cons label path)))
-                             (magit-list-worktrees))))
+                             (lg/worktree--porcelain-list))))
         (puthash key (cons (float-time) result) lg/worktree--raw-list-cache)
         result))))
 
