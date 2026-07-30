@@ -65,13 +65,15 @@ plain text file containing a `gitdir: X' line pointing at
 \"ROOT/.git/worktrees/NAME\", whose own `HEAD' file is the one that matters.
 No subprocess either way, just small local file reads."
   (let ((dot-git (expand-file-name ".git" path)))
-    (if (file-directory-p dot-git)
-        (expand-file-name "HEAD" dot-git)
+    (cond
+     ((file-directory-p dot-git) (expand-file-name "HEAD" dot-git))
+     ((file-exists-p dot-git)
       (with-temp-buffer
         (insert-file-contents dot-git)
         (goto-char (point-min))
         (when (looking-at "gitdir: \\(.+\\)$")
-          (expand-file-name "HEAD" (string-trim (match-string 1))))))))
+          (expand-file-name "HEAD" (string-trim (match-string 1))))))
+     (t nil))))
 
 (defun lg/worktree--branch-of (path)
   "Return worktree PATH's checked-out branch name, or nil if detached.
@@ -93,15 +95,17 @@ stable per-repo key for `lg/worktree--order-table', in place of the
 git-list-derived `lg/worktree--repo-key' -- this version works even when
 the repo's root worktree has no persp open at all."
   (let ((dot-git (expand-file-name ".git" path)))
-    (if (file-directory-p dot-git)
-        path
+    (cond
+     ((file-directory-p dot-git) path)
+     ((file-exists-p dot-git)
       (with-temp-buffer
         (insert-file-contents dot-git)
         (goto-char (point-min))
         (when (looking-at "gitdir: \\(.+\\)$")
           (let ((gitdir (string-trim (match-string 1))))
             (directory-file-name
-             (replace-regexp-in-string "/\\.git/worktrees/[^/]+/?\\'" "" gitdir))))))))
+             (replace-regexp-in-string "/\\.git/worktrees/[^/]+/?\\'" "" gitdir))))))
+     (t nil))))
 
 (defun lg/worktree--porcelain-list ()
   "Return an ordered list of (PATH . BRANCH) for the current repo's
@@ -387,11 +391,13 @@ switching to it once repopulates the table."
                 (mapcar
                  (lambda (name)
                    (when-let* ((path (gethash name lg/worktree--persp-path-table)))
-                     (let* ((branch (lg/worktree--branch-of path))
-                            (label (format "%s%s"
-                                           (lg/worktree-display-name path)
-                                           (if branch (format " (%s)" branch) ""))))
-                       (cons label path))))
+                     (if (not (file-exists-p path))
+                         (progn (remhash name lg/worktree--persp-path-table) nil)
+                       (let* ((branch (lg/worktree--branch-of path))
+                              (label (format "%s%s"
+                                             (lg/worktree-display-name path)
+                                             (if branch (format " (%s)" branch) ""))))
+                         (cons label path)))))
                  names)))
          (key (and worktrees (lg/worktree--repo-root-of (cdr (car worktrees)))))
          (order (and key (gethash key lg/worktree--order-table))))
