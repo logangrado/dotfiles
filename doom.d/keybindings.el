@@ -188,6 +188,7 @@
                ;; open, the two are equivalent.
                :desc "Kill worktree buffers" "k" #'lg/worktree-kill
                :desc "Kill project buffers" "K" #'projectile-kill-buffers
+               :desc "Repair stale worktree perspectives" "R" #'lg/worktree-persp-repair
                "[" #'lg/worktree-switch-left
                "]" #'lg/worktree-switch-right
                "{" #'lg/worktree-move-left

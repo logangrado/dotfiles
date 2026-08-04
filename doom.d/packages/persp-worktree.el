@@ -18,7 +18,8 @@
 ;; here is private implementation detail and may change freely):
 ;;  - Naming: `lg/worktree-persp-name'
 ;;  - Commands: `lg/worktree-switch', `lg/worktree-quick-switch',
-;;    `lg/worktree-kill', `lg/worktree-move-left'/`-right',
+;;    `lg/worktree-kill', `lg/worktree-persp-repair',
+;;    `lg/worktree-move-left'/`-right',
 ;;    `lg/worktree-switch-left'/`-right', `lg/worktree-switch-to-N',
 ;;    `lg/repo-switch-to-repo', `lg/repo-switch-left'/`-right',
 ;;    `lg/repo-switch-to-N', `lg/worktree-move-buffer-to-path'
@@ -231,7 +232,16 @@ entry again.")
 (defun lg/worktree--persp-switch (name path)
   "Switch to persp NAME (for worktree PATH), auto-creating it (as an empty
 perspective) if it doesn't exist yet. Records PATH in
-`lg/worktree--persp-path-table' so it can be recovered later without git."
+`lg/worktree--persp-path-table' so it can be recovered later without git.
+
+If NAME is already open but recorded under a *different* path, that's a
+stale persp from a deleted worktree whose display name (repo + directory
+basename) is being reused by a new one -- kill it first so the new
+worktree gets a clean perspective instead of inheriting dead buffers and
+window layout."
+  (let ((existing (gethash name lg/worktree--persp-path-table)))
+    (when (and existing (not (equal existing path)) (+workspace-exists-p name))
+      (lg/worktree--kill-persp name)))
   (puthash name path lg/worktree--persp-path-table)
   (+workspace-switch name t))
 
@@ -243,11 +253,18 @@ in (e.g. root), which persp-mode activates on its own. Hooked onto the
 same buffer/selection-change events as `lg/refresh-workspace-tab-bar-light'
 in persp.el (cheap: a hash lookup, plus `lg/worktree-current-path' only
 once that lookup misses), so it catches the path as soon as the current
-buffer lands inside a project, without needing git."
+buffer lands inside a project, without needing git.
+
+Only records PATH if `lg/worktree-persp-name' of it actually matches the
+persp we're backfilling -- otherwise the current buffer just isn't in
+this persp's own worktree (e.g. its worktree was deleted and a stray
+buffer from elsewhere ended up here), and recording it would silently
+point this persp's entry at the wrong path."
   (let ((name (safe-persp-name (get-current-persp))))
     (unless (or (string= name persp-nil-name)
                 (gethash name lg/worktree--persp-path-table))
-      (when-let* ((path (lg/worktree-current-path)))
+      (when-let* ((path (lg/worktree-current-path))
+                  ((equal (lg/worktree-persp-name path) name)))
         (puthash name path lg/worktree--persp-path-table)))))
 
 (add-hook 'window-buffer-change-functions #'lg/worktree--maybe-record-current-path)
@@ -506,29 +523,104 @@ the stored order without moving anything the bar shows."
   (interactive)
   (lg/worktree-move 1))
 
+(defun lg/worktree--kill-persp (name)
+  "Kill worktree persp NAME and purge it from every worktree-persp table:
+`lg/worktree--persp-path-table', `lg/worktree--repo-mru' (if NAME was the
+MRU for its repo), and `lg/worktree--order-table' (if NAME's path appears
+in any repo's custom order). If NAME is the current persp, switches to a
+sibling persp of the same repo first when one is open; otherwise falls
+back to Doom's default behavior for killing your only/last workspace."
+  (let* ((path (gethash name lg/worktree--persp-path-table))
+         (repo (lg/worktree-persp-repo name)))
+    (when (string= name (safe-persp-name (get-current-persp)))
+      (when-let* ((other (cl-find-if
+                           (lambda (n) (and (not (string= n name))
+                                            (string= (lg/worktree-persp-repo n) repo)))
+                           (+workspace-list-names))))
+        (+workspace-switch other t)))
+    (+workspace/kill name)
+    (remhash name lg/worktree--persp-path-table)
+    (when (equal (gethash repo lg/worktree--repo-mru) name)
+      (remhash repo lg/worktree--repo-mru))
+    (when path
+      (maphash (lambda (key paths)
+                 (when (member path paths)
+                   (puthash key (remove path paths) lg/worktree--order-table)))
+               lg/worktree--order-table))
+    ;; Recompute after killing, not just before: whether the bar should
+    ;; still show at all can depend on the worktree we just closed.
+    (when (fboundp 'lg/refresh-workspace-tab-bar) (lg/refresh-workspace-tab-bar))))
+
+(defvar lg/worktree--sweeping nil
+  "Non-nil while `lg/worktree--sweep-dead-persps' is running, so the persp
+switches it triggers (via `lg/worktree--kill-persp') don't re-enter it
+through `persp-activated-functions'.")
+
+(defun lg/worktree--stale-persp-p (name)
+  "Non-nil if worktree persp NAME's recorded path is stale: gone from disk,
+or -- the case actually seen in practice -- pointing at a different
+worktree entirely (a wrong path backfilled by
+`lg/worktree--maybe-record-current-path' into an orphaned persp after its
+own worktree's entry was cleared elsewhere). A persp with no recorded path
+at all is left alone: switching to it once will populate it correctly."
+  (when-let* ((path (gethash name lg/worktree--persp-path-table)))
+    (or (not (file-exists-p path))
+        (not (equal (lg/worktree-persp-name path) name)))))
+
+(defun lg/worktree--sweep-dead-persps (&rest _)
+  "Kill every open worktree persp whose recorded path is stale (see
+`lg/worktree--stale-persp-p'). Hooked onto `persp-activated-functions' so
+it runs once per real switch, not on the tab-bar's redisplay-hot path
+\(`lg/worktree-open-list' already prunes the path-table there, but never
+kills anything -- redisplay is the wrong place for that)."
+  (unless lg/worktree--sweeping
+    (let ((lg/worktree--sweeping t))
+      (dolist (name (+workspace-list-names))
+        (unless (string= name persp-nil-name)
+          (when (lg/worktree--stale-persp-p name)
+            (lg/worktree--kill-persp name)))))))
+
+(add-hook 'persp-activated-functions #'lg/worktree--sweep-dead-persps)
+
+;;;###autoload
+(defun lg/worktree-persp-repair ()
+  "Sweep all open worktree persps for stale path-table entries -- a
+worktree deleted out from under its persp, or a name/path mismatch from a
+stale backfill, see `lg/worktree--stale-persp-p' -- and kill them. Manual
+counterpart to the automatic sweep on `persp-activated-functions', for
+repairing a session that's already in a bad state without needing to
+switch persps first."
+  (interactive)
+  (let ((before (length (+workspace-list-names))))
+    (lg/worktree--sweep-dead-persps)
+    (let ((killed (- before (length (+workspace-list-names)))))
+      (message "Worktree persp repair: closed %d stale persp%s."
+                killed (if (= killed 1) "" "s")))))
+
 ;;;###autoload
 (defun lg/worktree-kill ()
   "Kill the perspective for the current worktree, dropping it from the
 worktree bar. Only closes the view: doesn't touch the worktree, its
 branch, or anything on disk. If another worktree of this repo has a
 perspective open, switches there first; otherwise falls back to Doom's
-default behavior for killing your only/last workspace."
+default behavior for killing your only/last workspace.
+
+Falls back to killing the current persp directly by name when its
+worktree is already gone (so `lg/worktree-current-path' can't resolve
+it) but the persp is nonetheless known to be a worktree persp -- i.e. it
+has (possibly stale) path-table entry. With no such entry and no
+resolvable worktree, this isn't a worktree persp at all, so it's left
+alone."
   (interactive)
-  (if-let* ((path (lg/worktree-current-path)))
-      (let* ((name (lg/worktree-persp-name path))
-             (other (cl-find-if (lambda (wt) (not (string= (expand-file-name (cdr wt)) path)))
-                                 (lg/worktree-open-list))))
-        ;; Switch away first when a sibling worktree-persp is open, so we
-        ;; don't kill the persp we're currently standing in. With no
-        ;; sibling, just kill it in place — `+workspace/kill' already knows
-        ;; what to do when it's your only/last workspace.
-        (when other
-          (lg/worktree-switch-to-path (cdr other)))
-        (+workspace/kill name)
-        ;; Recompute after killing, not just before: whether the bar should
-        ;; still show at all can depend on the worktree we just closed.
-        (when (fboundp 'lg/refresh-workspace-tab-bar) (lg/refresh-workspace-tab-bar)))
-    (message "Not inside a git worktree.")))
+  (let* ((current-name (safe-persp-name (get-current-persp)))
+         (name (or (when-let* ((path (lg/worktree-current-path)))
+                     (lg/worktree-persp-name path))
+                   (and (not (string= current-name persp-nil-name))
+                        (gethash current-name lg/worktree--persp-path-table)
+                        current-name))))
+    (if name
+        (lg/worktree--kill-persp name)
+      (message "Not inside a git worktree."))))
 
 ;;;###autoload
 (defun lg/worktree-move-buffer-to-path (buffer path)
