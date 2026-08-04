@@ -196,28 +196,33 @@ automatically: unknown paths are appended in `magit-list-worktrees' order."
         (projectile-find-file)
       (error (dired default-directory)))))
 
-(defun lg/worktree--repo-name ()
-  "Directory name of the current buffer's repo's main worktree.
-Reuses `lg/worktree--raw-list' for `default-directory' as-is, rather than
-rebinding it to some other worktree's path and fetching a second, separately
--cached raw list — every caller only ever needs this for a worktree of the
-*current* repo, so the current context's (already-cached) raw list already
-contains it. This is called once per worktree from `lg/worktree-persp-name',
-which `lg/worktree-open-list' calls per worktree on every redisplay via the
-tab bar, so a fresh `magit-list-worktrees' call per worktree here would
-defeat the `lg/worktree--raw-list' cache almost entirely."
-  (file-name-nondirectory
-   (directory-file-name
-    (cdr (cl-find-if (lambda (wt) (lg/worktree-root-p (cdr wt))) (lg/worktree--raw-list))))))
+(defun lg/worktree--repo-name-of (path)
+  "Directory name of the repo PATH belongs to, derived purely from PATH via
+`lg/worktree--repo-root-of' (a `.git' file read, no git subprocess, no
+dependence on `default-directory').
+
+Must stay path-pure: `lg/worktree--stale-persp-p' and the backfill guard
+in `lg/worktree--maybe-record-current-path' both call
+`lg/worktree-persp-name' (which uses this) to name-check *other* open
+persps' recorded paths while the current buffer sits in a completely
+different repo. An earlier ambient-`default-directory'-based version of
+this (via `lg/worktree--raw-list') silently returned the *current*
+buffer's repo name instead of PATH's, so every persp outside the current
+repo looked \"mismatched\" and got killed — the actual cause of a real
+incident where `lg/worktree-persp-repair' and even an ordinary project
+switch wiped out unrelated open perspectives."
+  (file-name-nondirectory (directory-file-name (lg/worktree--repo-root-of path))))
 
 (defun lg/worktree-persp-name (path)
   "The persp name for worktree PATH: \"repo\" for the main worktree, or
 \"repo:worktree\" for a linked one. PATH is always a project root (from
 `magit-list-worktrees'), so this resolves directly without an upward
-directory search."
+directory search. Path-pure: does not depend on `default-directory', so
+it's safe to call for any worktree's path regardless of which persp/repo
+the current buffer happens to be in."
   (if (lg/worktree-root-p path)
-      (lg/worktree--repo-name)
-    (format "%s:%s" (lg/worktree--repo-name) (lg/worktree-display-name path))))
+      (lg/worktree--repo-name-of path)
+    (format "%s:%s" (lg/worktree--repo-name-of path) (lg/worktree-display-name path))))
 
 (defvar lg/worktree--persp-path-table (make-hash-table :test 'equal)
   "Persp name -> worktree path, recorded once by `lg/worktree--persp-switch'
