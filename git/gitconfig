@@ -50,3 +50,5 @@
 # e.g., [user] email = work@example.com
 [include]
     path = ~/.gitconfig.local
+[rerere]
+	enabled = true
