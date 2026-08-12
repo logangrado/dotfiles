@@ -205,8 +205,8 @@ If not in a weekly note, go to previous week from current week."
 
   :bind
   (:map org-roam-dailies-map
-   ("Y" . org-roam-dailies-capture-yesterday)
-   ("T" . org-roam-dailies-capture-tomorrow))
+        ("Y" . org-roam-dailies-capture-yesterday)
+        ("T" . org-roam-dailies-capture-tomorrow))
 
 
 
@@ -297,7 +297,7 @@ If not in a weekly note, go to previous week from current week."
       (:prefix ("n" . "notes")
        :desc "Find roam node"  "f" #'org-roam-node-find
        :desc "Search roam"     "s" #'lg/org-roam-search
-       :desc "Ordered agenda"  "a" (cmd! (org-agenda nil "o"))
+       :desc "Ordered todo"  "a" #'lg/org-todo-ordered
        (:prefix ("c" . "capture")
         :desc "Todo"    "t" (cmd! (org-capture nil "t"))
         :desc "Meeting" "m" (cmd! (org-capture nil "m")))

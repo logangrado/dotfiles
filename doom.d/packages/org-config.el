@@ -177,6 +177,11 @@ display highlight is suppressed in lg/agenda-colorize."
                    (org-agenda-prefix-format " %(lg/agenda-order-str)  %(lg/agenda-state-str)  %(lg/agenda-tags-str)  ")))))))
   )
 
+(defun lg/org-todo-ordered ()
+  "Open the \"Ordered TODOs\" custom agenda view (priority-grouped)."
+  (interactive)
+  (org-agenda nil "o"))
+
 ;; ORDER normalization: runs on every agenda open, per priority group
 
 (defun lg/org-entry-put-safe (marker property value)
