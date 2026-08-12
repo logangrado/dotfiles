@@ -12,6 +12,8 @@ ALL=("zsh/zshrc $HOME/.zshrc"
      "ruff/ruff.toml $HOME/.config/ruff/ruff.toml"
      "agents/AGENTS.md $HOME/.claude/CLAUDE.md"
      "agents/AGENTS.md $HOME/.codex/AGENTS.md"
+     "agents/skills $HOME/.claude/skills"
+     "agents/skills $HOME/.codex/skills"
      "agents/statusline-command.sh $HOME/.claude/statusline-command.sh"
     )
 
@@ -32,14 +34,6 @@ case "${unameOut}" in
     CYGWIN*) ;;
     MINGW*)  ;;
 esac
-
-# Auto-link every skill under agents/skills/ into ~/.claude/skills/ and ~/.codex/skills/
-for skill_dir in "$DOT_DIR"/agents/skills/*/; do
-    [[ -d $skill_dir ]] || continue
-    skill_name=$(basename "$skill_dir")
-    ALL+=("agents/skills/$skill_name $HOME/.claude/skills/$skill_name")
-    ALL+=("agents/skills/$skill_name $HOME/.codex/skills/$skill_name")
-done
 
 DATE_TIME=$(date '+%Y-%m-%d')
 BACKUP_DIR="$DOT_DIR/backups/$DATE_TIME"
