@@ -393,15 +393,21 @@ whole point is to open one you haven't visited yet.
 
 Unlike `lg/worktree-list', never touches git: this is on the redisplay-hot
 path (via `lg/worktree-bar-formatted', part of `tab-bar-format'), so it's
-built entirely from already-open persps and cheap local file reads. Open
-persps for the current repo come from `+workspace-list-names' (already
-git-free, same as `lg/worktree-repo-list'); each one's path comes from
-`lg/worktree--persp-path-table' (recorded by `lg/worktree--persp-switch'
-whenever we switched there); each path's branch comes from
-`lg/worktree--branch-of' (a `HEAD' file read, no subprocess). A persp
-with no recorded path (never switched-to via this code, e.g. left over
-from before it existed) is dropped rather than falling back to git --
-switching to it once repopulates the table."
+built entirely from already-open persps and in-memory lookups, no file
+I/O at all. Open persps for the current repo come from
+`+workspace-list-names' (already git-free, same as `lg/worktree-repo-list');
+each one's path comes from `lg/worktree--persp-path-table' (recorded by
+`lg/worktree--persp-switch' whenever we switched there). A persp with no
+recorded path (never switched-to via this code, e.g. left over from before
+it existed) is dropped rather than falling back to git — switching to it
+once repopulates the table.
+
+The label is name-only (no branch): every caller on the hot path
+(`lg/worktree-bar-formatted' and the switch/number/left-right commands)
+only ever reads the path, not the label — `lg/worktree-quick-switch' is
+the sole consumer that wants a branch-annotated label, so it computes that
+itself (a `HEAD' file read per entry, fine there since it only runs once
+per interactive invocation, not once per redisplay)."
   (let* ((repo (lg/worktree-persp-repo (safe-persp-name (get-current-persp))))
          (names (cl-remove-if-not
                  (lambda (name)
@@ -415,11 +421,7 @@ switching to it once repopulates the table."
                    (when-let* ((path (gethash name lg/worktree--persp-path-table)))
                      (if (not (file-exists-p path))
                          (progn (remhash name lg/worktree--persp-path-table) nil)
-                       (let* ((branch (lg/worktree--branch-of path))
-                              (label (format "%s%s"
-                                             (lg/worktree-display-name path)
-                                             (if branch (format " (%s)" branch) ""))))
-                         (cons label path)))))
+                       (cons (lg/worktree-display-name path) path))))
                  names)))
          (key (and worktrees (lg/worktree--repo-root-of (cdr (car worktrees)))))
          (order (and key (gethash key lg/worktree--order-table))))
@@ -430,11 +432,31 @@ switching to it once repopulates the table."
                           order))
        (cl-remove-if (lambda (wt) (member (cdr wt) order)) worktrees)))))
 
+(defvar-local lg/worktree--current-path-memo nil
+  "(DEFAULT-DIRECTORY . RESULT) memo for `lg/worktree-current-path', keyed on
+the `default-directory' it was computed from. `lg/worktree-move-buffer-to-path'
+already treats changing a buffer's `default-directory' as the one sanctioned
+way to signal \"this buffer's worktree identity changed\" (see its
+docstring) -- vterm's shell-integration updating `default-directory' when
+you `cd' inside a terminal is the same signal. So comparing against the
+last-seen `default-directory' is exactly the right invalidation, not a
+polling approximation of it: recompute only when the thing the result
+actually depends on has changed, which for most buffers (anything that
+isn't a roaming vterm) is never after the first call.")
+
 (defun lg/worktree-current-path ()
-  "Return the worktree path the current buffer is rooted in, or nil."
-  (and (fboundp 'projectile-project-root)
-       (when-let* ((root (projectile-project-root)))
-         (directory-file-name (expand-file-name root)))))
+  "Return the worktree path the current buffer is rooted in, or nil.
+Memoized per-buffer against `default-directory'; see
+`lg/worktree--current-path-memo'."
+  (if (and lg/worktree--current-path-memo
+           (equal (car lg/worktree--current-path-memo) default-directory))
+      (cdr lg/worktree--current-path-memo)
+    (let ((result
+           (and (fboundp 'projectile-project-root)
+                (when-let* ((root (projectile-project-root)))
+                  (directory-file-name (expand-file-name root))))))
+      (setq lg/worktree--current-path-memo (cons default-directory result))
+      result)))
 
 (defun lg/worktree--current-index (worktrees)
   "Return the 0-based index of the current buffer's worktree within WORKTREES
@@ -448,11 +470,23 @@ switching to it once repopulates the table."
   "Switch to an already-open worktree of the current repo, within this
 perspective. Type to select; only offers worktrees with a buffer open
 already, since there's nothing to \"switch to\" otherwise — use
-`lg/worktree-switch' to open one you haven't visited yet."
+`lg/worktree-switch' to open one you haven't visited yet.
+
+Labels are branch-annotated (e.g. \"wt2 (feature-x)\") unlike
+`lg/worktree-open-list's bare names — this is the one place that's worth
+the `HEAD'-file read per worktree, since it only runs once per invocation
+of this command rather than once per redisplay."
   (interactive)
   (let* ((worktrees (lg/worktree-open-list))
-         (choice (completing-read "Switch to worktree: " (mapcar #'car worktrees))))
-    (when-let* ((path (cdr (assoc choice worktrees))))
+         (labeled (mapcar (lambda (wt)
+                             (let* ((path (cdr wt))
+                                    (branch (lg/worktree--branch-of path)))
+                               (cons (format "%s%s" (car wt)
+                                             (if branch (format " (%s)" branch) ""))
+                                     path)))
+                           worktrees))
+         (choice (completing-read "Switch to worktree: " (mapcar #'car labeled))))
+    (when-let* ((path (cdr (assoc choice labeled))))
       (lg/worktree-switch-to-path path))))
 
 (defun lg/worktree-switch-relative (delta)
