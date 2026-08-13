@@ -123,6 +123,45 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
                 result)))))))
 
   ;; -----------------------------------------------------------
+  ;; Ref-label tag-verify batching: avoid N `rev-parse --verify
+  ;; refs/tags/*' subprocess calls per log/status render
+  ;; -----------------------------------------------------------
+  ;; For every distinct ref name magit needs to decorate (branch/tag/HEAD
+  ;; labels), `magit-format-ref-labels' calls `magit-rev-verify' on
+  ;; "refs/tags/<name>" to check whether that name could also resolve as a
+  ;; tag, purely for correct label/face rendering. Profiled via `elp' on
+  ;; `magit-log' with a multi-branch/multi-commit view: 130 calls, ~1.78s —
+  ;; ~75% of total render time, the single largest cost by far. Batch it:
+  ;; one `git for-each-ref refs/tags' call per refresh, checked in Elisp
+  ;; instead of N subprocess calls. Non-tag `magit-rev-verify' calls are
+  ;; untouched.
+
+  (defvar lg/ref-verify-tags-cache nil
+    "Per-refresh cache: tag refname -> object hash. Populated lazily by
+`lg/ref-verify-tags-table', cleared on `magit-refresh-buffer-hook' so
+new/renamed tags are always picked up fresh next refresh.")
+
+  (defun lg/ref-verify-tags-table ()
+    "Hash table of all refs/tags/* -> object hash, for one refresh cycle."
+    (or lg/ref-verify-tags-cache
+        (setq lg/ref-verify-tags-cache
+              (let ((table (make-hash-table :test #'equal)))
+                (dolist (line (magit-git-lines "for-each-ref"
+                                                "--format=%(refname) %(objectname)"
+                                                "refs/tags"))
+                  (let ((sp (string-search " " line)))
+                    (when sp
+                      (puthash (substring line 0 sp) (substring line (1+ sp)) table))))
+                table))))
+
+  (define-advice magit-rev-verify (:around (orig rev) lg/batch-tag-verify)
+    "Batch refs/tags/* lookups via `lg/ref-verify-tags-table' instead of
+one `rev-parse --verify' subprocess per ref."
+    (if (string-prefix-p "refs/tags/" rev)
+        (gethash rev (lg/ref-verify-tags-table))
+      (funcall orig rev)))
+
+  ;; -----------------------------------------------------------
   ;; Worktrees section: avoid magit-list-worktrees' per-worktree subprocess
   ;; -----------------------------------------------------------
   ;; Stock `magit-insert-worktrees' goes through `magit-list-worktrees',
@@ -474,6 +513,8 @@ via the hook in forge-config.el."
 
   ;; Hooks
   (add-hook 'magit-refresh-buffer-hook #'lg/worktree--refresh-cache)
+  (add-hook 'magit-refresh-buffer-hook
+            (lambda () (setq lg/ref-verify-tags-cache nil)))
   (add-hook 'magit-diff-mode-hook #'lg/magit-wrap-lines)
 
   ;; Advice
