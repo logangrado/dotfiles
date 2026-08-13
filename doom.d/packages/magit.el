@@ -49,43 +49,44 @@
   (defvar lg/worktree--branch-cache (make-hash-table :test #'equal)
     "Cache: repo-toplevel -> list of short branch names in non-current worktrees.")
 
+  (defvar lg/worktree--porcelain-full-list-cache nil
+    "Per-refresh cache of `lg/worktree--porcelain-full-list''s result.
+
+Populated by whichever of the Worktrees section or
+`lg/worktree--refresh-cache' runs first in a `magit-status' refresh cycle,
+reused by the other, and cleared by `lg/worktree--refresh-cache' (the
+cycle's last consumer, via `magit-refresh-buffer-hook') so the next
+refresh recomputes fresh. Without this, both call sites shelled out to
+`git worktree list --porcelain' separately every refresh (confirmed via a
+per-call git log during profiling: ~0.04s of pure duplication).")
+
   (defun lg/worktree--porcelain-list ()
     "Return an ordered list of (PATH . BRANCH) for the current repo's
-worktrees, PATH with no trailing slash, BRANCH nil if detached.
-
-Parses `git worktree list --porcelain' directly in a single subprocess
-call, rather than going through `magit-list-worktrees' — which calls
-`magit-toplevel' (a separate `git rev-parse --show-toplevel' subprocess)
-once per worktree to canonicalize each path to the exact form magit uses
-as an internal cache key elsewhere. This callsite only needs path and
-branch, both already present in the porcelain output, so it can skip
-that canonicalization and its N extra subprocesses entirely."
-    (let (worktrees path branch)
-      (dolist (line (magit-git-lines "worktree" "list" "--porcelain"))
-        (cond
-         ((string-prefix-p "worktree " line)
-          (when path (push (cons path branch) worktrees))
-          (setq path (directory-file-name (substring line 9))
-                branch nil))
-         ((string-prefix-p "branch refs/heads/" line)
-          (setq branch (substring line 18)))))
-      (when path (push (cons path branch) worktrees))
-      (nreverse worktrees)))
+worktrees, PATH with no trailing slash, BRANCH nil if detached."
+    (mapcar (pcase-lambda (`(,path ,branch ,_commit ,_bare)) (cons path branch))
+            (lg/worktree--porcelain-full-list)))
 
   (defun lg/worktree--refresh-cache ()
     "Rebuild the worktree branch cache for the current repo."
-    (when-let ((top (magit-toplevel)))
-      (let* ((current-top (expand-file-name top))
-             (all (lg/worktree--porcelain-list))
-             (other-branches
-              (delq nil
-                    (mapcar (lambda (wt)
-                              (when (and (not (string= (expand-file-name (car wt))
-                                                       current-top))
-                                         (cdr wt))   ; BRANCH element
-                                (cdr wt)))
-                            all))))
-        (puthash current-top other-branches lg/worktree--branch-cache))))
+    (unwind-protect
+        (when-let ((top (magit-toplevel)))
+          (let* ((current-top (expand-file-name top))
+                 (all (lg/worktree--porcelain-list))
+                 (other-branches
+                  (delq nil
+                        (mapcar (lambda (wt)
+                                  (when (and (not (string= (expand-file-name (car wt))
+                                                           current-top))
+                                             (cdr wt))   ; BRANCH element
+                                    (cdr wt)))
+                                all))))
+            (puthash current-top other-branches lg/worktree--branch-cache)))
+      ;; This hook fires after section insertion (see
+      ;; `lg/magit--worktree-ref-labels'), so it's always the last consumer
+      ;; of `lg/worktree--porcelain-full-list-cache' in a refresh cycle --
+      ;; clear it here so the next refresh recomputes fresh rather than
+      ;; serving stale data.
+      (setq lg/worktree--porcelain-full-list-cache nil)))
 
   (defun lg/magit--worktree-ref-labels (result)
     "Post-process `magit-format-ref-labels' output.
@@ -120,6 +121,81 @@ branch checked out in another worktree, reface it as `magit-branch-worktree'."
                                          'magit-branch-worktree result))
                     (setq pos end)))
                 result)))))))
+
+  ;; -----------------------------------------------------------
+  ;; Worktrees section: avoid magit-list-worktrees' per-worktree subprocess
+  ;; -----------------------------------------------------------
+  ;; Stock `magit-insert-worktrees' goes through `magit-list-worktrees',
+  ;; which calls `magit-toplevel' (a `git rev-parse --show-toplevel'
+  ;; subprocess) once per worktree just to canonicalize each path -- on a
+  ;; repo with N worktrees that's N extra subprocess spawns for
+  ;; information already present verbatim in `git worktree list
+  ;; --porcelain' output. Profiled via `elp' on a real multi-worktree repo:
+  ;; this section alone was ~28% of total `magit-status' time, almost all
+  ;; of it those redundant `magit-toplevel' calls. Replace it with a
+  ;; version built on a single porcelain call instead.
+
+  (defun lg/worktree--porcelain-full-list ()
+    "Return a list of (PATH BRANCH COMMIT BARE) for the current repo's
+worktrees, via a single `git worktree list --porcelain' subprocess call
+per `magit-status' refresh (see `lg/worktree--porcelain-full-list-cache').
+
+Unlike `lg/worktree--porcelain-list' (path+branch only, used by the
+tab-bar and log ref-label decoration), this also captures the HEAD commit
+and bare flag needed to render `lg/magit-insert-worktrees' faithfully,
+without adding a second subprocess call."
+    (or lg/worktree--porcelain-full-list-cache
+        (setq lg/worktree--porcelain-full-list-cache
+              (let (worktrees path branch commit bare)
+                (dolist (line (magit-git-lines "worktree" "list" "--porcelain"))
+                  (cond
+                   ((string-prefix-p "worktree " line)
+                    (when path (push (list path branch commit bare) worktrees))
+                    (setq path (directory-file-name (substring line 9))
+                          branch nil commit nil bare nil))
+                   ((string-prefix-p "HEAD " line)
+                    (setq commit (substring line 5)))
+                   ((string-prefix-p "branch refs/heads/" line)
+                    (setq branch (substring line 18)))
+                   ((string= line "bare")
+                    (setq bare t))))
+                (when path (push (list path branch commit bare) worktrees))
+                (nreverse worktrees)))))
+
+  (defun lg/magit-insert-worktrees ()
+    "Replacement for stock `magit-insert-worktrees': same \"Worktrees\"
+section (one line per worktree, showing its branch/bare-status/detached
+commit and path), but built from a single subprocess call
+\(`lg/worktree--porcelain-full-list') instead of N+1.
+
+Known gap vs. the stock section: RET on a row here doesn't carry stock
+magit's worktree-visit keybinding, since that's wired to the section type
+stock `magit-insert-worktrees' uses internally and isn't part of magit's
+public API. Use `lg/worktree-switch'/the worktree tab bar to jump to a
+worktree instead."
+    (let ((worktrees (lg/worktree--porcelain-full-list)))
+      (when (length> worktrees 1)
+        (magit-insert-section (worktrees)
+          (magit-insert-heading t "Worktrees")
+          (let* ((heads
+                  (mapcar (pcase-lambda (`(,_path ,branch ,commit ,bare))
+                            (cond
+                             (branch (propertize branch 'font-lock-face 'magit-branch-local))
+                             (bare   (propertize "(bare)" 'font-lock-face 'font-lock-comment-face))
+                             (commit (propertize (substring commit 0 (min 7 (length commit)))
+                                                  'font-lock-face 'magit-hash))
+                             (t "")))
+                          worktrees))
+                 (align (1+ (apply #'max (mapcar #'length heads)))))
+            (cl-mapc
+             (lambda (head wt)
+               (let ((path (car wt)))
+                 (magit-insert-section (worktree path)
+                   (insert (format (format "%%-%ds " align) head))
+                   (insert (propertize (abbreviate-file-name path) 'font-lock-face 'magit-filename))
+                   (insert "\n"))))
+             heads worktrees))
+          (insert "\n")))))
 
   ;; -----------------------------------------------------------
   ;; Buffer management: one magit session per workspace
@@ -409,10 +485,25 @@ via the hook in forge-config.el."
   (magit-add-section-hook 'magit-status-sections-hook
                           'magit-insert-modules
                           'magit-insert-unpulled-from-upstream)
+  ;; Replace stock `magit-insert-worktrees' (magit-list-worktrees' per-worktree
+  ;; `magit-toplevel' subprocess fan-out) with `lg/magit-insert-worktrees' —
+  ;; `magit-add-section-hook' only adds, so the stock section must be removed
+  ;; explicitly or both run.
+  (remove-hook 'magit-status-sections-hook 'magit-insert-worktrees)
   (magit-add-section-hook 'magit-status-sections-hook
-                          #'magit-insert-worktrees
+                          #'lg/magit-insert-worktrees
                           'magit-insert-status-headers
                           t)   ; t = insert AFTER magit-insert-status-headers
+
+  ;; Drop optional status-buffer sections/headers that were measured (via a
+  ;; per-call git subprocess log during profiling) to cost real time for
+  ;; info not otherwise used day-to-day. To bring one back, delete its
+  ;; remove-hook line below.
+  (remove-hook 'magit-status-sections-hook 'magit-insert-stashes)     ; ~0.036s (2 git calls)
+  ;; `magit-insert-tags-header' lives in `magit-status-headers-hook', the
+  ;; nested hook `magit-insert-status-headers' runs to build the compound
+  ;; header block — not in `magit-status-sections-hook' itself.
+  (remove-hook 'magit-status-headers-hook 'magit-insert-tags-header)  ; ~0.096s (6 git calls)
 
   ;; Transient suffixes
   (transient-append-suffix 'magit-log "-A"
