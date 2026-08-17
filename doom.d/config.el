@@ -115,10 +115,11 @@
 ;; (add-hook 'evil-insert-state-exit-hook 'my-save-if-bufferfilename)
 ;;         (save-buffer))))
 
-;; Always switch to normal mode when switching windows or buffers
+;; Always switch to normal mode when switching windows or buffers,
+;; except into an org-capture buffer, which should stay ready to type.
 (defun my-set-mode ()
-  (evil-normal-state)
-  )
+  (unless (bound-and-true-p org-capture-mode)
+    (evil-normal-state)))
 (add-hook 'doom-switch-window-hook 'my-set-mode)
 
 ;; Esc quits most things

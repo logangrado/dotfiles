@@ -291,6 +291,16 @@ If not in a weekly note, go to previous week from current week."
 (use-package! vulpea
   :hook ((org-roam-db-autosync-mode . vulpea-db-autosync-enable)))
 
+(defun lg/org-capture-todo ()
+  "Capture a Todo, landing in evil insert state ready to type.
+Forces org-roam to load first, since it's deferred via `:after org' and
+may not have loaded yet on a cold start (before any org file is visited)."
+  (interactive)
+  (require 'org-roam)
+  (org-capture nil "t")
+  (when (bound-and-true-p evil-mode)
+    (evil-insert-state)))
+
 ;; SPC n — notes & org keybindings
 (map! :leader "nc" nil)  ; override Doom's +org/toggle-last-clock
 (map! :leader
@@ -299,7 +309,7 @@ If not in a weekly note, go to previous week from current week."
        :desc "Search roam"     "s" #'lg/org-roam-search
        :desc "Ordered todo"  "a" #'lg/org-todo-ordered
        (:prefix ("c" . "capture")
-        :desc "Todo"    "t" (cmd! (org-capture nil "t"))
+        :desc "Todo"    "t" #'lg/org-capture-todo
         :desc "Meeting" "m" (cmd! (org-capture nil "m")))
        (:prefix ("w" . "weekly")
         :desc "This week" "w" #'lg/org-roam-weeklies-goto-today
