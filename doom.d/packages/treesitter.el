@@ -1,5 +1,39 @@
 (setq treesit-font-lock-level 4)
 
+;; Declarative grammar sources: this alist is the single source of truth for
+;; which grammars we build and where they come from. `treesit-auto' is kept
+;; only for mode remapping / auto-mode-alist. `nil' revision tracks the repo's
+;; default branch. typescript/tsx live in subdirs of one repo.
+(setq treesit-language-source-alist
+      '((typescript "https://github.com/tree-sitter/tree-sitter-typescript" nil "typescript/src")
+        (tsx        "https://github.com/tree-sitter/tree-sitter-typescript" nil "tsx/src")
+        (bash       "https://github.com/tree-sitter/tree-sitter-bash")
+        (c          "https://github.com/tree-sitter/tree-sitter-c")
+        (dockerfile "https://github.com/camdencheek/tree-sitter-dockerfile")
+        (javascript "https://github.com/tree-sitter/tree-sitter-javascript" nil "src")
+        (nix        "https://github.com/nix-community/tree-sitter-nix")
+        (python     "https://github.com/tree-sitter/tree-sitter-python")
+        (rust       "https://github.com/tree-sitter/tree-sitter-rust")
+        (toml       "https://github.com/tree-sitter-grammars/tree-sitter-toml")
+        (yaml       "https://github.com/tree-sitter-grammars/tree-sitter-yaml")))
+
+(defun lg/treesit-install-missing-grammars ()
+  "Install any grammar in `treesit-language-source-alist' not yet available.
+Idempotent: already-built grammars are skipped, so this is cheap on an
+already-provisioned machine.
+
+The `let' shadows `lg/treesit-lang-cache' with a throwaway table for the
+duration: the pre-install availability check caches nil, and
+`treesit-install-language-grammar' re-checks after compiling to verify. Without
+the shadow that verify reads the stale nil and spuriously warns the freshly
+built grammar is broken."
+  (let ((lg/treesit-lang-cache (make-hash-table :test 'equal)))
+    (dolist (lang (mapcar #'car treesit-language-source-alist))
+      (unless (treesit-language-available-p lang)
+        (treesit-install-language-grammar lang)))))
+
+(add-hook 'doom-after-init-hook #'lg/treesit-install-missing-grammars)
+
 ;; Use treesit-auto to remap modes + install grammars on demand
 (use-package! treesit-auto
   :after treesit
