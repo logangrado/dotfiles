@@ -398,10 +398,29 @@ different priority group."
         org-appear-autokeywords t
         org-appear-inside-latex t))
 
-;; RET inside src blocks opens the dedicated edit buffer
-(map! :map org-mode-map
-      :ni "RET" #'lg/org-return-src-edit
-      :ni [return] #'lg/org-return-src-edit)
+(defun lg/org-insert-heading-after-subtree ()
+  "Insert a sibling heading after the current subtree and begin editing it."
+  (interactive)
+  (org-insert-heading-respect-content)
+  (evil-insert-state))
+
+(defun lg/org-insert-bullet-below ()
+  "Insert a bullet below the current line and begin editing it."
+  (interactive)
+  (end-of-line)
+  (if (org-at-item-p)
+      (org-insert-item)
+    (newline-and-indent)
+    (insert "- "))
+  (evil-insert-state))
+
+(after! evil-org
+  (map! :map evil-org-mode-map
+        :ni "C-RET" #'lg/org-insert-bullet-below
+        :ni "C-<return>" #'lg/org-insert-bullet-below
+        :ni "M-RET" #'lg/org-insert-heading-after-subtree
+        :ni "M-<return>" #'lg/org-insert-heading-after-subtree
+        :i "C-j" #'newline-and-indent))
 
 ;; Indented block styling for org-indent-mode
 ;; Override Doom's org-src-preserve-indentation=t so org can re-indent
