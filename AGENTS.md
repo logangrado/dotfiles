@@ -1,0 +1,41 @@
+# AGENTS.md
+
+This file captures context for AI agents working in this repository.
+It is updated at the end of each task.
+
+## Architecture Overview
+
+The active Emacs configuration is Doom Emacs in `doom.d/`. Package declarations
+live in `doom.d/packages.el`; package-specific configuration files in
+`doom.d/packages/` are loaded by `doom.d/config.el`.
+
+## Conventions
+
+Declare third-party packages with `package!` and place their configuration in a
+same-named file under `doom.d/packages/`. Keep machine-specific settings and
+secrets in `doom.d/computer-locals.el` or `auth-source`, not the repository.
+
+## Task History
+
+- Jira integration: added MELPA's maintained `jira.el`, configured for REST v3,
+  and bound the issue list to `SPC j j`. `lg/define-transient-map` is the single
+  source of truth for Jira actions: it generates the `h`/`?` transient and
+  matching explicit Evil normal/visual bindings. List `l` opens filters; `RET` opens
+  details; list `U` fetches the selected issue before opening the package's
+  field-update picker. `n` creates an issue by selecting a project (default
+  `FLWT`) and issue type from Jira metadata; detail `+` adds a comment.
+  The macro converts `#'command` declarations to the bare command symbols
+  Transient requires, and wraps noninteractive comment helpers before binding.
+  Jira's find-issue command has no autoload, so use `lg/jira-find-issue` from
+  menus that can load before `jira-detail`.
+  Register generated bindings with `evil-define-key` and normalize on each
+  Jira mode hook; do not add regular-map bindings, which affect insert state.
+  Mark the generated action maps as normal/visual intercept maps so they take
+  precedence over Tablist's Evil minor-mode bindings.
+  Convert generated direct key descriptions with `kbd`; otherwise multi-event
+  names such as `RET` become literal character sequences.
+  Attach Jira list and detail maps with `after! jira-issues` and `after!
+  jira-detail`: `SPC j j` autoloads `jira-issues`, not the top-level `jira`
+  feature.
+  Wrap Jira's field-update and subtask helpers in interactive commands before
+  binding them; those helpers are not commands themselves.

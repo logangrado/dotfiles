@@ -52,6 +52,7 @@
 ;;(package! gogs)
 ;;(package! buck)
 (package! code-review)
+(package! jira)
 
 (package! csv-mode)
 
