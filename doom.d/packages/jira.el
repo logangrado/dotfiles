@@ -1,35 +1,5 @@
 ;;; jira.el -*- lexical-binding: t; -*-
 
-(defmacro lg/define-transient-map (map transient &rest groups)
-  "Define TRANSIENT and Evil bindings from grouped actions."
-  (declare (indent 2))
-  (let ((actions (apply #'append (mapcar #'cdr groups))))
-    `(progn
-       (transient-define-prefix ,transient ()
-         "Show Jira commands."
-         ,@(mapcar
-            (lambda (group)
-              (apply #'vector
-                     (cons (car group)
-                           (mapcar
-                            (lambda (action)
-                              (let ((command (nth 2 action)))
-                                (list (car action) (nth 1 action)
-                                      (if (eq (car-safe command) 'function)
-                                          (cadr command)
-                                        command))))
-                            (cdr group)))))
-            groups))
-       (evil-define-key '(normal visual) ,map
-         (kbd "h") ,(list 'function transient)
-         (kbd "?") ,(list 'function transient)
-         ,@(apply #'append
-                  (mapcar (lambda (action)
-                            `(,(kbd (car action)) ,(nth 2 action)))
-                          actions)))
-       (evil-make-intercept-map ,map 'normal t)
-       (evil-make-intercept-map ,map 'visual t))))
-
 (use-package! jira
   :commands jira-issues
   :init

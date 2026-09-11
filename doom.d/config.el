@@ -184,12 +184,14 @@
 
 ;; EXTERNAL PACAKGE CONFIG
 ;;=================================================================
+;; Shared macros and helpers must load before package configuration.
+(load (expand-file-name "custom_funcs.el" doom-user-dir) t)
+
 ;; Load all files in packages/
 ;; (require 'ol) ;; TODO: DELETE AFTER 2026. was required to avoid `(void-function org-link-set-parameters)` startup error. However, it looks like renaming packages/org.el -> packages/org-config.el` fixes it, when used with forge
 (mapc 'load (file-expand-wildcards "~/.doom.d/packages/*.el"))
 
 ;; Final loads
-(load (expand-file-name "custom_funcs.el" doom-user-dir) t)
 (load (expand-file-name "keybindings.el" doom-user-dir) t)
 (load (expand-file-name "computer-locals.el" doom-user-dir) t)
 
