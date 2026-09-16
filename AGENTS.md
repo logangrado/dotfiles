@@ -36,6 +36,9 @@ expand them.
   precedence over Tablist's Evil minor-mode bindings.
   Convert generated direct key descriptions with `kbd`; otherwise multi-event
   names such as `RET` become literal character sequences.
+  Personal views live in ignored `doom.d/custom.el`: `g v` opens one, `g V`
+  saves one, and `g s` re-sorts its cached current page. These actions are
+  normal-only to preserve Visual mode.
   Attach Jira list and detail maps with `after! jira-issues` and `after!
   jira-detail`: `SPC j j` autoloads `jira-issues`, not the top-level `jira`
   feature.
