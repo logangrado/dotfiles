@@ -23,5 +23,6 @@ emacs.vanilla/org-roam.db
 *.out
 zsh/zshrc-work
 doom.d/computer-locals.el
+doom.d/custom.el
 .hatchery/worktrees/
 profiles/

@@ -10,7 +10,72 @@
         (:prefix ("j" . "jira")
          :desc "List issues" "j" #'jira-issues)))
 
+(defcustom lg/jira-views nil
+  "Personal Jira views.
+
+Each entry is (NAME JQL STATUS-ORDER).  STATUS-ORDER is a list of status
+names used for local sorting."
+  :type '(repeat (list (string :tag "Name")
+                       (string :tag "JQL")
+                       (repeat :tag "Status order" string))))
+
 (after! jira-issues
+  (defvar-local lg/jira--view-status-order nil)
+  (defun lg/jira--status-order-index (issue)
+    "Return ISSUE's local status sort position."
+    (let* ((status (jira-table-extract-field jira-issues-fields :status-name issue))
+           (name (alist-get 'name status)))
+      (or (cl-position name lg/jira--view-status-order :test #'string=)
+          (length lg/jira--view-status-order))))
+  (defun lg/jira-sort-cached-view ()
+    "Sort the current page by the active view's status order."
+    (interactive)
+    (when (and lg/jira--view-status-order jira-issues--raw-issues)
+      (setq jira-issues--raw-issues
+            (vconcat
+             (cl-stable-sort
+              (append jira-issues--raw-issues nil)
+              (lambda (left right)
+                (< (lg/jira--status-order-index left)
+                   (lg/jira--status-order-index right))))))
+      (setq tabulated-list-entries
+            (mapcar #'jira-issues--data-format-issue jira-issues--raw-issues))
+      (tabulated-list-print t)))
+  (defun lg/jira--refresh-table-with-view-sort (function data response)
+    "Sort fetched issues using the active local view before displaying them."
+    (funcall function data response)
+    (lg/jira-sort-cached-view))
+  (advice-add 'jira-issues--refresh-table :around
+              #'lg/jira--refresh-table-with-view-sort)
+  (defun lg/jira-read-status-order ()
+    "Read an optional comma-separated status order."
+    (mapcar #'string-trim
+            (split-string (read-string "Status order (comma-separated, blank for none): ")
+                          "," t)))
+  (defun lg/jira-save-view ()
+    "Save a personal Jira view in `custom-file'."
+    (interactive)
+    (let* ((name (read-string "View name: "))
+           (jql (read-string "JQL: " jira-issues--current-jql))
+           (status-order (lg/jira-read-status-order)))
+      (when (string-empty-p name)
+        (user-error "View name cannot be empty"))
+      (setq lg/jira-views
+            (cons (list name jql status-order)
+                  (cl-remove name lg/jira-views :key #'car :test #'string=)))
+      (customize-save-variable 'lg/jira-views lg/jira-views)
+      (message "Saved Jira view: %s" name)))
+  (defun lg/jira-open-view ()
+    "Fetch and display a saved personal Jira view."
+    (interactive)
+    (unless lg/jira-views
+      (user-error "No saved Jira views"))
+    (let* ((name (completing-read "Jira view: " (mapcar #'car lg/jira-views) nil t))
+           (view (assoc-string name lg/jira-views)))
+      (setq-local lg/jira--view-status-order (nth 2 view))
+      (setq jira-issues--current-jql (nth 1 view))
+      (jira-issues--reset-pagination)
+      (jira-issues--fetch-and-display nil)))
   (defun lg/jira-show-selected-issue ()
     "Show the selected Jira issue in a detail buffer."
     (interactive)
@@ -53,6 +118,10 @@
        project (cdr (assoc type choices))
        :callback #'jira-detail--create-issue-from-fields)))
   (lg/define-transient-map jira-issues-mode-map lg/jira-issues-menu
+    ("Views"
+     ("g v" "Open saved view" #'lg/jira-open-view :states normal)
+     ("g V" "Save current view" #'lg/jira-save-view :states normal)
+     ("g s" "Resort cached view" #'lg/jira-sort-cached-view :states normal))
     ("Filters"
      ("l" "Filter issues" #'jira-issues-menu))
     ("Issue Actions"

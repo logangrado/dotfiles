@@ -192,6 +192,8 @@
 (mapc 'load (file-expand-wildcards "~/.doom.d/packages/*.el"))
 
 ;; Final loads
+(setq custom-file (expand-file-name "custom.el" doom-user-dir))
+(load custom-file t)
 (load (expand-file-name "keybindings.el" doom-user-dir) t)
 (load (expand-file-name "computer-locals.el" doom-user-dir) t)
 
