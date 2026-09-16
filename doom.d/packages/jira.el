@@ -42,35 +42,17 @@ Each entry is (NAME :sort FIELDS :status-order STATUS-ORDER :columns FIELDS)."
   (defvar lg/jira--opening-default-filter nil)
   (defvar lg/jira--default-columns (copy-sequence jira-issues-table-fields))
 
-  (defun lg/jira--legacy-view-p (view)
-    "Return non-nil when VIEW uses the former combined filter format."
-    (stringp (nth 1 view)))
-  (defun lg/jira--migrate-legacy-views ()
-    "Split combined saved views into filters and views once."
-    (let ((legacy (seq-filter #'lg/jira--legacy-view-p lg/jira-views)))
-      (when legacy
-        (setq lg/jira-views
-              (append
-               (seq-remove #'lg/jira--legacy-view-p lg/jira-views)
-               (mapcar (lambda (entry)
-                         (list (format "%s view" (car entry))
-                               :sort '(:status-name)
-                               :status-order (nth 2 entry)
-                               :columns jira-issues-table-fields))
-                       legacy)))
-        (dolist (entry legacy)
-          (let ((name (car entry)))
-            (setq lg/jira-filters
-                  (cons (list name (nth 1 entry) (format "%s view" name))
-                        (cl-remove name lg/jira-filters :key #'car :test #'string=)))))
-        (customize-save-variable 'lg/jira-views lg/jira-views)
-        (customize-save-variable 'lg/jira-filters lg/jira-filters))))
   (defun lg/jira--view-value (view property)
     "Return PROPERTY from saved VIEW."
     (plist-get (cdr view) property))
   (defun lg/jira--view-columns (view)
     "Return VIEW's columns, or Jira's standard columns."
     (or (lg/jira--view-value view :columns) jira-issues-table-fields))
+  (defun lg/jira--view-fields (view)
+    "Return all fields VIEW needs to display and sort issues."
+    (delete-dups
+     (append (copy-sequence (lg/jira--view-columns view))
+             (copy-sequence (lg/jira--view-value view :sort)))))
   (defun lg/jira--set-columns (columns)
     "Use COLUMNS in the current issue list buffer."
     (setq-local jira-issues-table-fields columns)
@@ -123,10 +105,22 @@ Each entry is (NAME :sort FIELDS :status-order STATUS-ORDER :columns FIELDS)."
   (defun lg/jira--refresh-table-with-view-sort (function data response)
     "Sort fetched issues using the active local view before displaying them."
     (funcall function data response)
-    (setq-local lg/jira--loaded-columns jira-issues-table-fields)
+    (setq-local lg/jira--loaded-columns
+                (if lg/jira--current-view
+                    (lg/jira--view-fields lg/jira--current-view)
+                  jira-issues-table-fields))
     (lg/jira-sort-cached-view))
   (advice-add 'jira-issues--refresh-table :around
               #'lg/jira--refresh-table-with-view-sort)
+  (defun lg/jira--fetch-view-sort-fields (function jql callback &optional page-token)
+    "Request non-visible fields required by the current view's sorting."
+    (let ((jira-issues-table-fields
+           (if lg/jira--current-view
+               (lg/jira--view-fields lg/jira--current-view)
+             jira-issues-table-fields)))
+      (funcall function jql callback page-token)))
+  (advice-add 'jira-issues--api-get-issues :around
+              #'lg/jira--fetch-view-sort-fields)
   (defun lg/jira-read-status-order ()
     "Read an optional comma-separated status order."
     (mapcar #'string-trim
@@ -191,7 +185,8 @@ Each entry is (NAME :sort FIELDS :status-order STATUS-ORDER :columns FIELDS)."
     (setq-local lg/jira--current-view view)
     (let ((columns (lg/jira--view-columns view)))
       (lg/jira--set-columns columns)
-      (if (or fetch (not (equal columns lg/jira--loaded-columns)))
+      (if (or fetch (not (seq-every-p (lambda (field) (memq field lg/jira--loaded-columns))
+                                        (lg/jira--view-fields view))))
           (progn
             (jira-issues--reset-pagination)
             (jira-issues--fetch-and-display nil))
@@ -199,7 +194,6 @@ Each entry is (NAME :sort FIELDS :status-order STATUS-ORDER :columns FIELDS)."
   (defun lg/jira-open-view ()
     "Apply a saved personal view to the current filter."
     (interactive)
-    (lg/jira--migrate-legacy-views)
     (unless lg/jira-views
       (user-error "No saved Jira views"))
     (let* ((name (completing-read "Jira view: " (mapcar #'car lg/jira-views) nil t))
@@ -222,7 +216,6 @@ Each entry is (NAME :sort FIELDS :status-order STATUS-ORDER :columns FIELDS)."
   (defun lg/jira-open-filter ()
     "Fetch and display a saved personal Jira filter."
     (interactive)
-    (lg/jira--migrate-legacy-views)
     (unless lg/jira-filters
       (user-error "No saved Jira filters"))
     (let* ((name (completing-read "Jira filter: " (mapcar #'car lg/jira-filters) nil t))
@@ -261,7 +254,6 @@ Each entry is (NAME :sort FIELDS :status-order STATUS-ORDER :columns FIELDS)."
     "Use the saved default filter during initial list construction."
     (if (and lg/jira--opening-default-filter lg/jira-default-filter)
         (progn
-          (lg/jira--migrate-legacy-views)
           (let ((filter (assoc-string lg/jira-default-filter lg/jira-filters)))
             (if filter
                 (let ((lg/jira--opening-default-filter nil))
