@@ -36,9 +36,12 @@ expand them.
   precedence over Tablist's Evil minor-mode bindings.
   Convert generated direct key descriptions with `kbd`; otherwise multi-event
   names such as `RET` become literal character sequences.
-  Personal views live in ignored `doom.d/custom.el`: `g v` opens one, `g V`
-  saves one, and `g s` re-sorts its cached current page. These actions are
-  normal-only to preserve Visual mode.
+  Personal filters and views live in ignored `doom.d/custom.el`. Filters own
+  JQL and their default view; views own visible columns and local sort fields.
+  `f` opens the filter transient and `,` opens the view transient, both in
+  Normal state only. A view reuses cached issues when its fields are already
+  loaded; hidden sort fields are requested with the view. `SPC j j` opens the
+  saved default filter. Combined legacy views are intentionally unsupported.
   Attach Jira list and detail maps with `after! jira-issues` and `after!
   jira-detail`: `SPC j j` autoloads `jira-issues`, not the top-level `jira`
   feature.
