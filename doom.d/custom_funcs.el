@@ -23,10 +23,14 @@
        (evil-define-key '(normal visual) ,map
          (kbd "h") ,(list 'function transient)
          (kbd "?") ,(list 'function transient)
-         ,@(apply #'append
-                  (mapcar (lambda (action)
-                            `(,(kbd (car action)) ,(nth 2 action)))
-                          actions)))
+         )
+       ,@(mapcar
+          (lambda (action)
+            (let ((states (or (plist-get (nthcdr 3 action) :states)
+                              '(normal visual))))
+              `(evil-define-key ',states ,map
+                 (kbd ,(car action)) ,(nth 2 action))))
+          actions)
        (evil-make-intercept-map ,map 'normal t)
        (evil-make-intercept-map ,map 'visual t))))
 
