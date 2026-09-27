@@ -19,6 +19,12 @@ expand them.
 
 ## Task History
 
+- Vterm Visual yanks: `lg/vterm-yank-region` removes right-edge terminal-cell
+  padding while preserving every visible vterm row as a newline.  Bind it only
+  in `vterm-copy-mode-map`; keep ordinary Evil Visual `y` bound to `evil-yank`.
+  This is the no-native-rebuild fallback for redraw-heavy terminal UIs such as
+  Pi, Codex, and Claude; it intentionally leaves visual wraps as newlines.
+
 - Jira integration: added MELPA's maintained `jira.el`, configured for REST v3,
   and bound the issue list to `SPC j j`. `lg/define-transient-map` is the single
   source of truth for Jira actions: it generates the `h`/`?` transient and

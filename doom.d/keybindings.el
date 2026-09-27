@@ -39,10 +39,15 @@
 
 ;; COPY/PASTE
 ;; -----------
-;; Copy (visual and vterm)
-(map! :map (evil-visual-state-map vterm-copy-mode-map)
-      "y" #'evil-yank ;; Better than kill-ring-save, works in various visual states
-      )
+;; Copy.  Vterm needs a special yank that removes terminal-cell padding while
+;; retaining each visible terminal row (see `lg/vterm-yank-region').
+(map! :map evil-visual-state-map
+      "y" #'evil-yank)
+(map! :map vterm-copy-mode-map
+      "y" #'lg/vterm-yank-region)
+;; Evil's Visual-state map otherwise wins over a vterm minor-mode map.
+(evil-define-key 'visual vterm-copy-mode-map
+  (kbd "y") #'lg/vterm-yank-region)
 ;; Cut (visual only)
 (map! :map (evil-visual-state-map)
       "x" #'evil-delete ;; Better than kill-region, works in various visual states

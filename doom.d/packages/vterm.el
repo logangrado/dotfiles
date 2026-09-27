@@ -186,6 +186,46 @@ which handles eshell/comint/term/minibuffer via `consult-mode-histories'."
   (add-hook 'evil-normal-state-entry-hook #'lg/vterm-adjust-cursor)
   (add-hook 'vterm-mode-hook #'lg/vterm-adjust-cursor)
 
+  ;; --- Copy terminal text without render artifacts ---
+  ;;
+  ;; Vterm materializes unused terminal cells as spaces.  Also, terminal UIs
+  ;; such as Pi redraw their viewport, so vterm cannot reliably distinguish a
+  ;; program newline from a display-wrap newline.  Prefer preserving every
+  ;; visible row: that is what a Visual selection communicates.  This applies
+  ;; to every terminal UI (Pi, Codex, Claude, etc.), not to one program.
+  (defun lg/vterm-yank-region (beg end)
+    "Yank BEG..END, preserving visible rows and trimming cell padding.
+Intended for Visual-state yanks while `vterm-copy-mode' is active."
+    (interactive "r")
+    (unless (use-region-p)
+      (user-error "Select text before yanking"))
+    (let ((pos beg)
+          (line-start beg)
+          newline
+          chunks)
+      (while (setq newline (save-excursion
+                            (goto-char pos)
+                            (search-forward "\n" end t)))
+        (let ((newline-pos (1- newline)))
+          ;; The whitespace is only vterm's blank cells at the end of the
+          ;; rendered row.  Keep every row boundary as a newline: vterm's
+          ;; wrap property is not reliable for full-screen/redrawing TUIs.
+          (push (replace-regexp-in-string
+                 "[ \t]+\\'" ""
+                 (buffer-substring-no-properties line-start newline-pos))
+                chunks)
+          (push "\n" chunks)
+          (setq line-start newline
+                pos newline)))
+      (push (replace-regexp-in-string
+             "[ \t]+\\'" ""
+             (buffer-substring-no-properties line-start end))
+            chunks)
+      (kill-new (apply #'concat (nreverse chunks)))
+      (deactivate-mark)
+      (when (fboundp 'evil-exit-visual-state)
+        (evil-exit-visual-state))))
+
   ;; --- Auto-toggle vterm-copy-mode around navigation ---
   ;; In vterm + evil-normal-state, plain h/j/k/l (and arrow keys) move point but
   ;; vterm resets point to the live cursor on every render, so navigation feels
