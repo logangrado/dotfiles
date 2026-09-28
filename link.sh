@@ -15,6 +15,7 @@ ALL=("zsh/zshrc $HOME/.zshrc"
      "agents/skills $HOME/.claude/skills"
      "agents/skills $HOME/.codex/skills"
      "agents/statusline-command.sh $HOME/.claude/statusline-command.sh"
+     "pi/agent/extensions $HOME/.pi/agent/extensions"
     )
 
 OSX=("tmux/tmux-darwin.conf $HOME/.tmux-darwin.conf"
