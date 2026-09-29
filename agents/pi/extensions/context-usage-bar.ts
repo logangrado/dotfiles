@@ -4,6 +4,8 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 const BAR_WIDTH = 16;
 const SUBCHARACTER_STEPS = 8;
 const PARTIAL_BLOCKS = ["", "▏", "▎", "▍", "▌", "▋", "▊", "▉"];
+const SEPARATOR = "·";
+const GIT_BRANCH_SYMBOL = "";
 
 type Usage = {
 	input: number;
@@ -29,7 +31,12 @@ function addUsage(totals: UsageTotals, usage: Usage | undefined): void {
 }
 
 function formatTokens(tokens: number): string {
-	return tokens >= 1_000 ? `${Math.round(tokens / 1_000)}k` : `${Math.round(tokens)}`;
+	if (tokens < 1_000) return `${Math.round(tokens)}`;
+
+	const thousands = Number((tokens / 1_000).toPrecision(3));
+	if (thousands < 1_000) return `${thousands}k`;
+
+	return `${Number((tokens / 1_000_000).toPrecision(3))}m`;
 }
 
 function usageColor(percent: number): "success" | "warning" | "error" {
@@ -46,7 +53,7 @@ function formatCwd(cwd: string): string {
 function contextBar(ctx: ExtensionContext): string {
 	const usage = ctx.getContextUsage();
 	if (!usage || usage.tokens === null || usage.percent === null) {
-		return ctx.ui.theme.fg("dim", "ctx |????????????????| calculating");
+		return `${ctx.ui.theme.fg("dim", "ctx |")}${ctx.ui.theme.fg("accent", "????????????????")}${ctx.ui.theme.fg("dim", "| ")}${ctx.ui.theme.fg("accent", "calculating")}`;
 	}
 
 	const percent = Math.max(0, Math.min(100, usage.percent));
@@ -61,7 +68,7 @@ function contextBar(ctx: ExtensionContext): string {
 	const remaining = ctx.ui.theme.fg("dim", "░".repeat(remainingWidth));
 
 	const label = `${formatTokens(usage.tokens)}/${formatTokens(usage.contextWindow)} ${Math.round(percent)}%`;
-	return `${ctx.ui.theme.fg("muted", "ctx |")}${bar}${remaining}${ctx.ui.theme.fg("muted", `| ${label}`)}`;
+	return `${ctx.ui.theme.fg("dim", "ctx |")}${bar}${remaining}${ctx.ui.theme.fg("dim", "| ")}${ctx.ui.theme.fg("accent", label)}`;
 }
 
 function collectUsage(ctx: ExtensionContext): { totals: UsageTotals; latestCacheHitRate?: number } {
@@ -94,30 +101,48 @@ export default function (pi: ExtensionAPI): void {
 				invalidate() {},
 				render(width: number): string[] {
 					const { totals, latestCacheHitRate } = collectUsage(ctx);
-					const stats: string[] = [];
-					if (totals.input) stats.push(`↑${formatTokens(totals.input)}`);
-					if (totals.output) stats.push(`↓${formatTokens(totals.output)}`);
-					if (totals.cacheRead) stats.push(`R${formatTokens(totals.cacheRead)}`);
-					if (totals.cacheWrite) stats.push(`W${formatTokens(totals.cacheWrite)}`);
-					if (latestCacheHitRate !== undefined) stats.push(`CH${latestCacheHitRate.toFixed(1)}%`);
-					if (totals.cost.total) stats.push(`$${totals.cost.total.toFixed(3)}`);
-					stats.push(contextBar(ctx));
+					const stat = (label: string, value: string) =>
+						`${theme.fg("dim", label)}${theme.fg("accent", value)}`;
+					const usageStats: string[] = [];
+					if (totals.input) usageStats.push(stat("↑", formatTokens(totals.input)));
+					if (totals.output) usageStats.push(stat("↓", formatTokens(totals.output)));
 
-					const model = ctx.model?.id ?? "no-model";
+					const cacheStats: string[] = [];
+					if (totals.cacheRead) cacheStats.push(stat("R", formatTokens(totals.cacheRead)));
+					if (totals.cacheWrite) cacheStats.push(stat("W", formatTokens(totals.cacheWrite)));
+					if (latestCacheHitRate !== undefined) cacheStats.push(stat("CH", `${latestCacheHitRate.toFixed(1)}%`));
+					const totalPromptTokens = totals.input + totals.cacheRead + totals.cacheWrite;
+					if (totalPromptTokens) {
+						cacheStats.push(stat("Σ", `${((totals.cacheRead / totalPromptTokens) * 100).toFixed(1)}%`));
+					}
+
+					const sections: string[] = [];
+					if (usageStats.length) sections.push(usageStats.join(" "));
+					if (cacheStats.length) sections.push(cacheStats.join(" "));
+					if (totals.cost.total) sections.push(stat("$", totals.cost.total.toFixed(3)));
+					sections.push(contextBar(ctx));
+					const left = sections.join(` ${theme.fg("dim", SEPARATOR)} `);
+
+					const model = theme.fg("syntaxString", ctx.model?.id ?? "no-model");
+					const thinkingLevel = ctx.thinkingLevel ?? "off";
 					const thinking = ctx.model?.reasoning
-						? ` • ${ctx.thinkingLevel === "off" ? "thinking off" : (ctx.thinkingLevel ?? "off")}`
+						? ` ${theme.fg("dim", SEPARATOR)} ${theme.getThinkingBorderColor(thinkingLevel)(thinkingLevel === "off" ? "thinking off" : thinkingLevel)}`
 						: "";
-					const provider = footerData.getAvailableProviderCount() > 1 && ctx.model ? `(${ctx.model.provider}) ` : "";
+					const provider =
+						footerData.getAvailableProviderCount() > 1 && ctx.model
+							? `${theme.fg("muted", ctx.model.provider)} `
+							: "";
 					const right = `${provider}${model}${thinking}`;
-					const left = stats.join(" ");
 					const gap = " ".repeat(Math.max(2, width - visibleWidth(left) - visibleWidth(right)));
 					const statsLine = truncateToWidth(`${left}${gap}${right}`, width);
 
-					let cwd = formatCwd(ctx.cwd);
+					let cwd = theme.fg("syntaxKeyword", formatCwd(ctx.cwd));
 					const branch = footerData.getGitBranch();
-					if (branch) cwd += ` (${branch})`;
+					if (branch) {
+						cwd += ` ${theme.fg("dim", SEPARATOR)} ${theme.fg("mdCodeBlock", `${GIT_BRANCH_SYMBOL} ${branch}`)}`;
+					}
 					const sessionName = pi.getSessionName();
-					if (sessionName) cwd += ` • ${sessionName}`;
+					if (sessionName) cwd += ` ${theme.fg("dim", SEPARATOR)} ${theme.fg("dim", sessionName)}`;
 
 					const task = process.env.HATCHERY_TASK;
 					const taskLabel = task ? `⬮ ${task}` : "";
@@ -127,13 +152,11 @@ export default function (pi: ExtensionAPI): void {
 					const taskGap = taskLabel
 						? " ".repeat(Math.max(2, width - visibleWidth(shownCwd) - visibleWidth(taskLabel)))
 						: "";
-					const cwdLine = taskLabel
-						? `${theme.fg("dim", shownCwd)}${taskGap}${theme.fg("accent", taskLabel)}`
-						: theme.fg("dim", cwd);
+					const cwdLine = taskLabel ? `${shownCwd}${taskGap}${theme.fg("accent", taskLabel)}` : cwd;
 
 					return [
 						truncateToWidth(cwdLine, width, theme.fg("dim", "...")),
-						truncateToWidth(theme.fg("dim", statsLine), width, theme.fg("dim", "...")),
+						truncateToWidth(statsLine, width, theme.fg("dim", "...")),
 					];
 				},
 			};

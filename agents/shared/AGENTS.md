@@ -39,6 +39,8 @@
 
 **Don't claim a change works without running it.**
 
+- Check the result against the approved goal, existing contracts, and relevant invariants — not just whether it compiles.
+- Cover reachable success, failure, and boundary behavior. Preserve behavior outside the requested scope.
 - A diff that looks right is not a diff that works.
 - If you can't run it (no test infra, can't reach a service), say "I haven't verified this" explicitly.
 - For UI: open the page. For backend: run the function or the test. For CLI: invoke it.
@@ -71,15 +73,18 @@
 **Tests are required when the repo has a test framework. Write them first. Test behavior, never internals.**
 
 - TDD: for bug fixes, write a failing test that reproduces the bug, then fix it. For features, write the test for the public contract first.
+- Cover every changed behavior and its meaningful success, failure, boundary, and regression paths. A regression test must fail without the fix it protects.
 - Test names describe behavior: `test_returns_404_for_unknown_variant`, not `test_handle_unknown`. Reads as a sentence in `pytest -v`.
 - **Never test internals.** If renaming a private helper breaks a test, the test was wrong.
 - **Assert with one equality on a literal**, not N field-by-field asserts — `pytest`'s diff shows the whole picture. For dynamic fields (timestamps, IDs), pop them, assert shape, then equality on the rest.
 - Doubles, most-to-least preferred: **real impl** → **fake** (working in-memory) via DI → **stub** (canned response) via DI → **monkeypatched** fake/stub (clock, env, stdio only) → **mock** (`assert_called_with`). Mocks couple tests to implementation; avoid.
+- Extract shared fixtures or builders only for genuinely repeated setup. Keep one-off test data local and obvious.
 
 ## 10. Code Structure
 
 **Reuse before reinventing. Extract helpers to name steps, not comment them.**
 
+- Keep functions cohesive and reasonably bounded. If a function contains distinct phases, split them into intention-revealing private helpers.
 - **Imports at module top.** Inside a function body only to guard the import (optional dep, circular import).
 - **Reuse before reimplementing.** Search for an existing function before writing a new one. If a private helper elsewhere does what you need, promote it to a public utility — don't paste-copy or reinvent.
 - **Extract helpers to name steps, not to anticipate reuse.** If a block needs a multi-line comment to explain what it does, the block wants to be a named function with a docstring. A good function name documents better than a comment ever can.
