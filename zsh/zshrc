@@ -40,6 +40,7 @@ unset LSCOLORS
 #======================================================
 export EDITOR="emacsclient"
 source $HOME/.dotfiles/zsh/emacsd.sh
+source $HOME/.dotfiles/zsh/podman.zsh
 
 # ALIASES
 #======================================================
