@@ -301,11 +301,35 @@ may not have loaded yet on a cold start (before any org file is visited)."
   (when (bound-and-true-p evil-mode)
     (evil-insert-state)))
 
+;; Dynamic block: list roam nodes carrying a tag, e.g. in a hub note:
+;;   #+BEGIN: roam-nodes :tag "recruiter"
+;;   #+END:
+;; Refresh with `org-update-all-dblocks' (SPC n u).
+(defun org-dblock-write:roam-nodes (params)
+  "Insert a sorted list of links to every roam node tagged :tag in PARAMS."
+  (let* ((tag (plist-get params :tag))
+         (rows (org-roam-db-query
+                [:select [nodes:id nodes:title]
+                 :from nodes
+                 :left-join tags :on (= nodes:id tags:node-id)
+                 :where (= tags:tag $s1)
+                 :order-by nodes:title]
+                tag)))
+    (dolist (row rows)
+      (insert (format "- [[id:%s][%s]]\n" (car row) (cadr row))))
+    (when rows (delete-char -1))))
+
 ;; SPC n — notes & org keybindings
 (map! :leader "nc" nil)  ; override Doom's +org/toggle-last-clock
 (map! :leader
       (:prefix ("n" . "notes")
        :desc "Find roam node"  "f" #'org-roam-node-find
+       :desc "Insert roam link" "i" #'org-roam-node-insert
+       :desc "Add roam tag"     "t" #'org-roam-tag-add
+       :desc "Remove roam tag"  "T" #'org-roam-tag-remove
+       :desc "Update dblocks"   "u" #'org-update-all-dblocks
+       :desc "Backlinks buffer" "b" #'org-roam-buffer-toggle
+       :desc "Backlinks (pinned)" "B" #'org-roam-buffer-display-dedicated
        :desc "Search roam"     "s" #'lg/org-roam-search
        :desc "Ordered todo"  "a" #'lg/org-todo-ordered
        (:prefix ("c" . "capture")
