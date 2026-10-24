@@ -112,7 +112,10 @@ way, without forcing a second, redundant full-frame redraw."
 (after! tab-bar
   ;; Used to show workspaces
   (tab-bar-mode 1)
-  (setq tab-bar-show 1)
+  ;; `t', not 1: persp entries aren't real tab-bar tabs, so with `1' ("hide
+  ;; when only one tab") Emacs recomputes `tab-bar-lines' to 0 on a reload
+  ;; and the bar vanishes.
+  (setq tab-bar-show t)
   )
 
 ;; --------------------------------------------------------------------------
@@ -124,3 +127,25 @@ way, without forcing a second, redundant full-frame redraw."
 ;; `lg/worktree-bar-formatted' (persp-worktree.el) — this file only wires it
 ;; into `tab-bar-format' above.
 ;; --------------------------------------------------------------------------
+
+;; --------------------------------------------------------------------------
+;; Keep the bar alive across `doom/reload' (SPC h r r)
+;; --------------------------------------------------------------------------
+(defun lg/ensure-workspace-tab-bar ()
+  "Idempotently (re)assert the persp/worktree tab bar.
+A Doom reload can leave `tab-bar-mode' off, `tab-bar-format' reset, or the
+frame's `tab-bar-lines' at 0; this puts all three back."
+  (interactive)
+  (when (featurep 'persp-mode)
+    (customize-set-variable
+     'tab-bar-format
+     '(lg/workspaces-formatted tab-bar-format-align-right
+       lg/worktree-bar-formatted lg/invisible-current-workspace)))
+  (tab-bar-mode 1)
+  (setq tab-bar-show t)
+  (set-frame-parameter nil 'tab-bar-lines 1)
+  (when (fboundp 'tab-bar--invalidate-cache)
+    (tab-bar--invalidate-cache))
+  (force-mode-line-update t))
+
+(add-hook 'doom-after-reload-hook #'lg/ensure-workspace-tab-bar)
