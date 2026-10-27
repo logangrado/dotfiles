@@ -555,25 +555,18 @@ via the hook in forge-config.el."
     '("x" "discard…" lg/magit-x-transient :transient transient--do-replace))
   (define-key magit-hunk-section-map (kbd "x") #'lg/magit-x-transient))
 
-;; magit-delta rendering notes (for future reference):
+;; magit-delta rendering:
 ;;
-;; Delta completely replaces magit's diff text with its own ANSI-colored
-;; output. xterm-color then converts those ANSI codes into font-lock-face
-;; text properties on overlays (priority 0), setting BOTH :foreground and
-;; :background. This means:
+;; Keep Delta's syntax foreground/background as face TEXT properties.
+;; Upstream xterm-color syntax overlays made navigation and redisplay slow
+;; on large reviews, even after caching their computation.  Magit paints
+;; font-lock-face, so syntax faces deliberately use the separate face property.
+;; Tune syntax colors through magit-delta-delta-args below, not Magit faces
+;; or gitconfig (our invocation uses --no-gitconfig).
 ;;
-;;   - custom-set-faces! for magit-diff-added, magit-diff-added-highlight,
-;;     etc. has NO effect — those faces are never consulted for diff content.
-;;   - All color tuning must go through gitconfig [delta] section.
-;;
-;; To distinguish focused vs unfocused hunks, we attempted adding priority-5
-;; overlays via magit-section-highlight-hook that override only :background.
-;; This did not work in practice — unclear whether the hooks fired correctly
-;; or whether something else interfered. A future attempt should verify:
-;;   1. That magit-section-highlight-hook fires at all with magit-delta active
-;;      (add a (message ...) to confirm).
-;;   2. That (magit-section-match 'hunk section) matches correctly.
-;;   3. Whether delta itself has a --focused-hunk style option.
+;; Only line-ending background-extension overlays remain.  Never put those
+;; backgrounds over the whole line: overlays override syntax text properties
+;; and would mask Delta's brighter word-emphasis backgrounds.
 ;; -----------------------------------------------------------
 ;; magit-delta context wrapper
 ;; -----------------------------------------------------------
@@ -728,15 +721,13 @@ escape sequences inserted by delta around the @@ header."
                   (setq advance 0)))
               (forward-line advance))))))))
 
-;; Delta colours each `+'/`-' line by attaching ANSI background to the text
-;; only; nothing covers BOL..text-start or text-end..window-edge, so the
-;; coloured stripe ends mid-line.  Magit's own diff faces (which carry
-;; `:extend t') aren't consulted once delta replaces the diff text.  We
-;; emulate `:extend t' by adding one low-priority full-line overlay per
-;; `+'/`-' content line.  Priority -1 keeps delta's per-char overlays
-;; (including the brighter emph-style) visible on top within the text.
+;; Fill gaps in Delta's +/- line backgrounds without masking its brighter
+;; word-emphasis backgrounds.  Text faces provide the base background at
+;; lower precedence than syntax faces; one overlay at the newline extends
+;; that base color to the window edge.  A full-line overlay would override
+;; syntax text properties regardless of its priority.
 (defun lg/magit-delta--extend-line-backgrounds ()
-  "Add :extend t overlays so +/- diff lines fill to window edge."
+  "Fill +/- line backgrounds and extend them with one line-ending overlay."
   (save-excursion
     (goto-char (point-min))
     (let ((in-hunk nil))
@@ -750,24 +741,55 @@ escape sequences inserted by delta around the @@ header."
           (let* ((plus (eq (char-after) ?+))
                  (bg   (if plus lg/magit-delta-plus-bg lg/magit-delta-minus-bg))
                  (beg  (line-beginning-position))
-                 (end  (min (point-max) (1+ (line-end-position))))
-                 (ov   (make-overlay beg end)))
+                 (eol  (line-end-position))
+                 (end  (min (point-max) (1+ eol)))
+                 (ov   (make-overlay eol end)))
+            (add-face-text-property beg end `(:background ,bg :extend t) t)
             (overlay-put ov 'face `(:background ,bg :extend t))
             (overlay-put ov 'priority -1)
             (overlay-put ov 'lg-magit-delta-line-bg t))))
         (forward-line 1)))))
 
+(defun lg/magit-delta--syntax-text-faces ()
+  "Normalize xterm colors to face properties that survive Magit painting.
+Magit rewrites font-lock-face during washing and section highlighting;
+keeping ANSI colors there would silently discard syntax highlighting."
+  (let ((pos (point-min)))
+    (while (< pos (point-max))
+      (let ((next (next-single-property-change pos 'font-lock-face nil (point-max)))
+            (face (get-text-property pos 'font-lock-face)))
+        (when face (put-text-property pos next 'face face))
+        (setq pos next))))
+  (remove-text-properties (point-min) (point-max)
+                          '(font-lock-face nil xterm-color nil)))
+
 (defun lg/magit-delta-call-delta-with-context (orig-fn &rest args)
-  "Around-advice for `magit-delta-call-delta-and-convert-ansi-escape-sequences'.
-Augments hunks with extra preceding context so delta's syntect sees the
-right syntactic state, then strips that context from delta's output.
-A per-invocation cache shares HEAD reads across hunks of the same file."
-  (let ((lg/magit-delta--prefix-cache (make-hash-table :test 'equal)))
-    (let ((augs (lg/magit-delta--augment-buffer)))
-      (unwind-protect
-          (apply orig-fn args)
-        (lg/magit-delta--strip-augmentations augs)
-        (lg/magit-delta--extend-line-backgrounds)))))
+  "Render Delta syntax as text faces rather than dense token overlays.
+Retain synthetic context and line-background extension without depending
+on any persistent rendering cache."
+  (if args
+      (apply orig-fn args)
+    (let ((lg/magit-delta--prefix-cache (make-hash-table :test #'equal))
+          (buffer-read-only nil)
+          (original (buffer-string)))
+      (condition-case err
+          (let ((augs (lg/magit-delta--augment-buffer)))
+            (let ((status (apply #'call-process-region
+                                 (point-min) (point-max)
+                                 magit-delta-delta-executable t t nil
+                                 (magit-delta--make-delta-args))))
+              (unless (eq status 0)
+                (error "Delta failed (%s)" status)))
+            (lg/magit-delta--strip-augmentations augs)
+            (xterm-color-colorize-buffer)
+            (lg/magit-delta--syntax-text-faces)
+            (when magit-delta-hide-plus-minus-markers
+              (magit-delta-hide-plus-minus-markers))
+            (lg/magit-delta--extend-line-backgrounds))
+        ((error quit)
+         (delete-region (point-min) (point-max))
+         (insert original)
+         (signal (car err) (cdr err)))))))
 
 (use-package! magit-delta
   :after magit
