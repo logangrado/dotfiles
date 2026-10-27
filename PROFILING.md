@@ -156,6 +156,83 @@ after itself even if the target errors:
 `profiles/` is gitignored scratch space — treat these files as disposable,
 overwrite on every run.
 
+## Profiling stage/unstage refreshes with Delta
+
+Start with `magit-` and `lg/` using the interactive recipe above, reset
+with `elp-reset-all`, then stage **one hunk** and wait for redisplay before
+collecting results. Do not benchmark opening status as a substitute for
+the actual operation. Parent and child totals overlap. For confirmation,
+remove broad instrumentation with `elp-restore-all`, then time only
+`magit-stage`, `magit-refresh`,
+`magit-process-git`, `lg/magit-delta-call-delta-with-context`,
+`lg/magit-delta--decode-file`, `lg/magit-delta--insert-snapshot`, and
+`lg/magit-delta--run`. Timing thousands of tiny helpers adds overhead.
+
+The October 2026 review-buffer trace measured ~995 ms staging, of which
+~946 ms was refresh and only ~50 ms the actual staging Git command.
+Delta plus our syntax-context wrapper took ~429 ms, including ~179 ms
+fetching preceding source lines. Review comment overlays were negligible.
+
+`doom.d/magit-delta-cache.el` now retains stripped per-file text with syntax
+face/display properties plus relative background-overlay spans. Syntax colors
+do NOT use xterm-color overlays: user isolation tests showed those overlays
+caused navigation lag, while removing only background overlays did not help.
+Use the separate `face` text property because Magit rewrites `font-lock-face`
+during section painting. Cache keys cover augmented input, file-local
+synthetic-context stripping metadata, effective Delta arguments, executable
+path, repository directory, process environment, and conversion settings
+(font-lock face property, ANSI palette/rendering, marker visibility, line
+background colors). Changed files are batched into one process per diff
+section. Only misses run ANSI conversion, context stripping, marker hiding,
+and background scanning. Magit still regenerates its sections. Insertion
+copies syntax text properties and recreates only background-extension
+overlays at current file offsets. Those overlays cover newlines, not entire
+lines; lower-precedence text faces fill base line backgrounds without
+overriding Delta's word-emphasis backgrounds. Thus:
+
+- The first refresh is cold; measure subsequent stage/unstage operations.
+- `lg/magit-delta--run` counts actual Delta invocations. An unchanged warm
+  refresh should need none; staging a hunk generally needs at most one
+  per affected staged/unstaged section.
+- `lg/magit-delta--decode-file` should run only for changed or uncached files.
+  An unchanged warm refresh should need neither Delta nor decoding. Snapshot
+  installation copies syntax faces with the cached text and creates only
+  one background overlay per changed line. `xterm-color` overlay count
+  should remain zero, including after highlighting and stage/unstage.
+- Immutable HEAD source contents are also cached, and shared across the
+  staged/unstaged rendering passes. Working-tree fallback is not persisted.
+- Run `M-x lg/magit-delta-clear-cache` after replacing Delta in place or
+  to compare cold versus warm behavior. Rendering-option changes naturally
+  miss the cache. Removing `--no-gitconfig` bypasses rendered-output caching.
+- The shared FIFO cache is capped at 256 entries and 16 MiB of payload
+  (text, serialized text-property runs, and background span properties/offsets;
+  Lisp object overhead is additional). Oversized entries are not retained.
+- ANSI-only caching removed repeated Delta computation but left parsing,
+  allocation, and native redisplay costs. A local identical-input warm
+  wrapper benchmark (50 files, ~6k diff lines, five runs) measured ~429 ms/run
+  for ANSI-only caching versus ~142 ms/run for parsed snapshots. This is not
+  an end-to-end staging benchmark or a user-machine latency guarantee.
+- Parsed spans still recreated thousands of syntax overlays and did not
+  resolve navigation lag. A later same-input benchmark (50 files, ~6k lines,
+  five runs) compared parsed syntax overlays with syntax text properties:
+  ~153 ms versus ~18 ms per warm wrapper run, with syntax overlays dropping
+  from 23,950 to zero and background overlays staying at 100. GC collections
+  across five runs dropped from 11 to 2. This is also a local wrapper
+  benchmark, not an interactive redisplay or full-stage measurement.
+
+Regression tests: `emacs -Q --batch -l doom.d/tests/magit-delta-cache-test.el
+-f ert-run-tests-batch-and-exit`. Unit tests need no Doom setup; real-process
+tests additionally need Delta (`DELTA=/path/to/delta` is supported), and
+the full integration test needs Magit, magit-delta, and xterm-color on
+`load-path`. It stages/unstages a real hunk in a disposable Git repository
+and checks unchanged files are neither sent back to Delta nor decoded again.
+Cold/warm parsed output is compared to the full-buffer ANSI pipeline at every
+character, including resolved color attributes and hidden markers. Real
+Magit tests also check syntax faces through painting, highlighting,
+fontification requests, collapse/expand, and staging/unstaging, with zero
+xterm-color overlays. Word-emphasis and full-width line backgrounds have
+separate regression coverage.
+
 ## General findings that generalize beyond magit
 
 - **Subprocess-spawn fixed overhead is real and dominant**: every observed

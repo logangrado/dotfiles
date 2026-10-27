@@ -589,10 +589,15 @@ the colour fills past end-of-line.")
 (defvar lg/magit-delta-minus-bg "#4a1f1f"
   "Background colour for removed (`-') lines.  See `lg/magit-delta-plus-bg'.")
 
+(load! "../magit-delta-cache")
+
 (defvar lg/magit-delta--prefix-cache nil
-  "Per-invocation cache: path -> list of file lines (or nil sentinel).
-Bound to a fresh hash table by `lg/magit-delta-call-delta-with-context'
-so multiple hunks of the same file share a single git subprocess call.")
+  "Refresh-scoped cache of file lines and repository HEAD identity.")
+
+(defun lg/magit-delta--with-refresh-cache (orig-fn &rest args)
+  "Share context lookups across staged and unstaged diffs in one refresh."
+  (let ((lg/magit-delta--prefix-cache (make-hash-table :test #'equal)))
+    (apply orig-fn args)))
 
 (defun lg/magit-delta--ansi-strip (s)
   "Strip ANSI CSI sequences from S."
@@ -602,17 +607,47 @@ so multiple hunks of the same file share a single git subprocess call.")
   "Return all lines of PATH from HEAD, falling back to the working tree.
 Caches the result in `lg/magit-delta--prefix-cache' when that var is bound
 to a hash table; subsequent calls for the same PATH avoid the git subprocess."
-  (let ((cached (and lg/magit-delta--prefix-cache
-                     (gethash path lg/magit-delta--prefix-cache 'absent))))
+  (let ((cached (if lg/magit-delta--prefix-cache
+                    (gethash path lg/magit-delta--prefix-cache 'absent)
+                  'absent)))
     (if (not (eq cached 'absent))
         cached
-      (let ((fresh (or (ignore-errors
-                         (magit-git-lines "show" (concat "HEAD:" path)))
-                       (let ((abs (expand-file-name path (magit-toplevel))))
-                         (and (file-readable-p abs)
-                              (with-temp-buffer
-                                (insert-file-contents abs)
-                                (split-string (buffer-string) "\n")))))))
+      (let* ((identity
+              (or (and lg/magit-delta--prefix-cache
+                       (gethash :identity lg/magit-delta--prefix-cache))
+                  (let ((id (list (file-truename default-directory)
+                                  (magit-rev-parse "HEAD"))))
+                    (when lg/magit-delta--prefix-cache
+                      (puthash :identity id lg/magit-delta--prefix-cache))
+                    id)))
+             (revision (cadr identity))
+             (key (list 'source identity path))
+             (entry (lg/magit-delta--cache-get key))
+             (head-lines
+              (if entry
+                  (cdr entry)
+                ;; Use the resolved immutable revision, not a moving HEAD.
+                (let ((lines
+                       (and revision
+                            (with-temp-buffer
+                              (when (eq 0 (magit-git-insert
+                                           "show" (concat revision ":" path)))
+                                ;; magit-git-lines discards blank lines,
+                                ;; which corrupts source line coordinates.
+                                (split-string (buffer-string) "\n"))))))
+                  (when lines
+                    (lg/magit-delta--cache-put
+                     key lines (cl-loop for line in lines
+                                        sum (1+ (string-bytes line)))))
+                  lines)))
+             ;; Never persist working-tree fallback: it can change without
+             ;; HEAD moving.  Augmented diff contents key the render cache.
+             (fresh (or head-lines
+                        (let ((abs (expand-file-name path (magit-toplevel))))
+                          (and (file-readable-p abs)
+                               (with-temp-buffer
+                                 (insert-file-contents abs)
+                                 (split-string (buffer-string) "\n")))))))
         (when lg/magit-delta--prefix-cache
           (puthash path fresh lg/magit-delta--prefix-cache))
         fresh))))
@@ -750,6 +785,27 @@ escape sequences inserted by delta around the @@ header."
             (overlay-put ov 'lg-magit-delta-line-bg t))))
         (forward-line 1)))))
 
+(defun lg/magit-delta--file-augmentations (parts augs)
+  "Translate global AUGS hunk indices into per-file indices for PARTS."
+  (let ((index 0))
+    (mapcar
+     (lambda (part)
+       (let ((first index) (pos 0) local)
+         (while (string-match "^@@ " part pos)
+           (setq index (1+ index) pos (match-end 0)))
+         (while (and augs (< (caar augs) index))
+           (let ((entry (pop augs)))
+             (push (cons (- (car entry) first) (cdr entry)) local)))
+         (nreverse local)))
+     parts)))
+
+(defun lg/magit-delta--conversion-settings ()
+  "Capture settings affecting ANSI conversion in the current wash buffer."
+  (cl-loop for var in '(font-lock-mode xterm-color-render
+                        xterm-color-use-bold-for-bright
+                        xterm-color-names xterm-color-names-bright)
+           when (boundp var) collect (cons var (symbol-value var))))
+
 (defun lg/magit-delta--syntax-text-faces ()
   "Normalize xterm colors to face properties that survive Magit painting.
 Magit rewrites font-lock-face during washing and section highlighting;
@@ -763,30 +819,76 @@ keeping ANSI colors there would silently discard syntax highlighting."
   (remove-text-properties (point-min) (point-max)
                           '(font-lock-face nil xterm-color nil)))
 
+(defun lg/magit-delta--decode-file (ansi augs settings)
+  "Decode ANSI into syntax text faces and relative background-overlay spans.
+SETTINGS comes from the original wash buffer.  No syntax overlays are
+created.  Temporary background overlays are destroyed after capture."
+  (with-temp-buffer
+    (dolist (setting settings)
+      (set (make-local-variable (car setting)) (cdr setting)))
+    (insert ansi)
+    (lg/magit-delta--strip-augmentations augs)
+    (xterm-color-colorize-buffer)
+    (lg/magit-delta--syntax-text-faces)
+    (when magit-delta-hide-plus-minus-markers
+      (magit-delta-hide-plus-minus-markers))
+    (lg/magit-delta--extend-line-backgrounds)
+    (lg/magit-delta--snapshot-create
+     :text (buffer-string)
+     :spans (mapcar
+             (lambda (ov)
+               (vector (1- (overlay-start ov)) (1- (overlay-end ov))
+                       ;; Only our coloring properties belong in the cache.
+                       ;; Never retain arbitrary third-party buffer objects.
+                       (cl-loop for prop in '(face font-lock-face xterm-color
+                                             evaporate priority lg-magit-delta-line-bg)
+                                for value = (overlay-get ov prop)
+                                when value append (list prop (copy-tree value)))))
+             (let ((lists (overlay-lists)))
+               (append (car lists) (cdr lists)))))))
+
+(defun lg/magit-delta--insert-snapshot (snapshot)
+  "Insert SNAPSHOT's syntax text faces and recreate only background overlays."
+  (let ((start (point)))
+    (insert (lg/magit-delta--snapshot-text snapshot))
+    (dolist (span (lg/magit-delta--snapshot-spans snapshot))
+      (let ((ov (make-overlay (+ start (aref span 0))
+                              (+ start (aref span 1)))))
+        (cl-loop for (prop value) on (aref span 2) by #'cddr
+                 do (overlay-put ov prop value))))))
+
 (defun lg/magit-delta-call-delta-with-context (orig-fn &rest args)
-  "Render Delta syntax as text faces rather than dense token overlays.
-Retain synthetic context and line-background extension without depending
-on any persistent rendering cache."
+  "Color diffs using cached stripped text and relative color spans per file.
+Only changed files are sent through Delta, ANSI conversion, context
+stripping and line-background scanning.  Syntax colors use text faces;
+only background-extension overlays are recreated before section parsing."
   (if args
       (apply orig-fn args)
-    (let ((lg/magit-delta--prefix-cache (make-hash-table :test #'equal))
-          (buffer-read-only nil)
-          (original (buffer-string)))
+    (let ((lg/magit-delta--prefix-cache
+           (or lg/magit-delta--prefix-cache (make-hash-table :test #'equal)))
+          (original (buffer-string))
+          (settings (lg/magit-delta--conversion-settings)))
       (condition-case err
-          (let ((augs (lg/magit-delta--augment-buffer)))
-            (let ((status (apply #'call-process-region
-                                 (point-min) (point-max)
-                                 magit-delta-delta-executable t t nil
-                                 (magit-delta--make-delta-args))))
-              (unless (eq status 0)
-                (error "Delta failed (%s)" status)))
-            (lg/magit-delta--strip-augmentations augs)
-            (xterm-color-colorize-buffer)
-            (lg/magit-delta--syntax-text-faces)
-            (when magit-delta-hide-plus-minus-markers
-              (magit-delta-hide-plus-minus-markers))
-            (lg/magit-delta--extend-line-backgrounds))
+          (let* ((augs (lg/magit-delta--augment-buffer))
+                 (input (buffer-substring-no-properties (point-min) (point-max)))
+                 (parts (lg/magit-delta--file-parts input))
+                 (local-augs (lg/magit-delta--file-augmentations parts augs))
+                 (snapshots
+                  (lg/magit-delta--render-files
+                   input magit-delta-delta-executable
+                   (magit-delta--make-delta-args)
+                   (lambda (ansi _input index)
+                     (lg/magit-delta--decode-file
+                      ansi (if index (nth index local-augs) augs) settings))
+                   (list 'syntax-text-v1 settings magit-delta-hide-plus-minus-markers
+                         lg/magit-delta-plus-bg lg/magit-delta-minus-bg)
+                   parts local-augs)))
+            (delete-region (point-min) (point-max))
+            (goto-char (point-min))
+            (mapc #'lg/magit-delta--insert-snapshot snapshots)
+            (goto-char (point-min)))
         ((error quit)
+         ;; A failed process/decoder must not leave synthetic context behind.
          (delete-region (point-min) (point-max))
          (insert original)
          (signal (car err) (cdr err)))))))
@@ -810,5 +912,7 @@ on any persistent rendering cache."
           "--plus-emph-style" "syntax #2e6e3e bold"   ; word bg: brighter green
           "--minus-emph-style" "syntax #6e2e2e bold")) ; word bg: brighter red
 
+  (advice-add 'magit-refresh-buffer
+              :around #'lg/magit-delta--with-refresh-cache)
   (advice-add 'magit-delta-call-delta-and-convert-ansi-escape-sequences
               :around #'lg/magit-delta-call-delta-with-context))
