@@ -597,7 +597,12 @@ the colour fills past end-of-line.")
   "Refresh-scoped cache of file lines and repository HEAD identity.")
 
 (defun lg/magit-delta--with-refresh-cache (orig-fn &rest args)
-  "Share context lookups across staged and unstaged diffs in one refresh."
+  "Share context reads and discard old background overlays before refreshing.
+Explicit cleanup also repairs legacy non-evaporating overlays left in
+already-open buffers.  Do not touch Magit sections or review comments."
+  (save-restriction
+    (widen)
+    (remove-overlays (point-min) (point-max) 'lg-magit-delta-line-bg t))
   (let ((lg/magit-delta--prefix-cache (make-hash-table :test #'equal)))
     (apply orig-fn args)))
 
@@ -779,12 +784,14 @@ escape sequences inserted by delta around the @@ header."
                  (bg   (if plus lg/magit-delta-plus-bg lg/magit-delta-minus-bg))
                  (beg  (line-beginning-position))
                  (eol  (line-end-position))
-                 (end  (min (point-max) (1+ eol)))
-                 (ov   (make-overlay eol end)))
+                 (end  (min (point-max) (1+ eol))))
             (add-face-text-property beg end `(:background ,bg :extend t) t)
-            (overlay-put ov 'face `(:background ,bg :extend t))
-            (overlay-put ov 'priority -1)
-            (overlay-put ov 'lg-magit-delta-line-bg t))))
+            (when (< eol end)
+              (let ((ov (make-overlay eol end)))
+                (overlay-put ov 'face `(:background ,bg :extend t))
+                (overlay-put ov 'priority -1)
+                (overlay-put ov 'lg-magit-delta-line-bg t)
+                (overlay-put ov 'evaporate t))))))
         (forward-line 1)))))
 
 (defun lg/magit-delta--file-augmentations (parts augs)
@@ -854,10 +861,15 @@ created.  Temporary background overlays are destroyed after capture."
   (let ((start (point)))
     (insert (lg/magit-delta--snapshot-text snapshot))
     (dolist (span (lg/magit-delta--snapshot-spans snapshot))
-      (let ((ov (make-overlay (+ start (aref span 0))
-                              (+ start (aref span 1)))))
-        (cl-loop for (prop value) on (aref span 2) by #'cddr
-                 do (overlay-put ov prop value))))))
+      (when (< (aref span 0) (aref span 1))
+        (let ((ov (make-overlay (+ start (aref span 0))
+                                (+ start (aref span 1)))))
+          (cl-loop for (prop value) on (aref span 2) by #'cddr
+                   do (overlay-put ov prop value))
+          ;; Enforce lifetime on insertion, not just in the decoder: an
+          ;; existing cache entry may predate this flag or explicitly lack it.
+          (when (overlay-get ov 'lg-magit-delta-line-bg)
+            (overlay-put ov 'evaporate t)))))))
 
 (defun lg/magit-delta-call-delta-with-context (orig-fn &rest args)
   "Color diffs using cached stripped text and relative color spans per file.

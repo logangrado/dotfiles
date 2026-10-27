@@ -25,7 +25,11 @@ rewrites font-lock-face, so normalize colors to the separate face property.
 Cache stripped/propertized file text and relative background spans, never
 live overlays or section objects (`doom.d/magit-delta-cache.el`). Retain one
 background-extension overlay at each changed line's newline; full-line
-background overlays mask text-property word-emphasis colors. Batch cache
+background overlays mask text-property word-emphasis colors. Background overlays
+must evaporate on text deletion, including those restored from older cached
+snapshots. Clear only our background overlays before full refreshes, skip
+empty spans, and test repeated refreshes in the SAME buffer: erasing text alone
+does not remove non-evaporating overlays. Batch cache
 misses into one Delta call per section and decode only misses. Include
 file-local synthetic-context metadata and conversion settings in cache
 identity. Keep Magit's synchronous refresh/section parsing. Source-context

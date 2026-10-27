@@ -220,6 +220,17 @@ overriding Delta's word-emphasis backgrounds. Thus:
   across five runs dropped from 11 to 2. This is also a local wrapper
   benchmark, not an interactive redisplay or full-stage measurement.
 
+Background lifetime matters independently of syntax-overlay density. A later
+real review had 32,779 lines but 613,890 background overlays: the old
+non-evaporating backgrounds survived text erasure and accumulated on refresh.
+Removing only those backgrounds immediately restored navigation. Backgrounds
+now evaporate on text deletion; insertion enforces that even for old cached
+snapshots, and full refresh explicitly removes stale owned backgrounds.
+Empty spans are not recreated. Check counts across repeated refreshes in the
+same buffer, not only freshly created buffers. To include empty overlays at
+point-max, use `overlays-in` over the widened buffer rather than
+`overlay-lists`, which omits that boundary case.
+
 Regression tests: `emacs -Q --batch -l doom.d/tests/magit-delta-cache-test.el
 -f ert-run-tests-batch-and-exit`. Unit tests need no Doom setup; real-process
 tests additionally need Delta (`DELTA=/path/to/delta` is supported), and
@@ -229,8 +240,9 @@ and checks unchanged files are neither sent back to Delta nor decoded again.
 Cold/warm parsed output is compared to the full-buffer ANSI pipeline at every
 character, including resolved color attributes and hidden markers. Real
 Magit tests also check syntax faces through painting, highlighting,
-fontification requests, collapse/expand, and staging/unstaging, with zero
-xterm-color overlays. Word-emphasis and full-width line backgrounds have
+fontification requests, collapse/expand, 20 repeated refreshes and 10
+stage/unstage round trips in one live buffer, with zero xterm-color overlays
+and bounded, nonempty, evaporating background overlays. Word-emphasis and full-width line backgrounds have
 separate regression coverage.
 
 ## General findings that generalize beyond magit

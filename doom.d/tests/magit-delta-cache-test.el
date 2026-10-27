@@ -371,6 +371,28 @@
                   (lg/delta-test--assert-magit-text-faces)
                   (should-not (magit-git-string "diff" "--cached" "--name-only"))
                   (should (magit-get-section '((unstaged) (status))))
+                  ;; The same live status buffer must not accumulate old
+                  ;; background overlays as cached output is installed again.
+                  (dotimes (_ 20)
+                    (magit-refresh)
+                    (lg/delta-test--assert-background-lifetime 3))
+                  (dotimes (_ 10)
+                    (let* ((section (magit-get-section '((unstaged) (status))))
+                           (file (car (oref section children)))
+                           (hunk (car (oref file children))))
+                      (goto-char (oref hunk start))
+                      (magit-stage))
+                    (lg/delta-test--assert-background-lifetime 3)
+                    (let* ((section (magit-get-section '((staged) (status))))
+                           (file (car (oref section children)))
+                           (hunk (car (oref file children))))
+                      (goto-char (oref hunk start))
+                      (magit-unstage))
+                    (lg/delta-test--assert-background-lifetime 3)
+                    (should-not (magit-git-string "diff" "--cached" "--name-only")))
+                  (should (= 2 delta-calls))
+                  (should (= 2 decodes))
+                  (lg/delta-test--assert-magit-text-faces)
                   (dolist (ov (overlays-in (point-min) (point-max)))
                     (should (<= (point-min) (overlay-start ov) (overlay-end ov) (point-max)))))))
           (advice-remove 'magit-refresh-buffer #'lg/magit-delta--with-refresh-cache)
@@ -755,5 +777,94 @@ identical overlay/text-property representation."
                 (should (= 2 (length backgrounds)))
                 (dolist (ov backgrounds)
                   (should (= ?\n (char-after (overlay-start ov)))))))))))))
+
+(defun lg/delta-test--backgrounds ()
+  "Return all of our backgrounds, including empty and inaccessible overlays."
+  (save-restriction
+    (widen)
+    ;; overlay-lists omits empty overlays exactly at point-max.
+    (cl-remove-if-not (lambda (ov) (overlay-get ov 'lg-magit-delta-line-bg))
+                      (overlays-in (point-min) (point-max)))))
+
+(defun lg/delta-test--assert-background-lifetime (expected)
+  "Assert exactly EXPECTED live nonempty, evaporating background overlays."
+  (let ((backgrounds (lg/delta-test--backgrounds)))
+    (should (= expected (length backgrounds)))
+    (dolist (ov backgrounds)
+      (should (< (overlay-start ov) (overlay-end ov)))
+      (should (overlay-get ov 'evaporate)))))
+
+(ert-deftest lg/delta-background-creation-evaporates-after-text-deletion ()
+  (with-temp-buffer
+    (dotimes (_ 50)
+      (insert (lg/delta-test--diff "a.py"))
+      (lg/magit-delta--extend-line-backgrounds)
+      (lg/delta-test--assert-background-lifetime 2)
+      (erase-buffer)
+      (should-not (lg/delta-test--backgrounds)))))
+
+(ert-deftest lg/delta-background-legacy-cached-snapshots-do-not-accumulate ()
+  (let ((snapshot
+         (lg/magit-delta--snapshot-create
+          :text "one\ntwo\n"
+          ;; Deliberately model already-cached data from the old renderer:
+          ;; no evaporate flag, an explicit nil flag, and empty spans.
+          :spans (list (vector 3 4 '(lg-magit-delta-line-bg t))
+                       (vector 7 8 '(lg-magit-delta-line-bg t evaporate nil))
+                       (vector 0 0 '(lg-magit-delta-line-bg t))
+                       (vector 8 8 '(lg-magit-delta-line-bg t))))))
+    (with-temp-buffer
+      (dotimes (_ 50)
+        (lg/magit-delta--insert-snapshot snapshot)
+        (lg/delta-test--assert-background-lifetime 2)
+        (delete-region 4 5) ; deleting just a newline must expire its overlay
+        (lg/delta-test--assert-background-lifetime 1)
+        (erase-buffer)
+        (should-not (lg/delta-test--backgrounds))))
+    ;; Restoring old cached data must not mutate it or require a cache flush.
+    (should-not (plist-get (aref (cadr (lg/magit-delta--snapshot-spans snapshot)) 2)
+                           'evaporate))))
+
+(ert-deftest lg/delta-background-refresh-cleans-legacy-overlays-without-collateral ()
+  (with-temp-buffer
+    (insert "before\ninside\nafter\n")
+    (let ((foreign (make-overlay 1 1))
+          (lo 8) (hi 14))
+      (overlay-put foreign 'lg/review-comment t)
+      ;; Non-evaporating survivors from previous versions, including both
+      ;; buffer boundaries and regions outside the later narrowing.
+      (dolist (range (list (cons 1 1) (cons 1 4) (cons 9 10)
+                          (cons (point-max) (point-max))))
+        (overlay-put (make-overlay (car range) (cdr range))
+                     'lg-magit-delta-line-bg t))
+      (narrow-to-region lo hi)
+      (let ((buffer-read-only t))
+        (lg/magit-delta--with-refresh-cache
+         (lambda ()
+           (should (= lo (point-min)))
+           (should (= hi (point-max)))
+           (should-not (lg/delta-test--backgrounds))
+           (should (eq (current-buffer) (overlay-buffer foreign))))))
+      (should (= lo (point-min)))
+      (should (= hi (point-max)))
+      (should (eq (current-buffer) (overlay-buffer foreign))))))
+
+(ert-deftest lg/delta-background-refresh-cleans-up-before-failed-refresh ()
+  (with-temp-buffer
+    (insert "old\n")
+    (overlay-put (make-overlay 1 1) 'lg-magit-delta-line-bg t)
+    (should-error
+     (lg/magit-delta--with-refresh-cache (lambda () (error "refresh failed"))))
+    (should-not (lg/delta-test--backgrounds))))
+
+(ert-deftest lg/delta-background-unterminated-line-never-creates-empty-overlay ()
+  (with-temp-buffer
+    (insert "diff --git a/a.py b/a.py\n@@ -1 +1 @@\n+new")
+    (lg/magit-delta--extend-line-backgrounds)
+    (should-not (lg/delta-test--backgrounds))
+    ;; The base face still supplies background extension without a newline.
+    (let ((attrs (lg/delta-test--attributes-at (1- (point-max)))))
+      (should (equal lg/magit-delta-plus-bg (cdr (assq :background attrs))))
+      (should (cdr (assq :extend attrs))))))
 
 ;;; magit-delta-cache-test.el ends here

@@ -32,6 +32,44 @@ Delta syntax highlighting without dense syntax overlays or repeated work.
   (39 versus 93 file parses); a temporary ~632 ms average versus the initial
   ~995 ms is not a stable end-to-end speedup claim.
 
+### Durable background-overlay lifetime fix
+
+A later real review regressed on `90068aa`: 1,056,961 characters, 32,779
+lines, 614,030 total overlays, of which 613,890 were backgrounds and ZERO
+were syntax overlays. It started fast and worsened while staging. Removing
+only our background overlays immediately restored responsiveness. This is a
+separate confirmed issue from the earlier dense syntax-overlay bottleneck.
+
+- Background overlays lacked `evaporate`, so erasing/rebuilding text retained
+  old overlays and cached insertion added new ones. Before the fix, five
+  erase/reinsert cycles in one buffer produced counts `(1 2 3 4 5)`.
+  After the fix they remain `(1 1 1 1 1)`.
+- Set `evaporate t` when creating line backgrounds AND when installing
+  snapshots. Insertion enforces this after restoring saved properties, even
+  if an existing cache entry has no evaporation flag or explicitly has nil.
+  Old cached data need not be flushed or mutated.
+- Before a full refresh, widen temporarily and remove only overlays tagged
+  `lg-magit-delta-line-bg`. This repairs legacy survivors in existing buffers,
+  including empty overlays at either boundary and overlays outside narrowing.
+  Preserve the original restriction and foreign section/review-comment
+  overlays. Cleanup occurs even if the subsequent refresh errors.
+- Skip empty spans during creation and insertion. Unterminated final lines
+  retain background extension through text faces, without empty overlays.
+- Earlier visual/bounds tests did not assert bounded overlay counts over
+  repeated refreshes. Five new lifetime tests all fail against pre-fix source.
+  The real Magit test now performs 20 refreshes plus 10 stage/unstage round
+  trips in ONE buffer, holding exactly three backgrounds, retaining colors,
+  restoring the index each round trip, and doing no extra Delta/decoding work.
+- Test enumeration must use `overlays-in` on the widened buffer:
+  `overlay-lists` omits empty overlays exactly at point-max, which otherwise
+  hides an important boundary failure.
+- Current-session convenience loader (gitignored):
+  `profiles/reload-magit-overlay-lifetime.el`. It reloads only the three
+  changed function definitions from committed source, without rerunning
+  package setup or resetting in-memory review sessions. Press `g` afterward
+  to clean legacy backgrounds. Normal Emacs startup loads the fix directly;
+  no `doom sync` or new package is needed.
+
 ### Final architecture and decisions
 
 Preserve Magit's synchronous refresh/section parsing and Delta's syntax
@@ -48,7 +86,8 @@ async section rendering is unnecessary for the isolated overlay bottleneck.
   the newline, not the whole line; lower-precedence text faces fill base
   backgrounds elsewhere. Full-line overlays would override text-property
   emphasis backgrounds regardless of low priority, flattening Delta's brighter
-  word highlights. This adjustment was discussed during implementation.
+  word highlights. Backgrounds evaporate when their text disappears, are
+  enforced on cached insertion, and are cleared explicitly before refresh.
 - `doom.d/magit-delta-cache.el` retains stripped/propertized file text plus
   relative background-overlay offsets/property lists, never live overlays,
   buffers, markers, or Magit section objects. Cache hits copy text and recreate
@@ -78,9 +117,10 @@ async section rendering is unnecessary for the isolated overlay bottleneck.
 
 ### Commit boundaries
 
-Per user request, history is organized as TWO implementation commits: first
-an independently functional scrolling fix (syntax text faces, without the
-persistent cache), then Delta staging/cache optimization. The standalone
+Per user request, the original work is organized as two implementation commits:
+first an independently functional scrolling fix (syntax text faces, without
+persistent caching), then Delta staging/cache optimization. Subsequent approved
+worktree-reader and background-lifetime fixes are separate commits. The standalone
 intermediate renderer passed real Magit stage/unstage and word-emphasis/
 background tests. The final code is unchanged by this history reorganization;
 all regression tests and the combined decision record accompany the second
@@ -89,9 +129,11 @@ not staged or changed.
 
 ### Validation and measurements
 
-- All 25 ERT tests in `doom.d/tests/magit-delta-cache-test.el` pass with
-  Emacs 30.1, Delta 0.18.2, Magit 4.3.5, upstream magit-delta, and xterm-color.
-  Dependencies were extracted under `/tmp`, not installed into the repo.
+- All 36 tests pass together: 30 Delta tests in
+  `doom.d/tests/magit-delta-cache-test.el` plus six worktree-cache tests,
+  using Emacs 30.1, Delta 0.18.2, Magit 4.3.5, upstream magit-delta, and
+  xterm-color. Dependencies were extracted under `/tmp`, not installed into
+  the system or repository. The temporary live-reload helper was also tested.
 - Real Git/Magit tests check syntax faces and zero syntax overlays after
   refresh, section painting/highlighting, fontification requests,
   collapse/expand, staging and unstaging. Index correctness and background
@@ -115,10 +157,14 @@ not staged or changed.
 
 ### Remaining limits and user verification
 
-Restart Emacs (no `doom sync` needed), open review to warm caches, then test
-navigation and one-hunk stage/unstage. Check xterm-color overlay count stays
-zero. User confirmed after completely restarting Emacs that scrolling is
-significantly smoother. This verifies the scrolling fix.
+User initially confirmed smoother scrolling after restarting with syntax text
+faces. The later background accumulation was separately isolated and fixed
+above. For the latest fix, reload the changed functions (or restart when
+convenient) and refresh Magit, then stage/unstage repeatedly in the real review.
+Syntax overlays should stay zero; background counts should reflect current
+changed lines, not the number of past refreshes. Automated lifetime validation
+is complete; sustained responsiveness in the user's large review remains to
+be confirmed.
 
 Subsequent focused real-session ELP capture:
 
