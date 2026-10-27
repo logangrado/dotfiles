@@ -60,9 +60,11 @@ refresh recomputes fresh. Without this, both call sites shelled out to
 `git worktree list --porcelain' separately every refresh (confirmed via a
 per-call git log during profiling: ~0.04s of pure duplication).")
 
-  (defun lg/worktree--porcelain-list ()
-    "Return an ordered list of (PATH . BRANCH) for the current repo's
-worktrees, PATH with no trailing slash, BRANCH nil if detached."
+  (defun lg/magit--worktree-path-branches ()
+    "Return cached (PATH . BRANCH) pairs for Magit's current refresh.
+PATH has no trailing slash; BRANCH is nil for detached or bare worktrees.
+Keep this separate from the tab-bar's `lg/worktree--porcelain-list',
+which reads Git independently of Magit's refresh-scoped cache."
     (mapcar (pcase-lambda (`(,path ,branch ,_commit ,_bare)) (cons path branch))
             (lg/worktree--porcelain-full-list)))
 
@@ -71,7 +73,7 @@ worktrees, PATH with no trailing slash, BRANCH nil if detached."
     (unwind-protect
         (when-let ((top (magit-toplevel)))
           (let* ((current-top (expand-file-name top))
-                 (all (lg/worktree--porcelain-list))
+                 (all (lg/magit--worktree-path-branches))
                  (other-branches
                   (delq nil
                         (mapcar (lambda (wt)
@@ -179,9 +181,9 @@ one `rev-parse --verify' subprocess per ref."
 worktrees, via a single `git worktree list --porcelain' subprocess call
 per `magit-status' refresh (see `lg/worktree--porcelain-full-list-cache').
 
-Unlike `lg/worktree--porcelain-list' (path+branch only, used by the
-tab-bar and log ref-label decoration), this also captures the HEAD commit
-and bare flag needed to render `lg/magit-insert-worktrees' faithfully,
+Unlike `lg/magit--worktree-path-branches' (path+branch only, used by
+log ref-label decoration), this also captures the HEAD commit and bare
+flag needed to render `lg/magit-insert-worktrees' faithfully,
 without adding a second subprocess call."
     (or lg/worktree--porcelain-full-list-cache
         (setq lg/worktree--porcelain-full-list-cache

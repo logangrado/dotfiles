@@ -31,3 +31,8 @@ file-local synthetic-context metadata and conversion settings in cache
 identity. Keep Magit's synchronous refresh/section parsing. Source-context
 caches must use immutable HEAD IDs and preserve blank lines (`magit-git-lines`
 drops them). See `PROFILING.md` for wall-clock profiling.
+
+Keep package-local helpers distinctly named: Magit's cached worktree reader
+is `lg/magit--worktree-path-branches`, separate from the tab-bar's
+`lg/worktree--porcelain-list`. Duplicate function names across package files
+can silently replace cached readers and reintroduce subprocess calls.

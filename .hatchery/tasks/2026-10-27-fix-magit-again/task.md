@@ -141,11 +141,52 @@ Neither repeated operation invoked Delta or decoded a file. There is no
 observed recurring cache miss in that round trip. Git accounts for ~67% of
 each command's instrumented wall-clock time and is the largest measured
 component. These are ELP command timings, not input-to-display latency.
-Further refresh optimization should log actual Git commands and call sites
-before changing sections or adding caches. No additional optimization beyond
-the scrolling fix has been approved.
+Actual Git subprocess profiling and the separately approved duplicate-call
+fix are recorded below. No broader recent-commit caching, batching,
+parallelism, or selective-refresh implementation was approved.
 
 Git subprocesses, section refresh, source augmentation, text-property copying,
 and native redisplay still have costs. Use focused ELP entry points rather
 than instrumenting thousands of tiny helpers. No near-instant staging or
 permanent visual-fill-column fix is claimed.
+
+### Git profiling and duplicate-worktree-call fix
+
+- Temporary, manually loaded, gitignored logger:
+  `profiles/magit-git-profile.el`. It arms tracing for one normal stage or
+  unstage, then removes advice automatically and writes `git-stage.txt` /
+  `git-unstage.txt` beside itself. Captures `magit-process-file` argv,
+  directory, wall-clock duration and caller names; not Git output or direct
+  stdin-based apply calls. Tracing overhead means report command times are
+  not directly comparable to focused ELP results.
+- Real traces each had 26 calls, ~578/~586 ms summed process time and
+  ~881/~829 ms traced command time. These operations staged/unstaged an
+  entire file (`add -u` / `reset HEAD`), not a hunk. Git time groups:
+  diffs ~109/~107 ms, recent commits/decorations ~124/~152 ms, untracked
+  checks ~57/~63 ms, two worktree listings ~39/~36 ms.
+- Root cause of the duplicate: BOTH `magit.el` and `persp-worktree.el`
+  defined `lg/worktree--porcelain-list`. The tab-bar's uncached function
+  could overwrite Magit's cached reader. Magit now uses the unique
+  `lg/magit--worktree-path-branches`; tab-bar behavior and refresh-scoped
+  cache invalidation stay unchanged. Expected saving is only ONE subprocess,
+  roughly 17–19 ms in those traces, not hundreds of milliseconds.
+- Operator-requested worker implemented only that seam. Parent reviewed the
+  diff and ran both suites together: 31/31 tests passed. Six new tests in
+  `doom.d/tests/magit-worktree-cache-test.el` load actual source definitions
+  and cover both load orders, one query per warm refresh, next-refresh
+  freshness, independent tab-bar data and cleanup. One pre-existing
+  current-worktree exclusion bug (trailing slash on `magit-toplevel`) was
+  explicitly kept out of scope and characterized rather than silently fixed.
+- Tiny-query tests did not demonstrate an abnormal machine or wrapper cost.
+  Thirty-call warm averages initially gave true ~2.76 ms, Git version ~5.28 ms,
+  raw rev-parse ~4.71 ms, and a separate Magit run ~9.72 ms. A controlled
+  comparison instead gave raw ~8.91 ms, Magit arguments ~7.72 ms, Magit
+  environment/coding ~7.76 ms, full Magit wrapper ~7.57 ms. The apparent
+  wrapper penalty did not reproduce. These are batch means, not distributions;
+  order/load/GC variability remains. Do not call traced subprocess durations
+  pure spawn overhead or infer macOS performance from Linux container tests.
+- Keep useful sections and normal synchronous refresh. Persistent recent-commit
+  caching was deferred for correctness/invalidation risk; generic batching or
+  asynchronous prefetch is not a drop-in configuration fix. No process-wrapper
+  or machine configuration changes were made. A future clean repeated
+  stage/unstage benchmark may establish a less noisy baseline if requested.
