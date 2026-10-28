@@ -205,7 +205,7 @@ text properties and do not require a flush. Thus:
 - Run `M-x lg/magit-delta-clear-cache` after replacing Delta in place or
   to compare cold versus warm behavior. Rendering-option changes naturally
   miss the cache. Removing `--no-gitconfig` bypasses rendered-output caching.
-- The shared FIFO cache is capped at 256 entries and 16 MiB of payload
+- The shared FIFO cache is capped at 512 entries and 128 MiB of payload
   (text, serialized text-property runs, and any ignored legacy span data still
   retained; Lisp object overhead is additional). Oversized entries are not
   retained. New snapshots leave the legacy span field empty.
@@ -221,6 +221,24 @@ text properties and do not require a flush. Thus:
   from 23,950 to zero and background overlays staying at 100. GC collections
   across five runs dropped from 11 to 2. This is also a local wrapper
   benchmark, not an interactive redisplay or full-stage measurement.
+
+A subsequent ~150-file review exposed a separate cache-capacity issue.
+With the old 16 MiB budget, one stage capture decoded all 192 snapshots:
+5.27 s total, including 1.75 s payload accounting, 1.07 s decoding and
+0.77 s Delta execution. After increasing only the runtime byte budget to
+64 MiB and warming the buffer, the cache held 209 entries (17 sources and
+192 renders), totaling 32,999,188 payload bytes (~31.47 MiB). The next stage
+capture took 1.13 s with no Delta, decode, or payload-accounting calls.
+Git calls fell from 41 to 24 because HEAD source data stayed cached too.
+These are different instrumented stage captures, not a controlled speedup
+guarantee, but stable cache occupancy and absent recomputation demonstrate
+the working set fits once byte-budget thrashing stops.
+
+The approved defaults are 128 MiB /512 entries for additional headroom.
+The entry cap is not a unique-path cap: a file can have several snapshots.
+It independently bounds fixed per-entry metadata and FIFO bookkeeping for
+many tiny payloads; the byte budget does not account for all Lisp overhead.
+Cold payload-sizing optimization is deferred because it disappears on hits.
 
 Background lifetime matters independently of syntax-overlay density. A later
 real review had 32,779 lines but 613,890 background overlays: the old

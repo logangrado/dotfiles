@@ -39,8 +39,8 @@
   `(let ((lg/magit-delta--cache (make-hash-table :test #'equal))
          (lg/magit-delta--cache-order nil)
          (lg/magit-delta--cache-bytes 0)
-         (lg/magit-delta-cache-max-entries 256)
-         (lg/magit-delta-cache-max-bytes (* 16 1024 1024))
+         (lg/magit-delta-cache-max-entries lg/magit-delta-cache-max-entries)
+         (lg/magit-delta-cache-max-bytes lg/magit-delta-cache-max-bytes)
          (lg/magit-delta--prefix-cache nil)
          ;; Mocking a C primitive must not require a native compiler.
          (native-comp-enable-subr-trampolines nil)
@@ -137,6 +137,60 @@
       (should (= 0 lg/magit-delta--cache-bytes))
       (should-not lg/magit-delta--cache-order)
       (should (= 0 (hash-table-count lg/magit-delta--cache))))))
+
+(ert-deftest lg/delta-cache-default-budget-retains-large-warm-working-set ()
+  ;; Both old limits were too small for this fixture.  Inherit the real
+  ;; defaults rather than supplying a test-only budget that masks regressions.
+  (should (= 512 lg/magit-delta-cache-max-entries))
+  (should (= (* 128 1024 1024) lg/magit-delta-cache-max-bytes))
+  (lg/delta-test--with-cache
+    (let* ((files 280)
+           (sources 24)
+           (body (make-string (* 64 1024) ?x))
+           (input (mapconcat
+                   (lambda (index)
+                     (lg/delta-test--diff (format "large-%d.py" index) body))
+                   (number-sequence 0 (1- files)) ""))
+           (runs 0)
+           (decodes 0)
+           (decode (lambda (ansi _input _index)
+                     (cl-incf decodes)
+                     (lg/magit-delta--snapshot-create
+                      :text (propertize ansi 'face '(:foreground "#aabbcc")))))
+           cold)
+      (dotimes (index sources)
+        (lg/magit-delta--cache-put
+         (list 'source index) (list body) (string-bytes body)))
+      (cl-letf (((symbol-function 'lg/magit-delta--run)
+                 (lambda (text _exe _args) (cl-incf runs) text)))
+        (setq cold (lg/magit-delta--render-files
+                    input "delta" lg/delta-test--args decode 'large-working-set))
+        (should (= files decodes))
+        (should (> lg/magit-delta--cache-bytes (* 16 1024 1024)))
+        (should (< lg/magit-delta--cache-bytes lg/magit-delta-cache-max-bytes))
+        (should (= (+ sources files) (hash-table-count lg/magit-delta--cache)))
+        (dotimes (_ 2)
+          (dotimes (index sources)
+            (should (lg/magit-delta--cache-get (list 'source index))))
+          (should (equal cold (lg/magit-delta--render-files
+                               input "delta" lg/delta-test--args
+                               decode 'large-working-set))))
+        (should (= 1 runs))
+        (should (= files decodes))))))
+
+(ert-deftest lg/delta-cache-enforces-entry-and-byte-limits-independently ()
+  (lg/delta-test--with-cache
+    (dolist (limits '((2 100) (100 5)))
+      (lg/magit-delta-clear-cache)
+      (let ((lg/magit-delta-cache-max-entries (car limits))
+            (lg/magit-delta-cache-max-bytes (cadr limits)))
+        (dolist (key '(a b c))
+          (lg/magit-delta--cache-put key "xx" 2))
+        (should-not (lg/magit-delta--cache-get 'a))
+        (should (lg/magit-delta--cache-get 'b))
+        (should (lg/magit-delta--cache-get 'c))
+        (should (= 2 (hash-table-count lg/magit-delta--cache)))
+        (should (= 4 lg/magit-delta--cache-bytes))))))
 
 (ert-deftest lg/delta-cache-does-not-cache-process-errors ()
   (lg/delta-test--with-cache

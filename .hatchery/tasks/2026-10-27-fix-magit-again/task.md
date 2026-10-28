@@ -82,7 +82,7 @@ Magit's synchronous refresh/section parsing remains intact.
   shared within a refresh. Working-tree fallback is not persisted.
   Preserve blank source lines with `magit-git-insert` plus `split-string`;
   `magit-git-lines` silently drops them.
-- FIFO limits: 256 entries and 16 MiB payload. Count text, serialized
+- FIFO limits: 512 entries and 128 MiB payload. Count text, serialized
   text-property runs, and any ignored legacy span data still retained;
   Lisp container overhead is additional. Oversized entries are not retained.
 - Render caching requires `--no-gitconfig`. Unknown formats fall back to
@@ -90,6 +90,56 @@ Magit's synchronous refresh/section parsing remains intact.
   unaugmented input. Clear the cache after replacing Delta in place.
 - Original scrolling and Delta staging changes remain separate commits in
   that order, per user request. Later narrow fixes are separate commits.
+
+### Larger-review staging: capacity, not another rendering rewrite
+
+A subsequent ~150-file review had 2.715M characters /51,592 lines and zero
+coloring overlays, but staged slowly. The old 16 MiB cache repeatedly evicted
+the working set: all 192 inserted snapshots were decoded again.
+
+| Instrumented stage capture | Old 16 MiB | Warm 64 MiB experiment |
+| --- | ---: | ---: |
+| Stage command | 5.2669 s | 1.1295 s |
+| Delta/context wrapper | 4.5315 s | 0.4640 s |
+| Render-cache pass | 3.9063 s | 0.0132 s |
+| Payload accounting | 1.7518 s /192 calls | no calls |
+| Decode | 1.0663 s /192 calls | no calls |
+| Delta execution | 0.7675 s /2 calls | no calls |
+| Git | 0.7444 s /41 calls | 0.3911 s /24 calls |
+| Prefix source reads | 0.3093 s | 0.0110 s |
+
+Times overlap; do not add rows. These were different stage operations, not
+a controlled identical-input speedup guarantee. Nevertheless, cache state
+stayed unchanged across the warm capture and recomputation disappeared.
+The actual working set was 209 entries (17 sources +192 renders) and
+32,999,188 payload bytes (~31.47 MiB), almost twice the old byte budget.
+The 256-entry cap was not the binding constraint in this case.
+
+The user approved defaults of **128 MiB and512 entries**, keeping both guards
+with more headroom. An entry is a source or a particular rendered version,
+not a unique path; one file can consume several entries. The entry cap limits
+fixed per-entry Lisp/key/queue overhead and FIFO bookkeeping even if payloads
+are tiny. The byte counter is not an exact heap-memory budget.
+No eviction-policy change, new metadata cache, payload-sizing optimization,
+or Magit-refresh rewrite was needed.
+
+A new regression retains 280 rendered snapshots +24 HEAD-source entries
+(>256 entries and >16 MiB payload) through repeated warm render passes with
+no extra Delta or decode calls. Another independently exercises byte and entry
+eviction. Tests inherit and isolate the real production budget defaults.
+
+The temporary gitignored helper `profiles/magit-stage-benchmark.el` measures
+the next normal stage command, reports focused ELP/cache/buffer inventories,
+and saves `profiles/stage-benchmark.txt`. It neither stages anything itself
+nor clears caches; instrumentation is removed automatically. Two smoke tests
+cover normal return and stage errors. Its ELP magit-stage row can show zero;
+use the separately timed command header. Timings exclude later redisplay.
+The temporary runtime was restored under `/tmp/magit-emacs` after a session
+reset; no system packages were installed.
+
+For an already-running Emacs, explicitly set both budget variables; reloading
+their `defvar` forms does not override old live values. No cache clearing is
+needed, and normal startup initializes the new defaults.
 
 ### Git profiling and separate worktree-reader fix
 
@@ -123,7 +173,7 @@ caching, batching, parallelism, or selective-refresh rewrite were approved.
 
 ### Validation and operating notes
 
-- 38 tests pass: 32 Delta tests plus six worktree-cache tests, using extracted
+- 40 tests pass: 34 Delta tests plus six worktree-cache tests, using extracted
   Emacs 30.1, Delta 0.18.2, Magit 4.3.5, upstream magit-delta and xterm-color.
   Dependencies stayed under `/tmp`; no system packages were installed.
 - A 50,000-added-line fixture has ZERO coloring overlays on cold and repeated

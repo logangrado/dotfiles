@@ -2,10 +2,13 @@
 
 (require 'cl-lib)
 
-(defvar lg/magit-delta-cache-max-entries 256
-  "Maximum number of rendered files and HEAD sources retained.")
-(defvar lg/magit-delta-cache-max-bytes (* 16 1024 1024)
-  "Maximum retained payload bytes, excluding Lisp object overhead.")
+(defvar lg/magit-delta-cache-max-entries 512
+  "Maximum number of rendered snapshots and HEAD sources retained.
+A file can have multiple snapshots.  This separately bounds per-entry
+overhead and FIFO bookkeeping even when individual payloads are tiny.")
+(defvar lg/magit-delta-cache-max-bytes (* 128 1024 1024)
+  "Maximum retained payload bytes, excluding Lisp object overhead.
+Large reviews can exceed the former 16 MiB budget and thrash on refresh.")
 (defvar lg/magit-delta--cache (make-hash-table :test #'equal))
 (defvar lg/magit-delta--cache-order nil)
 (defvar lg/magit-delta--cache-bytes 0)

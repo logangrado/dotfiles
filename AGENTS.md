@@ -33,7 +33,10 @@ Delta call per section and decode only misses. Include file-local synthetic
 context metadata and conversion settings in cache identity. Keep Magit's
 synchronous refresh/section parsing. Source-context caches must use immutable
 HEAD IDs and preserve blank lines (`magit-git-lines` drops them).
-See `PROFILING.md` for wall-clock profiling.
+The shared cache defaults to 128 MiB payload /512 entries. Both HEAD sources
+and rendered versions consume capacity; undersizing the working set causes
+FIFO thrashing and full re-decoding. Payload bytes exclude Lisp overhead, so
+retain the separate entry cap. See `PROFILING.md` for wall-clock profiling.
 
 Keep package-local helpers distinctly named: Magit's cached worktree reader
 is `lg/magit--worktree-path-branches`, separate from the tab-bar's
