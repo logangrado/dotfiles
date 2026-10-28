@@ -88,7 +88,8 @@ Never retain failed or partial output."
 
 (cl-defstruct (lg/magit-delta--snapshot
                (:constructor lg/magit-delta--snapshot-create))
-  "Position-independent file output.  SPANS contain offsets and property lists."
+  "Propertized file TEXT.  Legacy SPANS are kept for old cache compatibility.
+New snapshots leave SPANS empty and rendering never restores them."
   text spans)
 
 (defun lg/magit-delta--text-payload-bytes (text)
@@ -102,7 +103,7 @@ Never retain failed or partial output."
        bytes)))
 
 (defun lg/magit-delta--payload-bytes (value)
-  "Count retained text, text-property runs and relative overlay span payload.
+  "Count retained text, properties and any legacy span payload still cached.
 Lisp container overhead is additional to the configured payload limit."
   (if (stringp value)
       (lg/magit-delta--text-payload-bytes value)

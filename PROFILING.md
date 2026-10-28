@@ -173,22 +173,23 @@ The October 2026 review-buffer trace measured ~995 ms staging, of which
 Delta plus our syntax-context wrapper took ~429 ms, including ~179 ms
 fetching preceding source lines. Review comment overlays were negligible.
 
-`doom.d/magit-delta-cache.el` now retains stripped per-file text with syntax
-face/display properties plus relative background-overlay spans. Syntax colors
-do NOT use xterm-color overlays: user isolation tests showed those overlays
-caused navigation lag, while removing only background overlays did not help.
-Use the separate `face` text property because Magit rewrites `font-lock-face`
-during section painting. Cache keys cover augmented input, file-local
+`doom.d/magit-delta-cache.el` retains stripped per-file text with syntax,
+background, and display properties. No coloring overlays are created or
+restored: user isolation found both dense syntax overlays and, on larger
+reviews, background overlays made navigation slow. Use the separate `face`
+text property because Magit rewrites `font-lock-face` during section painting.
+Cache keys cover augmented input, file-local
 synthetic-context stripping metadata, effective Delta arguments, executable
 path, repository directory, process environment, and conversion settings
 (font-lock face property, ANSI palette/rendering, marker visibility, line
 background colors). Changed files are batched into one process per diff
 section. Only misses run ANSI conversion, context stripping, marker hiding,
 and background scanning. Magit still regenerates its sections. Insertion
-copies syntax text properties and recreates only background-extension
-overlays at current file offsets. Those overlays cover newlines, not entire
-lines; lower-precedence text faces fill base line backgrounds without
-overriding Delta's word-emphasis backgrounds. Thus:
+copies propertized text only. Lower-precedence background faces include
+newlines and :extend t, filling to the window edge without masking Delta's
+word-emphasis colors. The snapshot's old span field remains for compatibility,
+but is ignored by insertion; warm old cache entries already have the needed
+text properties and do not require a flush. Thus:
 
 - The first refresh is cold; measure subsequent stage/unstage operations.
 - `lg/magit-delta--run` counts actual Delta invocations. An unchanged warm
@@ -196,17 +197,18 @@ overriding Delta's word-emphasis backgrounds. Thus:
   per affected staged/unstaged section.
 - `lg/magit-delta--decode-file` should run only for changed or uncached files.
   An unchanged warm refresh should need neither Delta nor decoding. Snapshot
-  installation copies syntax faces with the cached text and creates only
-  one background overlay per changed line. `xterm-color` overlay count
-  should remain zero, including after highlighting and stage/unstage.
+  installation only copies the cached text. Both `xterm-color` and
+  `lg-magit-delta-line-bg` overlay counts must stay ZERO after highlighting,
+  refresh, staging, and unstaging, even with old cached span descriptors.
 - Immutable HEAD source contents are also cached, and shared across the
   staged/unstaged rendering passes. Working-tree fallback is not persisted.
 - Run `M-x lg/magit-delta-clear-cache` after replacing Delta in place or
   to compare cold versus warm behavior. Rendering-option changes naturally
   miss the cache. Removing `--no-gitconfig` bypasses rendered-output caching.
 - The shared FIFO cache is capped at 256 entries and 16 MiB of payload
-  (text, serialized text-property runs, and background span properties/offsets;
-  Lisp object overhead is additional). Oversized entries are not retained.
+  (text, serialized text-property runs, and any ignored legacy span data still
+  retained; Lisp object overhead is additional). Oversized entries are not
+  retained. New snapshots leave the legacy span field empty.
 - ANSI-only caching removed repeated Delta computation but left parsing,
   allocation, and native redisplay costs. A local identical-input warm
   wrapper benchmark (50 files, ~6k diff lines, five runs) measured ~429 ms/run
@@ -223,12 +225,17 @@ overriding Delta's word-emphasis backgrounds. Thus:
 Background lifetime matters independently of syntax-overlay density. A later
 real review had 32,779 lines but 613,890 background overlays: the old
 non-evaporating backgrounds survived text erasure and accumulated on refresh.
-Removing only those backgrounds immediately restored navigation. Backgrounds
-now evaporate on text deletion; insertion enforces that even for old cached
-snapshots, and full refresh explicitly removes stale owned backgrounds.
-Empty spans are not recreated. Check counts across repeated refreshes in the
-same buffer, not only freshly created buffers. To include empty overlays at
-point-max, use `overlays-in` over the widened buffer rather than
+Removing only those backgrounds immediately restored navigation. A lifetime
+fix prevented accumulation, but a still larger review then had 50,897 valid,
+nonempty, evaporating backgrounds and lag returned after every refresh.
+Clearing them left ~299 unrelated Magit/review overlays, restored navigation,
+and ALL diffs still rendered correctly. Density alone was enough to hurt.
+
+The final renderer therefore creates NO syntax or background overlays and
+ignores old cached spans. Full refresh still removes legacy owned background
+overlays. Check counts on large diffs AND repeated same-buffer operations;
+bounded counts alone are not a performance guarantee. To include empty
+overlays at point-max, use `overlays-in` over the widened buffer rather than
 `overlay-lists`, which omits that boundary case.
 
 Regression tests: `emacs -Q --batch -l doom.d/tests/magit-delta-cache-test.el
@@ -241,17 +248,20 @@ Cold/warm parsed output is compared to the full-buffer ANSI pipeline at every
 character, including resolved color attributes and hidden markers. Real
 Magit tests also check syntax faces through painting, highlighting,
 fontification requests, collapse/expand, 20 repeated refreshes and 10
-stage/unstage round trips in one live buffer, with zero xterm-color overlays
-and bounded, nonempty, evaporating background overlays. Word-emphasis and full-width line backgrounds have
+stage/unstage round trips in one live buffer with ZERO coloring overlays.
+A 50,000-added-line cold/warm fixture checks that scale does not reintroduce
+overlays; a seeded legacy cache verifies old spans are ignored without losing
+colors or forcing re-decoding. Word emphasis and full-width backgrounds have
 separate regression coverage.
 
 ## General findings that generalize beyond magit
 
-- **Subprocess-spawn fixed overhead is real and dominant**: every observed
-  `git` subcommand cost ~0.015–0.045s almost regardless of what it computed.
-  The lever for speedup is reducing subprocess *count*, not per-call speed.
-  If `elp` shows N calls to the same underlying operation, batching into one
-  call is almost always the highest-leverage fix available.
+- **Many subprocesses can dominate a Git-bound operation**, but command
+  durations are not pure spawn overhead. Earlier cases measured ~15–45 ms
+  per query; a later controlled comparison found ~8 ms through both raw Git
+  and Magit. Measure arguments/environment, actual Git work, tracing and
+  allocation effects before blaming process launch. Duplicate calls are
+  worthwhile to remove, but do not assume batching is trivial or sufficient.
 - **A sibling function/section can silently absorb work you thought you
   removed.** Don't judge one function's removability from its `elp` cost in
   isolation — check what happens to overall total time after removing it,

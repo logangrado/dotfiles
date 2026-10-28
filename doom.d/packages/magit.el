@@ -566,9 +566,9 @@ via the hook in forge-config.el."
 ;; Tune syntax colors through magit-delta-delta-args below, not Magit faces
 ;; or gitconfig (our invocation uses --no-gitconfig).
 ;;
-;; Only line-ending background-extension overlays remain.  Never put those
-;; backgrounds over the whole line: overlays override syntax text properties
-;; and would mask Delta's brighter word-emphasis backgrounds.
+;; Backgrounds also use text faces, including :extend t on newlines.
+;; No coloring overlays are needed: even one per changed line made large
+;; reviews sluggish.  Keep old-overlay cleanup for already-open buffers.
 ;; -----------------------------------------------------------
 ;; magit-delta context wrapper
 ;; -----------------------------------------------------------
@@ -585,7 +585,7 @@ Read from HEAD (fallback: working tree).  Stripped before xterm-color runs.")
 
 (defvar lg/magit-delta-plus-bg  "#1f4a28"
   "Background colour for added (`+') lines.  Shared by the delta
-`--plus-style' arg and the `:extend t' overlay applied post-render so
+`--plus-style' arg and the `:extend t' text face applied post-render so
 the colour fills past end-of-line.")
 
 (defvar lg/magit-delta-minus-bg "#4a1f1f"
@@ -763,13 +763,11 @@ escape sequences inserted by delta around the @@ header."
                   (setq advance 0)))
               (forward-line advance))))))))
 
-;; Fill gaps in Delta's +/- line backgrounds without masking its brighter
-;; word-emphasis backgrounds.  Text faces provide the base background at
-;; lower precedence than syntax faces; one overlay at the newline extends
-;; that base color to the window edge.  A full-line overlay would override
-;; syntax text properties regardless of its priority.
+;; Fill gaps in Delta's +/- line backgrounds at lower precedence than syntax
+;; faces, including newlines so :extend t fills to the window edge.  No
+;; overlays: their density alone caused lag in large, fully expanded reviews.
 (defun lg/magit-delta--extend-line-backgrounds ()
-  "Fill +/- line backgrounds and extend them with one line-ending overlay."
+  "Fill +/- line backgrounds using only :extend t text faces."
   (save-excursion
     (goto-char (point-min))
     (let ((in-hunk nil))
@@ -783,15 +781,8 @@ escape sequences inserted by delta around the @@ header."
           (let* ((plus (eq (char-after) ?+))
                  (bg   (if plus lg/magit-delta-plus-bg lg/magit-delta-minus-bg))
                  (beg  (line-beginning-position))
-                 (eol  (line-end-position))
-                 (end  (min (point-max) (1+ eol))))
-            (add-face-text-property beg end `(:background ,bg :extend t) t)
-            (when (< eol end)
-              (let ((ov (make-overlay eol end)))
-                (overlay-put ov 'face `(:background ,bg :extend t))
-                (overlay-put ov 'priority -1)
-                (overlay-put ov 'lg-magit-delta-line-bg t)
-                (overlay-put ov 'evaporate t))))))
+                 (end  (min (point-max) (1+ (line-end-position)))))
+            (add-face-text-property beg end `(:background ,bg :extend t) t))))
         (forward-line 1)))))
 
 (defun lg/magit-delta--file-augmentations (parts augs)
@@ -829,9 +820,9 @@ keeping ANSI colors there would silently discard syntax highlighting."
                           '(font-lock-face nil xterm-color nil)))
 
 (defun lg/magit-delta--decode-file (ansi augs settings)
-  "Decode ANSI into syntax text faces and relative background-overlay spans.
-SETTINGS comes from the original wash buffer.  No syntax overlays are
-created.  Temporary background overlays are destroyed after capture."
+  "Decode ANSI into syntax/background text faces without coloring overlays.
+SETTINGS comes from the original wash buffer.  New snapshots retain only
+propertized text; their legacy overlay-span field is empty."
   (with-temp-buffer
     (dolist (setting settings)
       (set (make-local-variable (car setting)) (cdr setting)))
@@ -842,40 +833,19 @@ created.  Temporary background overlays are destroyed after capture."
     (when magit-delta-hide-plus-minus-markers
       (magit-delta-hide-plus-minus-markers))
     (lg/magit-delta--extend-line-backgrounds)
-    (lg/magit-delta--snapshot-create
-     :text (buffer-string)
-     :spans (mapcar
-             (lambda (ov)
-               (vector (1- (overlay-start ov)) (1- (overlay-end ov))
-                       ;; Only our coloring properties belong in the cache.
-                       ;; Never retain arbitrary third-party buffer objects.
-                       (cl-loop for prop in '(face font-lock-face xterm-color
-                                             evaporate priority lg-magit-delta-line-bg)
-                                for value = (overlay-get ov prop)
-                                when value append (list prop (copy-tree value)))))
-             (let ((lists (overlay-lists)))
-               (append (car lists) (cdr lists)))))))
+    (lg/magit-delta--snapshot-create :text (buffer-string))))
 
 (defun lg/magit-delta--insert-snapshot (snapshot)
-  "Insert SNAPSHOT's syntax text faces and recreate only background overlays."
-  (let ((start (point)))
-    (insert (lg/magit-delta--snapshot-text snapshot))
-    (dolist (span (lg/magit-delta--snapshot-spans snapshot))
-      (when (< (aref span 0) (aref span 1))
-        (let ((ov (make-overlay (+ start (aref span 0))
-                                (+ start (aref span 1)))))
-          (cl-loop for (prop value) on (aref span 2) by #'cddr
-                   do (overlay-put ov prop value))
-          ;; Enforce lifetime on insertion, not just in the decoder: an
-          ;; existing cache entry may predate this flag or explicitly lack it.
-          (when (overlay-get ov 'lg-magit-delta-line-bg)
-            (overlay-put ov 'evaporate t)))))))
+  "Insert SNAPSHOT's colored text; never restore legacy coloring overlays.
+Existing syntax-text-v1 snapshots already include the background text
+faces.  Ignore their obsolete spans so a warm cache needs no migration."
+  (insert (lg/magit-delta--snapshot-text snapshot)))
 
 (defun lg/magit-delta-call-delta-with-context (orig-fn &rest args)
   "Color diffs using cached stripped text and relative color spans per file.
 Only changed files are sent through Delta, ANSI conversion, context
-stripping and line-background scanning.  Syntax colors use text faces;
-only background-extension overlays are recreated before section parsing."
+stripping and line-background scanning.  All colors and line extension
+use text faces; insertion never creates coloring overlays."
   (if args
       (apply orig-fn args)
     (let ((lg/magit-delta--prefix-cache
