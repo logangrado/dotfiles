@@ -11,6 +11,10 @@ live in `doom.d/packages.el`; package-specific configuration files in
 
 ## Conventions
 
+Review base selection prefers origin defaults, then local main/master/dev.
+Without a conventional default, prompt for a branch rather than requiring a
+remote. Verify local defaults as refs/heads/<name> to avoid tag collisions.
+
 Declare third-party packages with `package!` and place their configuration in a
 same-named file under `doom.d/packages/`. Keep machine-specific settings and
 secrets in `doom.d/computer-locals.el` or `auth-source`, not the repository.

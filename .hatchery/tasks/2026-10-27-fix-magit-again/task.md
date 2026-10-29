@@ -11,6 +11,26 @@ staging, while preserving syntax colors, line backgrounds, and review state.
 
 ## Summary
 
+### Remote-free review base selection
+
+The origin-only detector raised an error before showing the base-selection
+prompt in repositories without remotes. The approved narrow fix preserves
+origin HEAD, then origin/main-master-dev priority; it falls back to local
+main/master/dev, verified under refs/heads/ so tags cannot masquerade as
+branches. With no conventional default, detection returns nil and the normal
+branch completion prompt still opens. Empty input without a default raises
+a selection error rather than passing nil into review setup. Explicit branch
+choices and empty-input defaults remain unchanged.
+
+Only the two base-selection helpers in `doom.d/packages/review.el` changed;
+session/worktree mutation and review lifecycle are untouched. Eight focused
+regressions cover origin precedence, local fallback order, tag rejection,
+no-default completion, and input handling, including a disposable real Git
+repository with no remote. Combined suites pass48/48.
+The gitignored `profiles/reload-review-base.el` reloads only these two helpers
+without restarting Emacs, resetting sessions, or rerunning review hooks.
+
+
 ### Final decision: no coloring overlays
 
 All Delta syntax colors, emphasis backgrounds, hidden markers, and full-width
@@ -173,7 +193,7 @@ caching, batching, parallelism, or selective-refresh rewrite were approved.
 
 ### Validation and operating notes
 
-- 40 tests pass: 34 Delta tests plus six worktree-cache tests, using extracted
+- 48 tests pass: 34 Delta, six worktree-cache, and eight review-base tests, using extracted
   Emacs 30.1, Delta 0.18.2, Magit 4.3.5, upstream magit-delta and xterm-color.
   Dependencies stayed under `/tmp`; no system packages were installed.
 - A 50,000-added-line fixture has ZERO coloring overlays on cold and repeated

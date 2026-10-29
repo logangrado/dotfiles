@@ -155,11 +155,13 @@ Stored as a sibling of the worktree dir so it survives worktree removal."
     "The most recently selected branch for review, used as default next time.")
 
   (defun lg/review--base-ref ()
-    "Detect the remote HEAD ref (e.g. origin/main)."
+    "Detect a conventional base branch, preferring origin; return nil if unknown."
     (or (when-let ((ref (magit-git-string "symbolic-ref" "refs/remotes/origin/HEAD")))
           (string-remove-prefix "refs/remotes/" ref))
         (seq-find #'magit-rev-verify '("origin/main" "origin/master" "origin/dev"))
-        (user-error "Cannot detect base branch — run: git remote set-head origin --auto")))
+        (seq-find (lambda (branch)
+                    (magit-rev-verify (concat "refs/heads/" branch)))
+                  '("main" "master" "dev"))))
 
   (defun lg/review--read-branch ()
     "Prompt for a branch to review, defaulting to the last selection."
@@ -174,12 +176,16 @@ Stored as a sibling of the worktree dir so it survives worktree removal."
       choice))
 
   (defun lg/review--read-base-ref ()
-    "Prompt for the base ref, defaulting to origin HEAD."
+    "Prompt for a base branch, with a remote or local default when detectable."
     (let* ((default (lg/review--base-ref))
-           (prompt (format "Base branch (default %s): " default))
+           (prompt (if default
+                       (format "Base branch (default %s): " default)
+                     "Base branch: "))
            (candidates (magit-list-branch-names))
            (choice (completing-read prompt candidates nil t nil nil default)))
-      (if (string-empty-p choice) default choice)))
+      (if (string-empty-p choice)
+          (or default (user-error "Select a base branch"))
+        choice)))
 
   ;; ==========================================================================
   ;; Diff-context helpers (used by lg/review-comment)
